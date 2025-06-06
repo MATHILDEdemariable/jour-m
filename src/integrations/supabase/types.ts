@@ -207,6 +207,7 @@ export type Database = {
           assigned_role: string | null
           assigned_vendor_id: string | null
           category_id: string | null
+          completed_at: string | null
           created_at: string | null
           dependencies: string[] | null
           description: string | null
@@ -226,6 +227,7 @@ export type Database = {
           assigned_role?: string | null
           assigned_vendor_id?: string | null
           category_id?: string | null
+          completed_at?: string | null
           created_at?: string | null
           dependencies?: string[] | null
           description?: string | null
@@ -245,6 +247,7 @@ export type Database = {
           assigned_role?: string | null
           assigned_vendor_id?: string | null
           category_id?: string | null
+          completed_at?: string | null
           created_at?: string | null
           dependencies?: string[] | null
           description?: string | null
