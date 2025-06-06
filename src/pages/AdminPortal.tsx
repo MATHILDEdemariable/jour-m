@@ -25,29 +25,29 @@ export const AdminPortal = () => {
   const { showLoginModal, handleCloseLoginModal } = useAdminProtectedRoute();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-50">
       <AdminLoginModal isOpen={showLoginModal} onClose={handleCloseLoginModal} />
 
       {isAuthenticated && (
         <>
           {/* Header */}
-          <div className="bg-white border-b shadow-sm">
+          <div className="bg-stone-100 border-b border-emerald-200 shadow-sm">
             <div className="flex items-center justify-between p-4">
               <div className="flex items-center gap-4">
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   onClick={() => navigate('/')}
-                  className="text-gray-600"
+                  className="text-stone-600 hover:bg-emerald-50 hover:text-emerald-800"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   {t('back')}
                 </Button>
                 <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                    Jour J - {t('admin_portal')}
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-stone-800 via-emerald-800 to-stone-900 bg-clip-text text-transparent">
+                    Jour M - {t('admin_portal')}
                   </h1>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-stone-600">
                     {t === undefined ? 'Portail de gestion événementielle' : ''}
                   </p>
                 </div>
@@ -58,7 +58,7 @@ export const AdminPortal = () => {
                   variant="outline" 
                   size="sm" 
                   onClick={logout}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 border-emerald-700 text-emerald-800 hover:bg-emerald-50"
                 >
                   <LogOut className="w-3 h-3" />
                   {t('logout')}
@@ -68,34 +68,34 @@ export const AdminPortal = () => {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="bg-white border-b">
+          <div className="bg-stone-100 border-b border-emerald-200">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-7 h-auto p-1">
-                <TabsTrigger value="dashboard" className="flex flex-col py-3">
+              <TabsList className="grid w-full grid-cols-7 h-auto p-1 bg-stone-100">
+                <TabsTrigger value="dashboard" className="flex flex-col py-3 data-[state=active]:bg-emerald-700 data-[state=active]:text-stone-100">
                   <span className="text-xs">📊</span>
                   <span className="text-xs">{t('dashboard')}</span>
                 </TabsTrigger>
-                <TabsTrigger value="tasks" className="flex flex-col py-3">
+                <TabsTrigger value="tasks" className="flex flex-col py-3 data-[state=active]:bg-emerald-700 data-[state=active]:text-stone-100">
                   <span className="text-xs">📋</span>
                   <span className="text-xs">{t('tasks')}</span>
                 </TabsTrigger>
-                <TabsTrigger value="planning" className="flex flex-col py-3">
+                <TabsTrigger value="planning" className="flex flex-col py-3 data-[state=active]:bg-emerald-700 data-[state=active]:text-stone-100">
                   <span className="text-xs">⏰</span>
                   <span className="text-xs">{t('planning')}</span>
                 </TabsTrigger>
-                <TabsTrigger value="people" className="flex flex-col py-3">
+                <TabsTrigger value="people" className="flex flex-col py-3 data-[state=active]:bg-emerald-700 data-[state=active]:text-stone-100">
                   <span className="text-xs">👥</span>
                   <span className="text-xs">{t('people')}</span>
                 </TabsTrigger>
-                <TabsTrigger value="vendors" className="flex flex-col py-3">
+                <TabsTrigger value="vendors" className="flex flex-col py-3 data-[state=active]:bg-emerald-700 data-[state=active]:text-stone-100">
                   <span className="text-xs">🏢</span>
                   <span className="text-xs">{t('vendors')}</span>
                 </TabsTrigger>
-                <TabsTrigger value="documents" className="flex flex-col py-3">
+                <TabsTrigger value="documents" className="flex flex-col py-3 data-[state=active]:bg-emerald-700 data-[state=active]:text-stone-100">
                   <span className="text-xs">📁</span>
                   <span className="text-xs">{t('documents')}</span>
                 </TabsTrigger>
-                <TabsTrigger value="config" className="flex flex-col py-3">
+                <TabsTrigger value="config" className="flex flex-col py-3 data-[state=active]:bg-emerald-700 data-[state=active]:text-stone-100">
                   <span className="text-xs">⚙️</span>
                   <span className="text-xs">{t('config')}</span>
                 </TabsTrigger>
