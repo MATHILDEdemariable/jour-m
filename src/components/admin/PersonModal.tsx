@@ -10,7 +10,7 @@ import { Person } from '@/hooks/usePeople';
 interface PersonModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: Partial<Person>) => void;
+  onSubmit: (data: Partial<Person>) => Promise<void>;
   person?: Person | null;
 }
 
@@ -25,17 +25,20 @@ export const PersonModal: React.FC<PersonModalProps> = ({
     role: '',
     email: '',
     phone: '',
-    status: 'pending'
+    status: 'pending',
+    availability: 'full'
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (person) {
       setFormData({
-        name: person.name,
-        role: person.role,
-        email: person.email,
-        phone: person.phone,
-        status: person.status
+        name: person.name || '',
+        role: person.role || '',
+        email: person.email || '',
+        phone: person.phone || '',
+        status: person.status || 'pending',
+        availability: person.availability || 'full'
       });
     } else {
       setFormData({
@@ -43,15 +46,24 @@ export const PersonModal: React.FC<PersonModalProps> = ({
         role: '',
         email: '',
         phone: '',
-        status: 'pending'
+        status: 'pending',
+        availability: 'full'
       });
     }
   }, [person, isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ ...formData, availability: 'full' });
-    onClose();
+    setIsSubmitting(true);
+    
+    try {
+      await onSubmit(formData);
+      onClose();
+    } catch (error) {
+      console.error('Error submitting person:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -135,11 +147,11 @@ export const PersonModal: React.FC<PersonModalProps> = ({
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
               Annuler
             </Button>
-            <Button type="submit" className="bg-gradient-to-r from-purple-600 to-pink-600">
-              {person ? 'Modifier' : 'Ajouter'}
+            <Button type="submit" className="bg-gradient-to-r from-purple-600 to-pink-600" disabled={isSubmitting}>
+              {isSubmitting ? 'Sauvegarde...' : (person ? 'Modifier' : 'Ajouter')}
             </Button>
           </div>
         </form>

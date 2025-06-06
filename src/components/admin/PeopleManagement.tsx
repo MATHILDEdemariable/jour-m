@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Phone, Mail, User } from 'lucide-react';
+import { Plus, Edit, Trash2, Phone, Mail, User, Loader2 } from 'lucide-react';
 import { usePeople, Person } from '@/hooks/usePeople';
 import { PersonModal } from './PersonModal';
 import {
@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export const PeopleManagement = () => {
-  const { people, addPerson, updatePerson, deletePerson } = usePeople();
+  const { people, loading, addPerson, updatePerson, deletePerson } = usePeople();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
 
@@ -63,15 +63,28 @@ export const PeopleManagement = () => {
     setIsModalOpen(true);
   };
 
-  const handleSubmitPerson = (data: Partial<Person>) => {
+  const handleSubmitPerson = async (data: Partial<Person>) => {
     if (editingPerson) {
-      updatePerson(editingPerson.id, data);
+      await updatePerson(editingPerson.id, data);
     } else {
-      addPerson(data as Omit<Person, 'id'>);
+      await addPerson(data as Omit<Person, 'id' | 'created_at' | 'updated_at'>);
     }
     setIsModalOpen(false);
     setEditingPerson(null);
   };
+
+  const handleDeletePerson = async (id: string) => {
+    await deletePerson(id);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin" />
+        <span className="ml-2">Chargement des personnes...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -128,7 +141,7 @@ export const PeopleManagement = () => {
                     <h3 className="font-semibold text-lg">{person.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge className={roleColors[person.role as keyof typeof roleColors]}>
-                        {roleLabels[person.role as keyof typeof roleLabels]}
+                        {roleLabels[person.role as keyof typeof roleLabels] || person.role}
                       </Badge>
                       <Badge className={statusColors[person.status as keyof typeof statusColors]}>
                         {person.status === 'confirmed' ? 'Confirmé' : 
@@ -142,11 +155,11 @@ export const PeopleManagement = () => {
                   <div className="text-right">
                     <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
                       <Mail className="w-4 h-4" />
-                      {person.email}
+                      {person.email || 'Non renseigné'}
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Phone className="w-4 h-4" />
-                      {person.phone}
+                      {person.phone || 'Non renseigné'}
                     </div>
                   </div>
                   
@@ -170,7 +183,7 @@ export const PeopleManagement = () => {
                         <AlertDialogFooter>
                           <AlertDialogCancel>Annuler</AlertDialogCancel>
                           <AlertDialogAction 
-                            onClick={() => deletePerson(person.id)}
+                            onClick={() => handleDeletePerson(person.id)}
                             className="bg-red-600 hover:bg-red-700"
                           >
                             Supprimer
@@ -184,6 +197,20 @@ export const PeopleManagement = () => {
             </CardContent>
           </Card>
         ))}
+
+        {people.length === 0 && (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune personne</h3>
+              <p className="text-gray-600 mb-4">Commencez par ajouter des personnes à votre événement</p>
+              <Button onClick={handleCreatePerson} className="bg-gradient-to-r from-purple-600 to-pink-600">
+                <Plus className="w-4 h-4 mr-2" />
+                Ajouter la première personne
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <PersonModal

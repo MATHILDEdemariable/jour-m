@@ -1,100 +1,139 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Person {
-  id: number;
+  id: string;
   name: string;
   role: string;
   email: string;
   phone: string;
   availability: string;
   status: string;
+  event_id?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export const usePeople = () => {
   const { toast } = useToast();
-  
-  const [people, setPeople] = useState<Person[]>([
-    {
-      id: 1,
-      name: "Sarah Martinez",
-      role: "bride",
-      email: "sarah@example.com",
-      phone: "+33 6 12 34 56 78",
-      availability: "full",
-      status: "confirmed"
-    },
-    {
-      id: 2,
-      name: "James Wilson",
-      role: "groom", 
-      email: "james@example.com",
-      phone: "+33 6 87 65 43 21",
-      availability: "full",
-      status: "confirmed"
-    },
-    {
-      id: 3,
-      name: "Emma Thompson",
-      role: "maid-of-honor",
-      email: "emma@example.com",
-      phone: "+33 6 11 22 33 44",
-      availability: "partial",
-      status: "confirmed"
-    },
-    {
-      id: 4,
-      name: "Studio Lumière",
-      role: "photographer",
-      email: "contact@studiolumiere.fr",
-      phone: "+33 1 23 45 67 89",
-      availability: "full",
-      status: "confirmed"
-    },
-    {
-      id: 5,
-      name: "Traiteur Délices",
-      role: "caterer",
-      email: "info@traiteurdelices.fr", 
-      phone: "+33 1 98 76 54 32",
-      availability: "full",
-      status: "pending"
+  const [people, setPeople] = useState<Person[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Load people from Supabase
+  const loadPeople = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('people')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPeople(data || []);
+    } catch (error) {
+      console.error('Error loading people:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de charger les personnes',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
     }
-  ]);
-
-  const addPerson = (newPerson: Omit<Person, 'id'>) => {
-    const id = Math.max(...people.map(p => p.id)) + 1;
-    setPeople(prev => [...prev, { ...newPerson, id }]);
-    
-    toast({
-      title: 'Personne ajoutée',
-      description: 'Nouvelle personne ajoutée avec succès',
-    });
   };
 
-  const updatePerson = (id: number, updates: Partial<Person>) => {
-    setPeople(prev => prev.map(person => 
-      person.id === id ? { ...person, ...updates } : person
-    ));
-    
-    toast({
-      title: 'Succès',
-      description: 'Personne mise à jour avec succès',
-    });
+  // Load people on component mount
+  useEffect(() => {
+    loadPeople();
+  }, []);
+
+  const addPerson = async (newPerson: Omit<Person, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('people')
+        .insert(newPerson)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setPeople(prev => [data, ...prev]);
+      toast({
+        title: 'Succès',
+        description: 'Personne ajoutée avec succès',
+      });
+      
+      return data;
+    } catch (error) {
+      console.error('Error adding person:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible d\'ajouter la personne',
+        variant: 'destructive',
+      });
+      throw error;
+    }
   };
 
-  const deletePerson = (id: number) => {
-    setPeople(prev => prev.filter(person => person.id !== id));
-    
-    toast({
-      title: 'Personne supprimée',
-      description: 'La personne a été supprimée avec succès',
-    });
+  const updatePerson = async (id: string, updates: Partial<Person>) => {
+    try {
+      const { data, error } = await supabase
+        .from('people')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setPeople(prev => prev.map(person => 
+        person.id === id ? { ...person, ...data } : person
+      ));
+      
+      toast({
+        title: 'Succès',
+        description: 'Personne mise à jour avec succès',
+      });
+    } catch (error) {
+      console.error('Error updating person:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de mettre à jour la personne',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const deletePerson = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('people')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setPeople(prev => prev.filter(person => person.id !== id));
+      toast({
+        title: 'Succès',
+        description: 'Personne supprimée avec succès',
+      });
+    } catch (error) {
+      console.error('Error deleting person:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de supprimer la personne',
+        variant: 'destructive',
+      });
+    }
   };
 
   return {
     people,
+    loading,
+    loadPeople,
     addPerson,
     updatePerson,
     deletePerson
