@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, Download, Plus, Search, Filter, Clock4 } from 'lucide-react';
+import { Calendar, Clock, Download, Search, Filter, Clock4, Sparkles, Plus } from 'lucide-react';
 import { usePlanningItems, PlanningItem } from '@/hooks/usePlanningItems';
 import { PlanningItemModal } from './PlanningItemModal';
 import { DraggablePlanningItem } from './DraggablePlanningItem';
@@ -13,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 export const PlanningManagement = () => {
   const [viewMode, setViewMode] = useState<'timeline' | 'calendar'>('timeline');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAISuggestionsOpen, setIsAISuggestionsOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<PlanningItem | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,7 +57,7 @@ export const PlanningManagement = () => {
     setIsModalOpen(true);
   };
 
-  const handleCreateItem = () => {
+  const handleCreateManualItem = () => {
     setEditingItem(null);
     setIsModalOpen(true);
   };
@@ -110,7 +112,12 @@ export const PlanningManagement = () => {
   };
 
   const handleAddAISuggestion = (suggestion: Omit<PlanningItem, 'id' | 'time'>) => {
-    addPlanningItem(suggestion);
+    // Add a default time for AI suggestions
+    const suggestionWithTime = {
+      ...suggestion,
+      time: '08:00' // Default time, will be recalculated by the hook
+    };
+    addPlanningItem(suggestionWithTime);
   };
 
   const filteredItems = planningItems.filter(item => {
@@ -148,14 +155,6 @@ export const PlanningManagement = () => {
               Calendrier
             </Button>
           </div>
-          <LogisticsAISuggestions onAddSuggestion={handleAddAISuggestion} />
-          <Button 
-            onClick={handleCreateItem}
-            className="bg-sage-600 hover:bg-sage-700 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter une étape
-          </Button>
           <Button variant="outline" className="border-stone-300 text-stone-700 hover:bg-stone-50">
             <Download className="w-4 h-4 mr-2" />
             Exporter
@@ -231,13 +230,34 @@ export const PlanningManagement = () => {
       {viewMode === 'timeline' && (
         <Card className="border-stone-200">
           <CardHeader>
-            <CardTitle className="text-stone-800 flex items-center gap-2">
-              <Clock4 className="w-5 h-5 text-sage-600" />
-              Timeline du Jour J - Horaires Dynamiques
-            </CardTitle>
-            <CardDescription className="text-stone-600">
-              Glissez-déposez pour réorganiser • Les horaires se recalculent automatiquement
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-stone-800 flex items-center gap-2">
+                  <Clock4 className="w-5 h-5 text-sage-600" />
+                  Timeline du Jour J - Horaires Dynamiques
+                </CardTitle>
+                <CardDescription className="text-stone-600">
+                  Glissez-déposez pour réorganiser • Les horaires se recalculent automatiquement
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button 
+                  onClick={() => setIsAISuggestionsOpen(true)}
+                  className="bg-gradient-to-r from-sage-600 to-sage-700 hover:from-sage-700 hover:to-sage-800 text-white shadow-lg"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Ajouter une étape
+                </Button>
+                <Button 
+                  onClick={handleCreateManualItem}
+                  variant="outline"
+                  className="border-sage-300 text-sage-700 hover:bg-sage-50"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Ajout Manuel
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {filteredItems.length === 0 ? (
@@ -327,6 +347,12 @@ export const PlanningManagement = () => {
         }}
         onSubmit={handleSubmitItem}
         item={editingItem}
+      />
+
+      <LogisticsAISuggestions 
+        isOpen={isAISuggestionsOpen}
+        onClose={() => setIsAISuggestionsOpen(false)}
+        onAddSuggestion={handleAddAISuggestion} 
       />
     </div>
   );

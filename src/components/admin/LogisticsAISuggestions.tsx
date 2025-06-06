@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,13 +18,16 @@ interface LogisticsSuggestion {
 }
 
 interface LogisticsAISuggestionsProps {
+  isOpen: boolean;
+  onClose: () => void;
   onAddSuggestion: (suggestion: Omit<LogisticsSuggestion, 'id'>) => void;
 }
 
 export const LogisticsAISuggestions: React.FC<LogisticsAISuggestionsProps> = ({
+  isOpen,
+  onClose,
   onAddSuggestion
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
   const [selectedPhase, setSelectedPhase] = useState<string>('all');
 
   const suggestions: LogisticsSuggestion[] = [
@@ -191,17 +194,11 @@ export const LogisticsAISuggestions: React.FC<LogisticsAISuggestionsProps> = ({
       status: suggestion.status
     });
     
-    setIsOpen(false);
+    onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-gradient-to-r from-sage-600 to-sage-700 hover:from-sage-700 hover:to-sage-800 text-white shadow-lg">
-          <Sparkles className="w-4 h-4 mr-2 animate-pulse" />
-          Suggestions IA Logistique
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-stone-800 flex items-center gap-2">

@@ -71,9 +71,6 @@ export const DraggablePlanningItem: React.FC<DraggablePlanningItemProps> = ({
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-semibold text-lg text-stone-800">{item.title}</h3>
           <div className="flex items-center gap-2">
-            <Badge className={categoryColors[item.category as keyof typeof categoryColors]}>
-              {item.category}
-            </Badge>
             <div className="flex items-center gap-1">
               <Button 
                 variant="ghost" 
