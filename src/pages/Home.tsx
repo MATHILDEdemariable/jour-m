@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,7 @@ import { AdminLoginForm } from '@/components/admin/AdminLoginForm';
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAdmin, login, logout } = useAdminAuth();
+  const { isAuthenticated, login, logout } = useAdminAuth();
   const [showAdminLogin, setShowAdminLogin] = useState(false);
 
   const handleLogin = async (password: string) => {
@@ -27,6 +28,7 @@ const Home: React.FC = () => {
         description: "Vous êtes connecté en tant qu'administrateur.",
       });
       setShowAdminLogin(false);
+      navigate('/admin');
     } else {
       toast({
         title: "Erreur de connexion",
@@ -42,6 +44,14 @@ const Home: React.FC = () => {
       title: "Déconnexion réussie",
       description: "Vous êtes déconnecté de l'administration.",
     });
+  };
+
+  const handleAdminAccess = () => {
+    if (isAuthenticated) {
+      navigate('/admin');
+    } else {
+      setShowAdminLogin(true);
+    }
   };
 
   return (
@@ -77,15 +87,27 @@ const Home: React.FC = () => {
             </Button>
             
             <Button
-              onClick={() => setShowAdminLogin(true)}
+              onClick={handleAdminAccess}
               variant="outline"
               className="border-purple-200 text-purple-700 hover:bg-purple-50 flex items-center gap-2"
               size="lg"
             >
               <Settings className="w-5 h-5" />
-              Admin
+              {isAuthenticated ? 'Admin Portal' : 'Admin'}
             </Button>
           </div>
+
+          {isAuthenticated && (
+            <div className="mt-4">
+              <Button
+                onClick={handleLogout}
+                variant="ghost"
+                className="text-stone-500 hover:text-stone-700"
+              >
+                Se déconnecter
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
