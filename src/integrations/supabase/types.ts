@@ -21,6 +21,7 @@ export type Database = {
           is_shared: boolean | null
           name: string
           uploaded_by: string | null
+          vendor_id: string | null
         }
         Insert: {
           category?: string | null
@@ -33,6 +34,7 @@ export type Database = {
           is_shared?: boolean | null
           name: string
           uploaded_by?: string | null
+          vendor_id?: string | null
         }
         Update: {
           category?: string | null
@@ -45,6 +47,7 @@ export type Database = {
           is_shared?: boolean | null
           name?: string
           uploaded_by?: string | null
+          vendor_id?: string | null
         }
         Relationships: [
           {
@@ -52,6 +55,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
