@@ -280,7 +280,7 @@ export const LogisticsAISuggestions: React.FC<LogisticsAISuggestionsProps> = ({
                     className="bg-sage-600 hover:bg-sage-700 text-white"
                   >
                     <Plus className="w-3 h-3 mr-1" />
-                    Ajouter
+                    Ajouter cette étape
                   </Button>
                 </div>
               </CardContent>

@@ -92,8 +92,8 @@ export const PlanningManagement = () => {
     setDraggedIndex(null);
   };
 
-  const handleAddAISuggestion = (suggestion: Omit<{ title: string; description: string; duration: number; category: string; assignedTo: string[]; status: string }, 'id'>) => {
-    addPlanningItem(suggestion as Omit<PlanningItem, 'id' | 'time'>);
+  const handleAddAISuggestion = (suggestion: Omit<PlanningItem, 'id' | 'time'>) => {
+    addPlanningItem(suggestion);
   };
 
   // Filtrage des items
@@ -253,7 +253,7 @@ export const PlanningManagement = () => {
         </Card>
       )}
 
-      {/* Calendar View */}
+      {/* Calendar View avec correction visibilité */}
       {viewMode === 'calendar' && (
         <Card className="border-stone-200">
           <CardHeader>
@@ -262,10 +262,10 @@ export const PlanningManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-12 gap-2">
-              {/* Time labels */}
+              {/* Time labels - Correction visibilité */}
               <div className="col-span-2">
                 {Array.from({ length: 16 }, (_, i) => (
-                  <div key={i} className="h-16 flex items-center text-sm font-medium border-b border-stone-200 text-stone-700">
+                  <div key={i} className="h-16 flex items-center text-sm font-medium border-b border-stone-200 text-stone-800">
                     {String(8 + i).padStart(2, '0')}:00
                   </div>
                 ))}
@@ -290,8 +290,8 @@ export const PlanningManagement = () => {
                       }}
                       onClick={() => handleEditItem(item)}
                     >
-                      <div className="font-semibold">{item.time} - {item.title}</div>
-                      <div className="text-xs opacity-90">{formatDuration(item.duration)}</div>
+                      <div className="font-semibold text-white">{item.time} - {item.title}</div>
+                      <div className="text-xs opacity-90 text-white">{formatDuration(item.duration)}</div>
                     </div>
                   );
                 })}

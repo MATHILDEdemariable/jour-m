@@ -43,8 +43,6 @@ export const DraggablePlanningItem: React.FC<DraggablePlanningItemProps> = ({
   onDragOver,
   onDrop
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
   const endTime = calculateEndTime(item.time, item.duration);
 
   return (
@@ -53,18 +51,16 @@ export const DraggablePlanningItem: React.FC<DraggablePlanningItemProps> = ({
       onDragStart={() => onDragStart(index)}
       onDragOver={(e) => onDragOver(e, index)}
       onDrop={(e) => onDrop(e, index)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       className={`flex items-start gap-4 p-4 border rounded-lg transition-all cursor-move
         ${isDragging ? 'opacity-50 scale-95 rotate-2' : 'hover:bg-stone-50 hover:shadow-md'}
-        ${isHovered ? 'border-sage-300 shadow-lg' : 'border-stone-200'}
+        border-stone-200
       `}
     >
-      {/* Timeline avec horaires */}
+      {/* Timeline avec horaires - Correction visibilité */}
       <div className="flex flex-col items-center min-w-[80px]">
         <div className="bg-gradient-to-br from-sage-500 to-sage-600 rounded-xl p-3 text-white text-center shadow-md">
-          <div className="font-bold text-lg leading-none">{item.time}</div>
-          <div className="text-xs opacity-90 mt-1">à {endTime}</div>
+          <div className="font-bold text-lg leading-none text-white">{item.time}</div>
+          <div className="text-xs opacity-90 mt-1 text-white">à {endTime}</div>
         </div>
         {index < 5 && (
           <div className="w-0.5 h-16 bg-gradient-to-b from-sage-300 to-stone-200 mt-3"></div>
@@ -78,51 +74,50 @@ export const DraggablePlanningItem: React.FC<DraggablePlanningItemProps> = ({
             <Badge className={categoryColors[item.category as keyof typeof categoryColors]}>
               {item.category}
             </Badge>
-            {isHovered && (
-              <div className="flex items-center gap-1">
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit(item);
-                  }}
-                  className="opacity-70 hover:opacity-100 text-stone-600 hover:text-sage-600 h-8 w-8 p-0"
-                >
-                  <Edit className="w-4 h-4" />
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={(e) => e.stopPropagation()}
-                      className="opacity-70 hover:opacity-100 text-stone-600 hover:text-red-600 h-8 w-8 p-0"
+            {/* Boutons toujours visibles */}
+            <div className="flex items-center gap-1">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(item);
+                }}
+                className="text-stone-600 hover:text-sage-600 h-8 w-8 p-0"
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-stone-600 hover:text-red-600 h-8 w-8 p-0"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Supprimer cette étape ?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Êtes-vous sûr de vouloir supprimer "{item.title}" ? 
+                      Cette action est irréversible et recalculera automatiquement les horaires suivants.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={() => onDelete(item.id)}
+                      className="bg-red-600 hover:bg-red-700"
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Supprimer cette étape ?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Êtes-vous sûr de vouloir supprimer "{item.title}" ? 
-                        Cette action est irréversible et recalculera automatiquement les horaires suivants.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Annuler</AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={() => onDelete(item.id)}
-                        className="bg-red-600 hover:bg-red-700"
-                      >
-                        Supprimer
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            )}
+                      Supprimer
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
         </div>
         
