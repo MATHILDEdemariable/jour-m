@@ -1,91 +1,111 @@
-
-import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Settings } from 'lucide-react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LanguageToggle } from '@/components/LanguageToggle';
+import { Button } from '@/components/ui/button';
+import { Calendar, Eye, Settings } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { AdminLoginForm } from '@/components/admin/AdminLoginForm';
 
-const Home = () => {
+const Home: React.FC = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { toast } = useToast();
+  const { isAdmin, login, logout } = useAdminAuth();
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+
+  const handleLogin = async (password: string) => {
+    const success = await login(password);
+    if (success) {
+      toast({
+        title: "Connexion réussie",
+        description: "Vous êtes connecté en tant qu'administrateur.",
+      });
+      setShowAdminLogin(false);
+    } else {
+      toast({
+        title: "Erreur de connexion",
+        description: "Mot de passe incorrect.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Déconnexion réussie",
+      description: "Vous êtes déconnecté de l'administration.",
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50">
-      {/* Header with Language Toggle */}
-      <div className="flex justify-end p-4">
-        <LanguageToggle />
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-sage-50 to-yellow-50 flex flex-col">
+      {/* Hero Section */}
+      <div className="flex-grow flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-5xl font-extrabold text-stone-800 mb-4 tracking-tight">
+            Organisez votre événement <span className="text-sage-600">sans stress</span>
+          </h1>
+          <p className="text-stone-500 text-lg mb-8">
+            Planifiez chaque détail, de la liste des invités à la coordination des prestataires.
+          </p>
 
-      {/* Main Content */}
-      <div className="text-center py-12">
-        <div className="text-6xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
-          Jour J
-        </div>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto px-4">
-          {t('simplify_organization')}
-        </p>
-      </div>
-
-      {/* Main Options */}
-      <div className="max-w-4xl mx-auto px-4 pb-16">
-        <div className="grid md:grid-cols-2 gap-8">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/event')}>
-            <CardHeader className="text-center">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mb-4">
-                <Calendar className="w-8 h-8 text-white" />
-              </div>
-              <CardTitle className="text-2xl">{t('access_event')}</CardTitle>
-              <CardDescription className="text-lg">
-                {t === undefined ? 'Rejoignez votre équipe et consultez vos tâches du jour J' : ''}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                size="lg"
-              >
-                {t('access_event')}
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/admin')}>
-            <CardHeader className="text-center">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center mb-4">
-                <Settings className="w-8 h-8 text-white" />
-              </div>
-              <CardTitle className="text-2xl">{t('organize_event')}</CardTitle>
-              <CardDescription className="text-lg">
-                {t === undefined ? 'Créez et gérez tous les aspects de votre événement' : ''}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                variant="outline" 
-                className="w-full border-2 border-purple-200 hover:bg-purple-50"
-                size="lg"
-              >
-                {t('admin_portal')}
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Boutons d'action */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
+            <Button
+              onClick={() => navigate('/event')}
+              className="bg-white text-purple-600 border-2 border-purple-200 hover:bg-purple-50 hover:border-purple-300 flex items-center gap-2"
+              size="lg"
+            >
+              <Calendar className="w-5 h-5" />
+              Timeline Invités
+            </Button>
+            
+            <Button
+              onClick={() => navigate('/event-portal')}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center gap-2"
+              size="lg"
+            >
+              <Eye className="w-5 h-5" />
+              Event Portal
+            </Button>
+            
+            <Button
+              onClick={() => setShowAdminLogin(true)}
+              variant="outline"
+              className="border-purple-200 text-purple-700 hover:bg-purple-50 flex items-center gap-2"
+              size="lg"
+            >
+              <Settings className="w-5 h-5" />
+              Admin
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="bg-white/50 backdrop-blur-sm border-t border-purple-100 py-8 mt-16">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <p className="text-gray-500 mb-4">{t('simplify_organization')}</p>
-          <button 
-            onClick={() => navigate('/admin')}
-            className="text-sm text-purple-600 hover:text-purple-700 underline"
-          >
-            {t('admin_access')}
-          </button>
-        </div>
+      <footer className="bg-stone-50 border-t border-stone-200 p-4 text-center text-stone-500 text-sm">
+        © {new Date().getFullYear()} Event Planner. Tous droits réservés.
       </footer>
+
+      {/* Admin Login Modal */}
+      <Dialog open={showAdminLogin} onOpenChange={setShowAdminLogin}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Connexion Administrateur</DialogTitle>
+            <DialogDescription>
+              Entrez le mot de passe pour accéder à l'interface d'administration.
+            </DialogDescription>
+          </DialogHeader>
+          <AdminLoginForm onSubmit={handleLogin} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
