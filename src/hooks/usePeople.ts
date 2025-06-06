@@ -39,8 +39,8 @@ export const usePeople = () => {
         role: person.role || '',
         email: person.email || '',
         phone: person.phone || '',
-        availability: person.availability || 'full',
-        status: person.confirmation_status || person.status || 'pending',
+        availability: person.availability_notes || 'full',
+        status: person.confirmation_status || 'pending',
         event_id: person.event_id,
         created_at: person.created_at,
         updated_at: person.updated_at,
@@ -72,7 +72,7 @@ export const usePeople = () => {
         role: newPerson.role,
         email: newPerson.email,
         phone: newPerson.phone,
-        availability: newPerson.availability,
+        availability_notes: newPerson.availability,
         confirmation_status: newPerson.status,
         event_id: newPerson.event_id,
       };
@@ -92,7 +92,7 @@ export const usePeople = () => {
         role: data.role || '',
         email: data.email || '',
         phone: data.phone || '',
-        availability: data.availability || 'full',
+        availability: data.availability_notes || 'full',
         status: data.confirmation_status || 'pending',
         event_id: data.event_id,
         created_at: data.created_at,
@@ -125,7 +125,7 @@ export const usePeople = () => {
       if (updates.role !== undefined) dbUpdates.role = updates.role;
       if (updates.email !== undefined) dbUpdates.email = updates.email;
       if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
-      if (updates.availability !== undefined) dbUpdates.availability = updates.availability;
+      if (updates.availability !== undefined) dbUpdates.availability_notes = updates.availability;
       if (updates.status !== undefined) dbUpdates.confirmation_status = updates.status;
       if (updates.event_id !== undefined) dbUpdates.event_id = updates.event_id;
 
@@ -145,7 +145,7 @@ export const usePeople = () => {
         role: data.role || '',
         email: data.email || '',
         phone: data.phone || '',
-        availability: data.availability || 'full',
+        availability: data.availability_notes || 'full',
         status: data.confirmation_status || 'pending',
         event_id: data.event_id,
         created_at: data.created_at,
