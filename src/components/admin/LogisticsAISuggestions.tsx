@@ -186,6 +186,8 @@ export const LogisticsAISuggestions: React.FC<LogisticsAISuggestionsProps> = ({
       duration: suggestion.duration,
       category: suggestion.category,
       assignedTo: suggestion.assignedTo,
+      phase: suggestion.phase,
+      priority: suggestion.priority,
       status: suggestion.status
     });
     
