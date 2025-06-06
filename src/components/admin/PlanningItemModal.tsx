@@ -28,9 +28,11 @@ export const PlanningItemModal: React.FC<PlanningItemModalProps> = ({
     description: '',
     duration: 60,
     category: 'Préparation',
-    assignedTo: [] as string[]
+    assignedTo: [] as string[],
+    time: '08:00'
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { people } = usePeople();
 
   useEffect(() => {
@@ -40,7 +42,8 @@ export const PlanningItemModal: React.FC<PlanningItemModalProps> = ({
         description: item.description,
         duration: item.duration,
         category: item.category,
-        assignedTo: item.assignedTo || []
+        assignedTo: item.assignedTo || [],
+        time: item.time || '08:00'
       });
     } else {
       setFormData({
@@ -48,14 +51,24 @@ export const PlanningItemModal: React.FC<PlanningItemModalProps> = ({
         description: '',
         duration: 60,
         category: 'Préparation',
-        assignedTo: []
+        assignedTo: [],
+        time: '08:00'
       });
     }
   }, [item, isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    setIsSubmitting(true);
+    
+    try {
+      await onSubmit(formData);
+      onClose();
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handlePersonAssignment = (personName: string, checked: boolean) => {
@@ -67,22 +80,30 @@ export const PlanningItemModal: React.FC<PlanningItemModalProps> = ({
     }));
   };
 
+  const handleClose = () => {
+    if (!isSubmitting) {
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{item ? 'Modifier l\'étape' : 'Ajouter une nouvelle étape'}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-stone-800">
+            {item ? 'Modifier l\'étape' : 'Ajouter une nouvelle étape'}
+          </DialogTitle>
+          <DialogDescription className="text-stone-600">
             Configurez les détails de cette étape du planning
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="title" className="text-right">Titre</Label>
+            <Label htmlFor="title" className="text-right text-stone-700">Titre</Label>
             <Input 
               id="title"
-              className="col-span-3"
+              className="col-span-3 border-stone-300 focus:border-sage-500"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
               required
@@ -90,21 +111,33 @@ export const PlanningItemModal: React.FC<PlanningItemModalProps> = ({
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="description" className="text-right">Description</Label>
+            <Label htmlFor="time" className="text-right text-stone-700">Heure de début</Label>
+            <Input 
+              id="time"
+              type="time"
+              className="col-span-3 border-stone-300 focus:border-sage-500"
+              value={formData.time}
+              onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="description" className="text-right text-stone-700">Description</Label>
             <Textarea 
               id="description"
-              className="col-span-3"
+              className="col-span-3 border-stone-300 focus:border-sage-500"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
             />
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="duration" className="text-right">Durée (min)</Label>
+            <Label htmlFor="duration" className="text-right text-stone-700">Durée (min)</Label>
             <Input 
               id="duration"
               type="number"
-              className="col-span-3"
+              className="col-span-3 border-stone-300 focus:border-sage-500"
               value={formData.duration}
               onChange={(e) => setFormData(prev => ({ ...prev, duration: parseInt(e.target.value) }))}
               min="1"
@@ -113,9 +146,9 @@ export const PlanningItemModal: React.FC<PlanningItemModalProps> = ({
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="category" className="text-right">Catégorie</Label>
+            <Label htmlFor="category" className="text-right text-stone-700">Catégorie</Label>
             <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
-              <SelectTrigger className="col-span-3">
+              <SelectTrigger className="col-span-3 border-stone-300 focus:border-sage-500">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -129,7 +162,7 @@ export const PlanningItemModal: React.FC<PlanningItemModalProps> = ({
           </div>
 
           <div className="grid grid-cols-4 items-start gap-4">
-            <Label className="text-right mt-2">Assigné à</Label>
+            <Label className="text-right mt-2 text-stone-700">Assigné à</Label>
             <div className="col-span-3 space-y-2 max-h-40 overflow-y-auto">
               {people.map((person) => (
                 <div key={person.id} className="flex items-center space-x-2">
@@ -138,7 +171,7 @@ export const PlanningItemModal: React.FC<PlanningItemModalProps> = ({
                     checked={formData.assignedTo.includes(person.name)}
                     onCheckedChange={(checked) => handlePersonAssignment(person.name, checked as boolean)}
                   />
-                  <Label htmlFor={`person-${person.id}`} className="text-sm">
+                  <Label htmlFor={`person-${person.id}`} className="text-sm text-stone-600">
                     {person.name} ({person.role})
                   </Label>
                 </div>
@@ -146,12 +179,22 @@ export const PlanningItemModal: React.FC<PlanningItemModalProps> = ({
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <div className="flex justify-end gap-3 pt-6 border-t border-stone-200">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleClose} 
+              disabled={isSubmitting}
+              className="border-stone-300 text-stone-700 hover:bg-stone-50"
+            >
               Annuler
             </Button>
-            <Button type="submit" className="bg-sage-600 hover:bg-sage-700">
-              {item ? 'Modifier' : 'Ajouter'}
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="bg-gradient-to-r from-sage-600 to-sage-700 hover:from-sage-700 hover:to-sage-800 text-white font-medium px-6"
+            >
+              {isSubmitting ? 'Sauvegarde...' : 'Sauvegarder'}
             </Button>
           </div>
         </form>

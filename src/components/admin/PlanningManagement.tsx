@@ -60,20 +60,37 @@ export const PlanningManagement = () => {
     setIsModalOpen(true);
   };
 
-  const handleSubmitItem = (data: Partial<PlanningItem>) => {
-    if (editingItem) {
-      updatePlanningItem(editingItem.id, data);
-    } else {
-      addPlanningItem({
-        ...data,
-        duration: data.duration || 60,
-        category: data.category || 'Préparation',
-        status: 'scheduled',
-        assignedTo: data.assignedTo || []
-      } as Omit<PlanningItem, 'id' | 'time'>);
+  const handleSubmitItem = async (data: Partial<PlanningItem>) => {
+    try {
+      if (editingItem) {
+        await updatePlanningItem(editingItem.id, data);
+        toast({
+          title: 'Succès',
+          description: 'Étape modifiée avec succès',
+        });
+      } else {
+        await addPlanningItem({
+          ...data,
+          duration: data.duration || 60,
+          category: data.category || 'Préparation',
+          status: 'scheduled',
+          assignedTo: data.assignedTo || [],
+          time: data.time || '08:00'
+        } as Omit<PlanningItem, 'id'>);
+        toast({
+          title: 'Succès',
+          description: 'Nouvelle étape ajoutée avec succès',
+        });
+      }
+      setIsModalOpen(false);
+      setEditingItem(null);
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de sauvegarder l\'étape',
+        variant: 'destructive',
+      });
     }
-    setIsModalOpen(false);
-    setEditingItem(null);
   };
 
   const handleDragStart = (index: number) => {
@@ -96,7 +113,6 @@ export const PlanningManagement = () => {
     addPlanningItem(suggestion);
   };
 
-  // Filtrage des items
   const filteredItems = planningItems.filter(item => {
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -253,7 +269,7 @@ export const PlanningManagement = () => {
         </Card>
       )}
 
-      {/* Calendar View avec correction visibilité */}
+      {/* Calendar View avec amélioration de la visibilité */}
       {viewMode === 'calendar' && (
         <Card className="border-stone-200">
           <CardHeader>
@@ -262,16 +278,14 @@ export const PlanningManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-12 gap-2">
-              {/* Time labels - Correction visibilité */}
               <div className="col-span-2">
                 {Array.from({ length: 16 }, (_, i) => (
-                  <div key={i} className="h-16 flex items-center text-sm font-medium border-b border-stone-200 text-stone-800">
+                  <div key={i} className="h-16 flex items-center text-sm font-bold border-b border-stone-200 text-stone-800 bg-stone-50 px-2 rounded-l">
                     {String(8 + i).padStart(2, '0')}:00
                   </div>
                 ))}
               </div>
               
-              {/* Timeline bars */}
               <div className="col-span-10 relative">
                 {filteredItems.map((item) => {
                   const startHour = parseInt(item.time.split(':')[0]);
@@ -282,7 +296,7 @@ export const PlanningManagement = () => {
                   return (
                     <div
                       key={item.id}
-                      className="absolute left-0 right-0 bg-gradient-to-r from-sage-500 to-sage-600 text-white p-2 rounded text-sm cursor-pointer hover:from-sage-600 hover:to-sage-700 transition-all shadow-md"
+                      className="absolute left-0 right-0 bg-gradient-to-r from-stone-800 to-stone-900 text-white p-3 rounded-lg text-sm cursor-pointer hover:from-stone-700 hover:to-stone-800 transition-all shadow-lg border border-stone-300"
                       style={{
                         top: `${top}px`,
                         height: `${height}px`,
@@ -290,15 +304,14 @@ export const PlanningManagement = () => {
                       }}
                       onClick={() => handleEditItem(item)}
                     >
-                      <div className="font-semibold text-white">{item.time} - {item.title}</div>
-                      <div className="text-xs opacity-90 text-white">{formatDuration(item.duration)}</div>
+                      <div className="font-bold text-white text-base">{item.time} - {item.title}</div>
+                      <div className="text-xs text-stone-200 font-medium mt-1">{formatDuration(item.duration)}</div>
                     </div>
                   );
                 })}
                 
-                {/* Hour grid lines */}
                 {Array.from({ length: 16 }, (_, i) => (
-                  <div key={i} className="h-16 border-b border-stone-200"></div>
+                  <div key={i} className="h-16 border-b border-stone-200 bg-white"></div>
                 ))}
               </div>
             </div>

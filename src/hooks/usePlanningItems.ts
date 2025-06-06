@@ -80,11 +80,11 @@ export const usePlanningItems = () => {
     }
   ]);
 
-  const addPlanningItem = (newItem: Omit<PlanningItem, 'id' | 'time'>) => {
+  const addPlanningItem = (newItem: Omit<PlanningItem, 'id'>) => {
     const id = Math.max(...planningItems.map(item => item.id)) + 1;
     
     setPlanningItems(prev => {
-      const newItems = [...prev, { ...newItem, id, time: "00:00" }];
+      const newItems = [...prev, { ...newItem, id }];
       return recalculateTimeline(newItems);
     });
     
@@ -111,6 +111,11 @@ export const usePlanningItems = () => {
       const updated = prev.map(item => 
         item.id === id ? { ...item, ...updates } : item
       );
+      
+      // Si l'heure de début a été modifiée, recalculer les étapes suivantes
+      if (updates.time) {
+        return recalculateTimelineFromItem(updated, id);
+      }
       
       return recalculateTimeline(updated);
     });
@@ -156,6 +161,43 @@ export const usePlanningItems = () => {
         ...item,
         time: newTime
       };
+    });
+  };
+
+  // Nouveau : Recalcul intelligent à partir d'un élément spécifique
+  const recalculateTimelineFromItem = (items: PlanningItem[], changedItemId: number): PlanningItem[] => {
+    if (items.length === 0) return items;
+
+    const sorted = [...items].sort((a, b) => {
+      if (a.id === b.id) return 0;
+      const indexA = items.findIndex(item => item.id === a.id);
+      const indexB = items.findIndex(item => item.id === b.id);
+      return indexA - indexB;
+    });
+
+    const changedItemIndex = sorted.findIndex(item => item.id === changedItemId);
+    
+    // Recalculer seulement les éléments suivants
+    let currentTime = timeToMinutes(sorted[changedItemIndex].time);
+    
+    return sorted.map((item, index) => {
+      if (index < changedItemIndex) {
+        // Garder les éléments précédents inchangés
+        return item;
+      } else if (index === changedItemIndex) {
+        // L'élément modifié garde son heure
+        currentTime = timeToMinutes(item.time) + item.duration;
+        return item;
+      } else {
+        // Recalculer les éléments suivants
+        const newTime = minutesToTime(currentTime);
+        currentTime += item.duration;
+        
+        return {
+          ...item,
+          time: newTime
+        };
+      }
     });
   };
 

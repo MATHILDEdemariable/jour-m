@@ -56,14 +56,14 @@ export const DraggablePlanningItem: React.FC<DraggablePlanningItemProps> = ({
         border-stone-200
       `}
     >
-      {/* Timeline avec horaires - Correction visibilité */}
-      <div className="flex flex-col items-center min-w-[80px]">
-        <div className="bg-gradient-to-br from-sage-500 to-sage-600 rounded-xl p-3 text-white text-center shadow-md">
-          <div className="font-bold text-lg leading-none text-white">{item.time}</div>
-          <div className="text-xs opacity-90 mt-1 text-white">à {endTime}</div>
+      {/* Timeline avec horaires - Amélioration de la visibilité */}
+      <div className="flex flex-col items-center min-w-[100px]">
+        <div className="bg-gradient-to-br from-stone-800 to-stone-900 rounded-xl p-4 text-center shadow-lg border border-stone-300">
+          <div className="font-bold text-lg leading-none text-white mb-1">{item.time}</div>
+          <div className="text-xs text-stone-200 font-medium">à {endTime}</div>
         </div>
         {index < 5 && (
-          <div className="w-0.5 h-16 bg-gradient-to-b from-sage-300 to-stone-200 mt-3"></div>
+          <div className="w-0.5 h-16 bg-gradient-to-b from-stone-400 to-stone-200 mt-3"></div>
         )}
       </div>
       
@@ -74,7 +74,6 @@ export const DraggablePlanningItem: React.FC<DraggablePlanningItemProps> = ({
             <Badge className={categoryColors[item.category as keyof typeof categoryColors]}>
               {item.category}
             </Badge>
-            {/* Boutons toujours visibles */}
             <div className="flex items-center gap-1">
               <Button 
                 variant="ghost" 
@@ -83,7 +82,7 @@ export const DraggablePlanningItem: React.FC<DraggablePlanningItemProps> = ({
                   e.stopPropagation();
                   onEdit(item);
                 }}
-                className="text-stone-600 hover:text-sage-600 h-8 w-8 p-0"
+                className="text-stone-600 hover:text-sage-600 h-8 w-8 p-0 hover:bg-sage-50"
               >
                 <Edit className="w-4 h-4" />
               </Button>
@@ -93,7 +92,7 @@ export const DraggablePlanningItem: React.FC<DraggablePlanningItemProps> = ({
                     variant="ghost" 
                     size="sm"
                     onClick={(e) => e.stopPropagation()}
-                    className="text-stone-600 hover:text-red-600 h-8 w-8 p-0"
+                    className="text-stone-600 hover:text-red-600 h-8 w-8 p-0 hover:bg-red-50"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -124,13 +123,13 @@ export const DraggablePlanningItem: React.FC<DraggablePlanningItemProps> = ({
         <p className="text-stone-600 mb-3 leading-relaxed">{item.description}</p>
         
         <div className="flex items-center gap-4 text-sm text-stone-500">
-          <div className="flex items-center gap-1 bg-stone-100 px-2 py-1 rounded-full">
-            <Clock className="w-4 h-4" />
-            <span className="font-medium">{formatDuration(item.duration)}</span>
+          <div className="flex items-center gap-1 bg-stone-100 px-3 py-1 rounded-full">
+            <Clock className="w-4 h-4 text-stone-600" />
+            <span className="font-medium text-stone-700">{formatDuration(item.duration)}</span>
           </div>
-          <div className="flex items-center gap-1 bg-stone-100 px-2 py-1 rounded-full">
-            <Users className="w-4 h-4" />
-            <span className="font-medium">{item.assignedTo.length} assigné(s)</span>
+          <div className="flex items-center gap-1 bg-stone-100 px-3 py-1 rounded-full">
+            <Users className="w-4 h-4 text-stone-600" />
+            <span className="font-medium text-stone-700">{item.assignedTo.length} assigné(s)</span>
           </div>
         </div>
         
