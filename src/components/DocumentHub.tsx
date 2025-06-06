@@ -3,77 +3,17 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-
-interface Document {
-  id: string;
-  name: string;
-  type: string;
-  category: string;
-  size: string;
-  uploadedBy: string;
-  uploadDate: string;
-  priority: 'high' | 'medium' | 'low';
-}
-
-const SAMPLE_DOCUMENTS: Document[] = [
-  {
-    id: '1',
-    name: 'Wedding Timeline Final.pdf',
-    type: 'PDF',
-    category: 'Planning',
-    size: '2.1 MB',
-    uploadedBy: 'Patricia Wilson',
-    uploadDate: '2024-06-01',
-    priority: 'high'
-  },
-  {
-    id: '2',
-    name: 'Ceremony Music Playlist.mp3',
-    type: 'Audio',
-    category: 'Music',
-    size: '45.2 MB',
-    uploadedBy: 'Harmony Music',
-    uploadDate: '2024-05-28',
-    priority: 'high'
-  },
-  {
-    id: '3',
-    name: 'Bride Speech Notes.docx',
-    type: 'Document',
-    category: 'Speeches',
-    size: '156 KB',
-    uploadedBy: 'Sarah',
-    uploadDate: '2024-06-02',
-    priority: 'medium'
-  },
-  {
-    id: '4',
-    name: 'Vendor Contracts.zip',
-    type: 'Archive',
-    category: 'Legal',
-    size: '8.7 MB',
-    uploadedBy: 'Patricia Wilson',
-    uploadDate: '2024-05-20',
-    priority: 'medium'
-  },
-  {
-    id: '5',
-    name: 'Seating Chart Final.xlsx',
-    type: 'Spreadsheet',
-    category: 'Planning',
-    size: '892 KB',
-    uploadedBy: 'Wedding Planner',
-    uploadDate: '2024-06-03',
-    priority: 'high'
-  }
-];
+import { useSharedEventData } from '@/hooks/useSharedEventData';
 
 const CATEGORY_COLORS = {
   'Planning': 'bg-purple-100 text-purple-800',
   'Music': 'bg-blue-100 text-blue-800',
   'Speeches': 'bg-green-100 text-green-800',
   'Legal': 'bg-red-100 text-red-800',
-  'Photos': 'bg-yellow-100 text-yellow-800'
+  'Photos': 'bg-yellow-100 text-yellow-800',
+  'Contract': 'bg-red-100 text-red-800',
+  'Invoice': 'bg-orange-100 text-orange-800',
+  'Other': 'bg-gray-100 text-gray-800'
 };
 
 const TYPE_ICONS = {
@@ -82,72 +22,168 @@ const TYPE_ICONS = {
   'Document': '📝',
   'Archive': '📦',
   'Spreadsheet': '📊',
-  'Image': '🖼️'
+  'Image': '🖼️',
+  'Video': '🎥',
+  'application/pdf': '📄',
+  'image/': '🖼️',
+  'audio/': '🎵',
+  'video/': '🎥'
 };
 
 export const DocumentHub: React.FC = () => {
+  const { loading } = useSharedEventData();
+
+  // Pour l'instant, nous utilisons des données d'exemple car le système de documents
+  // n'est pas encore complètement intégré avec la base de données
+  const sampleDocuments = [
+    {
+      id: '1',
+      name: 'Planning Final.pdf',
+      file_type: 'application/pdf',
+      category: 'Planning',
+      file_size: 2100000,
+      uploaded_by: 'Wedding Planner',
+      created_at: '2024-06-01T10:00:00Z'
+    },
+    {
+      id: '2',
+      name: 'Contrat Traiteur.pdf',
+      file_type: 'application/pdf',
+      category: 'Legal',
+      file_size: 1500000,
+      uploaded_by: 'Admin',
+      created_at: '2024-05-28T14:30:00Z'
+    },
+    {
+      id: '3',
+      name: 'Plan de Table.xlsx',
+      file_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      category: 'Planning',
+      file_size: 850000,
+      uploaded_by: 'Wedding Planner',
+      created_at: '2024-06-02T16:15:00Z'
+    }
+  ];
+
   const handleDownload = (documentId: string) => {
     console.log(`Downloading document ${documentId}`);
-    // In a real app, this would trigger the download
+    // Dans une vraie app, cela déclencherait le téléchargement
   };
 
   const handleView = (documentId: string) => {
     console.log(`Viewing document ${documentId}`);
-    // In a real app, this would open the document viewer
+    // Dans une vraie app, cela ouvrirait le visualiseur de documents
   };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getTypeIcon = (fileType: string) => {
+    for (const [type, icon] of Object.entries(TYPE_ICONS)) {
+      if (fileType.includes(type)) return icon;
+    }
+    return '📄';
+  };
+
+  if (loading) {
+    return (
+      <div className="p-4 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-2"></div>
+          <p className="text-purple-600">Chargement des documents...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const highPriorityDocs = sampleDocuments.filter(doc => 
+    doc.category === 'Planning' || doc.category === 'Legal'
+  );
+  const otherDocs = sampleDocuments.filter(doc => 
+    doc.category !== 'Planning' && doc.category !== 'Legal'
+  );
 
   return (
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Document Hub</h2>
+        <h2 className="text-lg font-semibold">Documents</h2>
         <Badge variant="secondary" className="text-xs">
-          {SAMPLE_DOCUMENTS.length} files
+          {sampleDocuments.length} fichiers
         </Badge>
       </div>
 
       {/* Quick Access - High Priority Documents */}
-      <div className="space-y-3">
-        <h3 className="text-md font-medium text-purple-600 flex items-center gap-2">
-          ⚡ Quick Access
-        </h3>
-        {SAMPLE_DOCUMENTS.filter(doc => doc.priority === 'high').map((document) => (
-          <DocumentCard 
-            key={document.id} 
-            document={document} 
-            onDownload={handleDownload}
-            onView={handleView}
-            isHighPriority={true}
-          />
-        ))}
-      </div>
+      {highPriorityDocs.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-md font-medium text-purple-600 flex items-center gap-2">
+            ⚡ Accès rapide
+          </h3>
+          {highPriorityDocs.map((document) => (
+            <DocumentCard 
+              key={document.id} 
+              document={document} 
+              onDownload={handleDownload}
+              onView={handleView}
+              isHighPriority={true}
+              formatFileSize={formatFileSize}
+              getTypeIcon={getTypeIcon}
+            />
+          ))}
+        </div>
+      )}
 
       {/* All Documents */}
-      <div className="space-y-3">
-        <h3 className="text-md font-medium text-gray-700">All Documents</h3>
-        {SAMPLE_DOCUMENTS.filter(doc => doc.priority !== 'high').map((document) => (
-          <DocumentCard 
-            key={document.id} 
-            document={document} 
-            onDownload={handleDownload}
-            onView={handleView}
-            isHighPriority={false}
-          />
-        ))}
-      </div>
+      {otherDocs.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-md font-medium text-gray-700">Autres documents</h3>
+          {otherDocs.map((document) => (
+            <DocumentCard 
+              key={document.id} 
+              document={document} 
+              onDownload={handleDownload}
+              onView={handleView}
+              isHighPriority={false}
+              formatFileSize={formatFileSize}
+              getTypeIcon={getTypeIcon}
+            />
+          ))}
+        </div>
+      )}
+
+      {sampleDocuments.length === 0 && (
+        <div className="text-center py-8 text-gray-500">
+          <p>Aucun document trouvé</p>
+          <p className="text-xs mt-2">Les documents ajoutés dans l'admin apparaîtront ici</p>
+        </div>
+      )}
     </div>
   );
 };
 
 interface DocumentCardProps {
-  document: Document;
+  document: any;
   onDownload: (id: string) => void;
   onView: (id: string) => void;
   isHighPriority: boolean;
+  formatFileSize: (bytes: number) => string;
+  getTypeIcon: (fileType: string) => string;
 }
 
-const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDownload, onView, isHighPriority }) => {
-  const categoryColor = CATEGORY_COLORS[document.category as keyof typeof CATEGORY_COLORS] || 'bg-gray-100 text-gray-800';
-  const typeIcon = TYPE_ICONS[document.type as keyof typeof TYPE_ICONS] || '📄';
+const DocumentCard: React.FC<DocumentCardProps> = ({ 
+  document, 
+  onDownload, 
+  onView, 
+  isHighPriority,
+  formatFileSize,
+  getTypeIcon
+}) => {
+  const categoryColor = CATEGORY_COLORS[document.category as keyof typeof CATEGORY_COLORS] || CATEGORY_COLORS.Other;
+  const typeIcon = getTypeIcon(document.file_type);
 
   return (
     <Card className={`hover:shadow-md transition-all ${isHighPriority ? 'border-l-4 border-l-purple-500 bg-purple-50' : ''}`}>
@@ -164,11 +200,11 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDownload, onVie
             </div>
             
             <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
-              <span>{document.size}</span>
+              <span>{formatFileSize(document.file_size)}</span>
               <span>•</span>
-              <span>by {document.uploadedBy}</span>
+              <span>par {document.uploaded_by}</span>
               <span>•</span>
-              <span>{new Date(document.uploadDate).toLocaleDateString()}</span>
+              <span>{new Date(document.created_at).toLocaleDateString('fr-FR')}</span>
             </div>
 
             <div className="flex gap-2">
@@ -177,7 +213,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDownload, onVie
                 onClick={() => onView(document.id)}
                 className="flex-1 bg-purple-600 hover:bg-purple-700"
               >
-                👁️ View
+                👁️ Voir
               </Button>
               <Button 
                 size="sm" 
@@ -185,7 +221,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDownload, onVie
                 onClick={() => onDownload(document.id)}
                 className="flex-1"
               >
-                ⬇️ Download
+                ⬇️ Télécharger
               </Button>
             </div>
           </div>

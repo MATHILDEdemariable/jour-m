@@ -3,159 +3,102 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useSharedEventData } from '@/hooks/useSharedEventData';
 
 interface TimelineProps {
   viewMode: 'personal' | 'global';
   userRole: string;
 }
 
-interface TimelineEvent {
-  id: string;
-  time: string;
-  title: string;
-  description: string;
-  status: 'done' | 'in-progress' | 'upcoming' | 'delayed';
-  assignedTo: string[];
-  priority: 'high' | 'medium' | 'low';
-}
-
-const SAMPLE_EVENTS: TimelineEvent[] = [
-  {
-    id: '1',
-    time: '09:00',
-    title: 'Hair & Makeup Start',
-    description: 'Bride and bridesmaids hair and makeup',
-    status: 'done',
-    assignedTo: ['bride', 'maid-of-honor'],
-    priority: 'high'
-  },
-  {
-    id: '2',
-    time: '11:00',
-    title: 'Photography - Getting Ready',
-    description: 'Capture preparation moments',
-    status: 'in-progress',
-    assignedTo: ['photographer', 'bride'],
-    priority: 'medium'
-  },
-  {
-    id: '3',
-    time: '13:00',
-    title: 'Ceremony Setup',
-    description: 'Final venue setup and decorations',
-    status: 'upcoming',
-    assignedTo: ['wedding-planner', 'best-man'],
-    priority: 'high'
-  },
-  {
-    id: '4',
-    time: '15:00',
-    title: 'Wedding Ceremony',
-    description: 'The main event!',
-    status: 'upcoming',
-    assignedTo: ['bride', 'groom'],
-    priority: 'high'
-  },
-  {
-    id: '5',
-    time: '16:30',
-    title: 'Cocktail Hour',
-    description: 'Guests enjoy appetizers and drinks',
-    status: 'upcoming',
-    assignedTo: ['caterer', 'wedding-planner'],
-    priority: 'medium'
-  }
-];
-
-const STATUS_CONFIG = {
-  done: { color: 'bg-green-100 text-green-800', icon: '✅', label: 'Done' },
-  'in-progress': { color: 'bg-yellow-100 text-yellow-800', icon: '🟡', label: 'In Progress' },
-  upcoming: { color: 'bg-blue-100 text-blue-800', icon: '⏰', label: 'Upcoming' },
-  delayed: { color: 'bg-red-100 text-red-800', icon: '🔴', label: 'Delayed' }
+const ROLE_LABELS = {
+  bride: "Mariée",
+  groom: "Marié",
+  "best-man": "Témoin",
+  "maid-of-honor": "Demoiselle d'honneur",
+  "wedding-planner": "Wedding Planner",
+  photographer: "Photographe",
+  caterer: "Traiteur",
+  guest: "Invité",
+  family: "Famille"
 };
 
 export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole }) => {
-  const [events, setEvents] = useState(SAMPLE_EVENTS);
+  const { planningItems, loading } = useSharedEventData();
 
-  const filteredEvents = viewMode === 'personal' 
-    ? events.filter(event => event.assignedTo.includes(userRole))
-    : events;
+  const filteredItems = viewMode === 'personal' 
+    ? planningItems.filter(item => item.assignedTo.includes(userRole))
+    : planningItems;
 
-  const updateEventStatus = (eventId: string, newStatus: TimelineEvent['status']) => {
-    setEvents(prev => prev.map(event => 
-      event.id === eventId ? { ...event, status: newStatus } : event
-    ));
+  const updateItemStatus = (itemId: number, newStatus: string) => {
+    // Cette fonction pourrait être étendue pour permettre des mises à jour
+    console.log(`Updating item ${itemId} to status ${newStatus}`);
   };
+
+  if (loading) {
+    return (
+      <div className="p-4 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-2"></div>
+          <p className="text-purple-600">Chargement du planning...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">
-          {viewMode === 'personal' ? 'My Timeline' : 'Full Timeline'}
+          {viewMode === 'personal' ? 'Mon Planning' : 'Planning Complet'}
         </h2>
         <Badge variant="secondary" className="text-xs">
-          {filteredEvents.length} events
+          {filteredItems.length} étapes
         </Badge>
       </div>
 
       <div className="space-y-3">
-        {filteredEvents.map((event, index) => {
-          const statusConfig = STATUS_CONFIG[event.status];
-          const isMyTask = event.assignedTo.includes(userRole);
+        {filteredItems.map((item) => {
+          const isMyTask = item.assignedTo.includes(userRole);
+          const endTime = calculateEndTime(item.time, item.duration);
           
           return (
             <Card 
-              key={event.id} 
+              key={item.id} 
               className={`border-l-4 ${isMyTask ? 'border-l-purple-500 bg-purple-50' : 'border-l-gray-300'} transition-all hover:shadow-md`}
             >
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-purple-600">{event.time}</span>
-                    <Badge className={statusConfig.color} variant="secondary">
-                      {statusConfig.icon} {statusConfig.label}
+                    <span className="text-lg font-bold text-purple-600">{item.time}</span>
+                    <Badge variant="outline" className="text-xs">
+                      {item.time} - {endTime}
                     </Badge>
                   </div>
-                  {event.priority === 'high' && (
-                    <Badge variant="destructive" className="text-xs">High Priority</Badge>
-                  )}
+                  <Badge variant="outline" className="text-xs border-purple-200 text-purple-700">
+                    {Math.floor(item.duration / 60)}h{item.duration % 60 > 0 ? item.duration % 60 : ''}
+                  </Badge>
                 </div>
-                <CardTitle className="text-base">{event.title}</CardTitle>
+                <CardTitle className="text-base">{item.title}</CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <p className="text-sm text-gray-600 mb-3">{event.description}</p>
+                <p className="text-sm text-gray-600 mb-3">{item.description}</p>
                 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">Assigned to:</span>
+                    <span className="text-xs text-gray-500">Assigné à:</span>
                     <div className="flex gap-1">
-                      {event.assignedTo.map(role => (
+                      {item.assignedTo.slice(0, 3).map(role => (
                         <Badge key={role} variant="outline" className="text-xs">
-                          {role.replace('-', ' ')}
+                          {ROLE_LABELS[role as keyof typeof ROLE_LABELS] || role.replace('-', ' ')}
                         </Badge>
                       ))}
+                      {item.assignedTo.length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{item.assignedTo.length - 3}
+                        </Badge>
+                      )}
                     </div>
                   </div>
-                  
-                  {isMyTask && event.status === 'upcoming' && (
-                    <Button 
-                      size="sm" 
-                      onClick={() => updateEventStatus(event.id, 'in-progress')}
-                      className="text-xs bg-purple-600 hover:bg-purple-700"
-                    >
-                      Start Task
-                    </Button>
-                  )}
-                  
-                  {isMyTask && event.status === 'in-progress' && (
-                    <Button 
-                      size="sm" 
-                      onClick={() => updateEventStatus(event.id, 'done')}
-                      className="text-xs bg-green-600 hover:bg-green-700"
-                    >
-                      Complete
-                    </Button>
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -164,4 +107,12 @@ export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole }) => {
       </div>
     </div>
   );
+};
+
+const calculateEndTime = (startTime: string, duration: number): string => {
+  const [hours, minutes] = startTime.split(':').map(Number);
+  const totalMinutes = hours * 60 + minutes + duration;
+  const endHours = Math.floor(totalMinutes / 60);
+  const endMins = totalMinutes % 60;
+  return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
 };
