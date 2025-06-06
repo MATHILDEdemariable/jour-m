@@ -32,15 +32,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ userRole, userName }) => {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <div className="bg-stone-100 shadow-sm border-b border-emerald-200 sticky top-0 z-50">
+      <div className="bg-white shadow-sm border-b sticky top-0 z-50">
         <div className="flex items-center justify-between p-4">
           <div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-stone-800 via-emerald-800 to-stone-900 bg-clip-text text-transparent">
-              Jour M
+            <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Jour J
             </h1>
-            <p className="text-sm text-stone-600">Welcome, {userName}</p>
+            <p className="text-sm text-gray-600">Welcome, {userName}</p>
           </div>
           <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
         </div>

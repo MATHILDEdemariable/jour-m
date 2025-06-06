@@ -69,11 +69,11 @@ const SAMPLE_DOCUMENTS: Document[] = [
 ];
 
 const CATEGORY_COLORS = {
-  'Planning': 'bg-emerald-100 text-emerald-800',
+  'Planning': 'bg-purple-100 text-purple-800',
   'Music': 'bg-blue-100 text-blue-800',
   'Speeches': 'bg-green-100 text-green-800',
   'Legal': 'bg-red-100 text-red-800',
-  'Photos': 'bg-amber-100 text-amber-800'
+  'Photos': 'bg-yellow-100 text-yellow-800'
 };
 
 const TYPE_ICONS = {
@@ -99,15 +99,15 @@ export const DocumentHub: React.FC = () => {
   return (
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-stone-900">Document Hub</h2>
-        <Badge variant="secondary" className="text-xs bg-stone-200 text-stone-700">
+        <h2 className="text-lg font-semibold">Document Hub</h2>
+        <Badge variant="secondary" className="text-xs">
           {SAMPLE_DOCUMENTS.length} files
         </Badge>
       </div>
 
       {/* Quick Access - High Priority Documents */}
       <div className="space-y-3">
-        <h3 className="text-md font-medium text-emerald-700 flex items-center gap-2">
+        <h3 className="text-md font-medium text-purple-600 flex items-center gap-2">
           ⚡ Quick Access
         </h3>
         {SAMPLE_DOCUMENTS.filter(doc => doc.priority === 'high').map((document) => (
@@ -123,7 +123,7 @@ export const DocumentHub: React.FC = () => {
 
       {/* All Documents */}
       <div className="space-y-3">
-        <h3 className="text-md font-medium text-stone-700">All Documents</h3>
+        <h3 className="text-md font-medium text-gray-700">All Documents</h3>
         {SAMPLE_DOCUMENTS.filter(doc => doc.priority !== 'high').map((document) => (
           <DocumentCard 
             key={document.id} 
@@ -146,24 +146,24 @@ interface DocumentCardProps {
 }
 
 const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDownload, onView, isHighPriority }) => {
-  const categoryColor = CATEGORY_COLORS[document.category as keyof typeof CATEGORY_COLORS] || 'bg-stone-100 text-stone-800';
+  const categoryColor = CATEGORY_COLORS[document.category as keyof typeof CATEGORY_COLORS] || 'bg-gray-100 text-gray-800';
   const typeIcon = TYPE_ICONS[document.type as keyof typeof TYPE_ICONS] || '📄';
 
   return (
-    <Card className={`hover:shadow-md transition-all ${isHighPriority ? 'border-l-4 border-l-emerald-600 bg-emerald-50' : 'bg-stone-50 border-emerald-200'}`}>
+    <Card className={`hover:shadow-md transition-all ${isHighPriority ? 'border-l-4 border-l-purple-500 bg-purple-50' : ''}`}>
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <div className="text-2xl">{typeIcon}</div>
           
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-medium truncate text-stone-900">{document.name}</h3>
+              <h3 className="font-medium truncate">{document.name}</h3>
               <Badge className={categoryColor} variant="secondary">
                 {document.category}
               </Badge>
             </div>
             
-            <div className="flex items-center gap-4 text-xs text-stone-500 mb-3">
+            <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
               <span>{document.size}</span>
               <span>•</span>
               <span>by {document.uploadedBy}</span>
@@ -175,7 +175,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDownload, onVie
               <Button 
                 size="sm" 
                 onClick={() => onView(document.id)}
-                className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-stone-100"
+                className="flex-1 bg-purple-600 hover:bg-purple-700"
               >
                 👁️ View
               </Button>
@@ -183,7 +183,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDownload, onVie
                 size="sm" 
                 variant="outline"
                 onClick={() => onDownload(document.id)}
-                className="flex-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                className="flex-1"
               >
                 ⬇️ Download
               </Button>

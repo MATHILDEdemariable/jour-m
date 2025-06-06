@@ -15,11 +15,7 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({ viewMode, onViewChange }
         variant={viewMode === 'personal' ? 'default' : 'outline'}
         size="sm"
         onClick={() => onViewChange('personal')}
-        className={`text-xs ${
-          viewMode === 'personal' 
-            ? 'bg-emerald-700 text-stone-100 hover:bg-emerald-800' 
-            : 'border-emerald-300 text-emerald-700 hover:bg-emerald-50'
-        }`}
+        className="text-xs"
       >
         My Tasks
       </Button>
@@ -27,11 +23,7 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({ viewMode, onViewChange }
         variant={viewMode === 'global' ? 'default' : 'outline'}
         size="sm"
         onClick={() => onViewChange('global')}
-        className={`text-xs ${
-          viewMode === 'global' 
-            ? 'bg-emerald-700 text-stone-100 hover:bg-emerald-800' 
-            : 'border-emerald-300 text-emerald-700 hover:bg-emerald-50'
-        }`}
+        className="text-xs"
       >
         All Tasks
       </Button>
