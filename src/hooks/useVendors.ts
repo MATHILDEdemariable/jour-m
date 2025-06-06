@@ -6,14 +6,14 @@ import { supabase } from '@/integrations/supabase/client';
 export interface Vendor {
   id: string;
   name: string;
-  service_type: string;
-  contact_person: string;
-  email: string;
-  phone: string;
-  address: string;
-  website: string;
-  notes: string;
-  contract_status: 'quote' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+  service_type: string | null;
+  contact_person: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  website: string | null;
+  notes: string | null;
+  contract_status: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -23,10 +23,10 @@ export interface VendorDocument {
   vendor_id: string;
   name: string;
   file_url: string;
-  file_type: string;
-  file_size: number;
-  category: 'quote' | 'invoice' | 'contract' | 'other';
-  uploaded_by: string;
+  file_type: string | null;
+  file_size: number | null;
+  category: string | null;
+  uploaded_by: string | null;
   created_at: string;
 }
 

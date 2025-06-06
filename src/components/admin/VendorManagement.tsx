@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Plus, Edit, Trash2, Phone, Mail, MapPin, FileText, Calendar } from 'lucide-react';
-import { useVendors } from '@/hooks/useVendors';
+import { useVendors, Vendor } from '@/hooks/useVendors';
 import { VendorModal } from './VendorModal';
 import { VendorDetailModal } from './VendorDetailModal';
 
@@ -15,18 +15,18 @@ export const VendorManagement = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [selectedVendor, setSelectedVendor] = useState(null);
+  const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
 
   useEffect(() => {
     loadVendors();
   }, []);
 
-  const handleCreateVendor = async (vendorData) => {
-    await addVendor(vendorData);
+  const handleCreateVendor = async (vendorData: Partial<Vendor>) => {
+    await addVendor(vendorData as Omit<Vendor, 'id' | 'created_at' | 'updated_at'>);
     setIsCreateModalOpen(false);
   };
 
-  const handleEditVendor = async (vendorData) => {
+  const handleEditVendor = async (vendorData: Partial<Vendor>) => {
     if (selectedVendor) {
       await updateVendor(selectedVendor.id, vendorData);
       setIsEditModalOpen(false);
@@ -34,21 +34,21 @@ export const VendorManagement = () => {
     }
   };
 
-  const handleDeleteVendor = async (vendorId) => {
+  const handleDeleteVendor = async (vendorId: string) => {
     await deleteVendor(vendorId);
   };
 
-  const openEditModal = (vendor) => {
+  const openEditModal = (vendor: Vendor) => {
     setSelectedVendor(vendor);
     setIsEditModalOpen(true);
   };
 
-  const openDetailModal = (vendor) => {
+  const openDetailModal = (vendor: Vendor) => {
     setSelectedVendor(vendor);
     setIsDetailModalOpen(true);
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string | null) => {
     const colors = {
       quote: "bg-blue-100 text-blue-800",
       confirmed: "bg-green-100 text-green-800",
@@ -56,10 +56,10 @@ export const VendorManagement = () => {
       completed: "bg-purple-100 text-purple-800",
       cancelled: "bg-red-100 text-red-800"
     };
-    return colors[status] || "bg-gray-100 text-gray-800";
+    return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-800";
   };
 
-  const getStatusLabel = (status) => {
+  const getStatusLabel = (status: string | null) => {
     const labels = {
       quote: "Devis",
       confirmed: "Confirmé",
@@ -67,10 +67,10 @@ export const VendorManagement = () => {
       completed: "Terminé",
       cancelled: "Annulé"
     };
-    return labels[status] || status;
+    return labels[status as keyof typeof labels] || status || "Non défini";
   };
 
-  const getServiceTypeLabel = (serviceType) => {
+  const getServiceTypeLabel = (serviceType: string | null) => {
     const labels = {
       photographer: "Photographe",
       caterer: "Traiteur",
@@ -81,7 +81,7 @@ export const VendorManagement = () => {
       transport: "Transport",
       other: "Autre"
     };
-    return labels[serviceType] || serviceType;
+    return labels[serviceType as keyof typeof labels] || serviceType || "Non défini";
   };
 
   const stats = {

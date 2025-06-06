@@ -18,6 +18,8 @@ interface VendorDetailModalProps {
   onEdit: (vendor: Vendor) => void;
 }
 
+type DocumentCategory = 'quote' | 'invoice' | 'contract' | 'other';
+
 export const VendorDetailModal: React.FC<VendorDetailModalProps> = ({
   isOpen,
   onClose,
@@ -26,7 +28,7 @@ export const VendorDetailModal: React.FC<VendorDetailModalProps> = ({
 }) => {
   const { documents, loadDocuments, uploadDocument, deleteDocument } = useVendors();
   const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadCategory, setUploadCategory] = useState<string>('other');
+  const [uploadCategory, setUploadCategory] = useState<DocumentCategory>('other');
 
   useEffect(() => {
     if (vendor && isOpen) {
@@ -42,7 +44,7 @@ export const VendorDetailModal: React.FC<VendorDetailModalProps> = ({
     setUploadCategory('other');
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | null) => {
     const colors = {
       quote: "bg-blue-100 text-blue-800",
       confirmed: "bg-green-100 text-green-800",
@@ -53,7 +55,7 @@ export const VendorDetailModal: React.FC<VendorDetailModalProps> = ({
     return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-800";
   };
 
-  const getStatusLabel = (status: string) => {
+  const getStatusLabel = (status: string | null) => {
     const labels = {
       quote: "Devis",
       confirmed: "Confirmé",
@@ -61,20 +63,20 @@ export const VendorDetailModal: React.FC<VendorDetailModalProps> = ({
       completed: "Terminé",
       cancelled: "Annulé"
     };
-    return labels[status as keyof typeof labels] || status;
+    return labels[status as keyof typeof labels] || status || "Non défini";
   };
 
-  const getCategoryLabel = (category: string) => {
+  const getCategoryLabel = (category: string | null) => {
     const labels = {
       quote: "Devis",
       invoice: "Facture", 
       contract: "Contrat",
       other: "Autre"
     };
-    return labels[category as keyof typeof labels] || category;
+    return labels[category as keyof typeof labels] || category || "Autre";
   };
 
-  const getCategoryColor = (category: string) => {
+  const getCategoryColor = (category: string | null) => {
     const colors = {
       quote: "bg-blue-100 text-blue-800",
       invoice: "bg-red-100 text-red-800",
@@ -178,7 +180,7 @@ export const VendorDetailModal: React.FC<VendorDetailModalProps> = ({
                   </div>
                   <div>
                     <Label htmlFor="category">Catégorie</Label>
-                    <Select value={uploadCategory} onValueChange={setUploadCategory}>
+                    <Select value={uploadCategory} onValueChange={(value: DocumentCategory) => setUploadCategory(value)}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -224,9 +226,11 @@ export const VendorDetailModal: React.FC<VendorDetailModalProps> = ({
                               <Badge className={getCategoryColor(doc.category)}>
                                 {getCategoryLabel(doc.category)}
                               </Badge>
-                              <span className="text-sm text-gray-500">
-                                {(doc.file_size / 1024 / 1024).toFixed(2)} MB
-                              </span>
+                              {doc.file_size && (
+                                <span className="text-sm text-gray-500">
+                                  {(doc.file_size / 1024 / 1024).toFixed(2)} MB
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>

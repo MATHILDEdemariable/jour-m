@@ -15,6 +15,8 @@ interface VendorModalProps {
   vendor?: Vendor | null;
 }
 
+type ContractStatus = 'quote' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+
 export const VendorModal: React.FC<VendorModalProps> = ({
   isOpen,
   onClose,
@@ -30,7 +32,7 @@ export const VendorModal: React.FC<VendorModalProps> = ({
     address: '',
     website: '',
     notes: '',
-    contract_status: 'quote' as const
+    contract_status: 'quote' as ContractStatus
   });
 
   useEffect(() => {
@@ -44,7 +46,7 @@ export const VendorModal: React.FC<VendorModalProps> = ({
         address: vendor.address || '',
         website: vendor.website || '',
         notes: vendor.notes || '',
-        contract_status: vendor.contract_status || 'quote'
+        contract_status: (vendor.contract_status as ContractStatus) || 'quote'
       });
     } else {
       setFormData({
@@ -121,7 +123,7 @@ export const VendorModal: React.FC<VendorModalProps> = ({
             </div>
             <div>
               <Label htmlFor="contract_status">Statut du contrat</Label>
-              <Select value={formData.contract_status} onValueChange={(value: any) => setFormData(prev => ({ ...prev, contract_status: value }))}>
+              <Select value={formData.contract_status} onValueChange={(value: ContractStatus) => setFormData(prev => ({ ...prev, contract_status: value }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
