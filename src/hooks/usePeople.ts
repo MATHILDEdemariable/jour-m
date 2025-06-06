@@ -31,7 +31,22 @@ export const usePeople = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPeople(data || []);
+      
+      // Map database fields to our interface
+      const mappedPeople = (data || []).map(person => ({
+        id: person.id,
+        name: person.name || '',
+        role: person.role || '',
+        email: person.email || '',
+        phone: person.phone || '',
+        availability: person.availability || 'full',
+        status: person.confirmation_status || person.status || 'pending',
+        event_id: person.event_id,
+        created_at: person.created_at,
+        updated_at: person.updated_at,
+      }));
+      
+      setPeople(mappedPeople);
     } catch (error) {
       console.error('Error loading people:', error);
       toast({
@@ -51,21 +66,46 @@ export const usePeople = () => {
 
   const addPerson = async (newPerson: Omit<Person, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      // Map our interface to database fields
+      const dbPerson = {
+        name: newPerson.name,
+        role: newPerson.role,
+        email: newPerson.email,
+        phone: newPerson.phone,
+        availability: newPerson.availability,
+        confirmation_status: newPerson.status,
+        event_id: newPerson.event_id,
+      };
+
       const { data, error } = await supabase
         .from('people')
-        .insert(newPerson)
+        .insert(dbPerson)
         .select()
         .single();
 
       if (error) throw error;
       
-      setPeople(prev => [data, ...prev]);
+      // Map back to our interface
+      const mappedPerson = {
+        id: data.id,
+        name: data.name || '',
+        role: data.role || '',
+        email: data.email || '',
+        phone: data.phone || '',
+        availability: data.availability || 'full',
+        status: data.confirmation_status || 'pending',
+        event_id: data.event_id,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+      };
+      
+      setPeople(prev => [mappedPerson, ...prev]);
       toast({
         title: 'Succès',
         description: 'Personne ajoutée avec succès',
       });
       
-      return data;
+      return mappedPerson;
     } catch (error) {
       console.error('Error adding person:', error);
       toast({
@@ -79,17 +119,41 @@ export const usePeople = () => {
 
   const updatePerson = async (id: string, updates: Partial<Person>) => {
     try {
+      // Map our interface to database fields
+      const dbUpdates: any = {};
+      if (updates.name !== undefined) dbUpdates.name = updates.name;
+      if (updates.role !== undefined) dbUpdates.role = updates.role;
+      if (updates.email !== undefined) dbUpdates.email = updates.email;
+      if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
+      if (updates.availability !== undefined) dbUpdates.availability = updates.availability;
+      if (updates.status !== undefined) dbUpdates.confirmation_status = updates.status;
+      if (updates.event_id !== undefined) dbUpdates.event_id = updates.event_id;
+
       const { data, error } = await supabase
         .from('people')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
       
+      // Map back to our interface
+      const mappedPerson = {
+        id: data.id,
+        name: data.name || '',
+        role: data.role || '',
+        email: data.email || '',
+        phone: data.phone || '',
+        availability: data.availability || 'full',
+        status: data.confirmation_status || 'pending',
+        event_id: data.event_id,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+      };
+      
       setPeople(prev => prev.map(person => 
-        person.id === id ? { ...person, ...data } : person
+        person.id === id ? { ...person, ...mappedPerson } : person
       ));
       
       toast({
