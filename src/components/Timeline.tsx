@@ -68,9 +68,9 @@ const SAMPLE_EVENTS: TimelineEvent[] = [
 ];
 
 const STATUS_CONFIG = {
-  done: { color: 'bg-green-100 text-green-800', icon: '✅', label: 'Done' },
-  'in-progress': { color: 'bg-yellow-100 text-yellow-800', icon: '🟡', label: 'In Progress' },
-  upcoming: { color: 'bg-blue-100 text-blue-800', icon: '⏰', label: 'Upcoming' },
+  done: { color: 'bg-emerald-100 text-emerald-800', icon: '✅', label: 'Done' },
+  'in-progress': { color: 'bg-amber-100 text-amber-800', icon: '🟡', label: 'In Progress' },
+  upcoming: { color: 'bg-stone-100 text-stone-800', icon: '⏰', label: 'Upcoming' },
   delayed: { color: 'bg-red-100 text-red-800', icon: '🔴', label: 'Delayed' }
 };
 
@@ -90,10 +90,10 @@ export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole }) => {
   return (
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">
+        <h2 className="text-lg font-semibold text-stone-900">
           {viewMode === 'personal' ? 'My Timeline' : 'Full Timeline'}
         </h2>
-        <Badge variant="secondary" className="text-xs">
+        <Badge variant="secondary" className="text-xs bg-stone-200 text-stone-700">
           {filteredEvents.length} events
         </Badge>
       </div>
@@ -106,31 +106,31 @@ export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole }) => {
           return (
             <Card 
               key={event.id} 
-              className={`border-l-4 ${isMyTask ? 'border-l-purple-500 bg-purple-50' : 'border-l-gray-300'} transition-all hover:shadow-md`}
+              className={`border-l-4 ${isMyTask ? 'border-l-emerald-600 bg-emerald-50' : 'border-l-stone-300 bg-stone-50'} transition-all hover:shadow-md`}
             >
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-purple-600">{event.time}</span>
+                    <span className="text-lg font-bold text-emerald-700">{event.time}</span>
                     <Badge className={statusConfig.color} variant="secondary">
                       {statusConfig.icon} {statusConfig.label}
                     </Badge>
                   </div>
                   {event.priority === 'high' && (
-                    <Badge variant="destructive" className="text-xs">High Priority</Badge>
+                    <Badge className="bg-red-800 text-red-100" variant="destructive">High Priority</Badge>
                   )}
                 </div>
-                <CardTitle className="text-base">{event.title}</CardTitle>
+                <CardTitle className="text-base text-stone-900">{event.title}</CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <p className="text-sm text-gray-600 mb-3">{event.description}</p>
+                <p className="text-sm text-stone-600 mb-3">{event.description}</p>
                 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">Assigned to:</span>
+                    <span className="text-xs text-stone-500">Assigned to:</span>
                     <div className="flex gap-1">
                       {event.assignedTo.map(role => (
-                        <Badge key={role} variant="outline" className="text-xs">
+                        <Badge key={role} variant="outline" className="text-xs border-stone-300 text-stone-700">
                           {role.replace('-', ' ')}
                         </Badge>
                       ))}
@@ -141,7 +141,7 @@ export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole }) => {
                     <Button 
                       size="sm" 
                       onClick={() => updateEventStatus(event.id, 'in-progress')}
-                      className="text-xs bg-purple-600 hover:bg-purple-700"
+                      className="text-xs bg-emerald-700 hover:bg-emerald-800 text-stone-100"
                     >
                       Start Task
                     </Button>
@@ -151,7 +151,7 @@ export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole }) => {
                     <Button 
                       size="sm" 
                       onClick={() => updateEventStatus(event.id, 'done')}
-                      className="text-xs bg-green-600 hover:bg-green-700"
+                      className="text-xs bg-emerald-700 hover:bg-emerald-800 text-stone-100"
                     >
                       Complete
                     </Button>

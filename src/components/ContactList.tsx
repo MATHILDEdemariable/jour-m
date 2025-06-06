@@ -63,14 +63,14 @@ const SAMPLE_CONTACTS: Contact[] = [
 
 const PRIORITY_CONFIG = {
   emergency: { color: 'bg-red-100 text-red-800', label: '🚨 Emergency' },
-  important: { color: 'bg-yellow-100 text-yellow-800', label: '⚡ Important' },
-  normal: { color: 'bg-gray-100 text-gray-800', label: '📞 Normal' }
+  important: { color: 'bg-amber-100 text-amber-800', label: '⚡ Important' },
+  normal: { color: 'bg-emerald-100 text-emerald-800', label: '📞 Normal' }
 };
 
 const AVAILABILITY_CONFIG = {
-  available: { color: 'bg-green-100 text-green-800', icon: '🟢', label: 'Available' },
+  available: { color: 'bg-emerald-100 text-emerald-800', icon: '🟢', label: 'Available' },
   busy: { color: 'bg-red-100 text-red-800', icon: '🔴', label: 'Busy' },
-  unknown: { color: 'bg-gray-100 text-gray-800', icon: '⚪', label: 'Unknown' }
+  unknown: { color: 'bg-stone-100 text-stone-800', icon: '⚪', label: 'Unknown' }
 };
 
 export const ContactList: React.FC = () => {
@@ -91,7 +91,7 @@ export const ContactList: React.FC = () => {
 
   return (
     <div className="p-4 space-y-4">
-      <h2 className="text-lg font-semibold">Contacts</h2>
+      <h2 className="text-lg font-semibold text-stone-900">Contacts</h2>
 
       {/* Emergency Contacts */}
       <div className="space-y-3">
@@ -111,7 +111,7 @@ export const ContactList: React.FC = () => {
 
       {/* Other Contacts */}
       <div className="space-y-3">
-        <h3 className="text-md font-medium text-gray-700">All Vendors</h3>
+        <h3 className="text-md font-medium text-stone-700">All Vendors</h3>
         {otherContacts.map((contact) => (
           <ContactCard 
             key={contact.id} 
@@ -138,12 +138,12 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onCall, onMessage, o
   const availabilityConfig = AVAILABILITY_CONFIG[contact.availability];
 
   return (
-    <Card className="hover:shadow-md transition-all">
+    <Card className="hover:shadow-md transition-all bg-stone-50 border-emerald-200">
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div>
-            <h3 className="font-medium text-lg">{contact.name}</h3>
-            <p className="text-sm text-gray-600">{contact.role}</p>
+            <h3 className="font-medium text-lg text-stone-900">{contact.name}</h3>
+            <p className="text-sm text-stone-600">{contact.role}</p>
           </div>
           <div className="flex flex-col gap-1 items-end">
             <Badge className={priorityConfig.color} variant="secondary">
@@ -156,15 +156,15 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onCall, onMessage, o
         </div>
 
         <div className="space-y-2 mb-4">
-          <p className="text-sm text-gray-700">📞 {contact.phone}</p>
-          <p className="text-sm text-gray-700">✉️ {contact.email}</p>
+          <p className="text-sm text-stone-700">📞 {contact.phone}</p>
+          <p className="text-sm text-stone-700">✉️ {contact.email}</p>
         </div>
 
         <div className="flex gap-2">
           <Button 
             size="sm" 
             onClick={() => onCall(contact.phone)}
-            className="flex-1 bg-green-600 hover:bg-green-700"
+            className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-stone-100"
           >
             📞 Call
           </Button>
@@ -172,7 +172,7 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onCall, onMessage, o
             size="sm" 
             variant="outline"
             onClick={() => onMessage(contact.phone)}
-            className="flex-1"
+            className="flex-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
           >
             💬 Text
           </Button>
@@ -180,7 +180,7 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onCall, onMessage, o
             size="sm" 
             variant="outline"
             onClick={() => onEmail(contact.email)}
-            className="flex-1"
+            className="flex-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
           >
             ✉️ Email
           </Button>
