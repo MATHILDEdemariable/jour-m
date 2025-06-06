@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -93,8 +92,8 @@ export const PlanningManagement = () => {
     setDraggedIndex(null);
   };
 
-  const handleAddAISuggestion = (suggestion: Omit<PlanningItem, 'id' | 'time'>) => {
-    addPlanningItem(suggestion);
+  const handleAddAISuggestion = (suggestion: Omit<{ title: string; description: string; duration: number; category: string; assignedTo: string[]; status: string }, 'id'>) => {
+    addPlanningItem(suggestion as Omit<PlanningItem, 'id' | 'time'>);
   };
 
   // Filtrage des items

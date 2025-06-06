@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,7 @@ interface LogisticsSuggestion {
   assignedTo: string[];
   phase: string;
   priority: 'high' | 'medium' | 'low';
+  status: string;
 }
 
 interface LogisticsAISuggestionsProps {
@@ -37,7 +37,8 @@ export const LogisticsAISuggestions: React.FC<LogisticsAISuggestionsProps> = ({
       category: 'Logistique',
       assignedTo: ['florist', 'wedding-planner'],
       phase: 'preparation',
-      priority: 'high'
+      priority: 'high',
+      status: 'scheduled'
     },
     {
       id: 'prep-2',
@@ -47,7 +48,8 @@ export const LogisticsAISuggestions: React.FC<LogisticsAISuggestionsProps> = ({
       category: 'Préparation',
       assignedTo: ['hairdresser', 'makeup-artist'],
       phase: 'preparation',
-      priority: 'high'
+      priority: 'high',
+      status: 'scheduled'
     },
     {
       id: 'prep-3',
@@ -57,7 +59,8 @@ export const LogisticsAISuggestions: React.FC<LogisticsAISuggestionsProps> = ({
       category: 'Logistique',
       assignedTo: ['sound-engineer', 'lighting-tech'],
       phase: 'preparation',
-      priority: 'medium'
+      priority: 'medium',
+      status: 'scheduled'
     },
 
     // Phase Setup (10h-14h)
@@ -69,7 +72,8 @@ export const LogisticsAISuggestions: React.FC<LogisticsAISuggestionsProps> = ({
       category: 'Logistique',
       assignedTo: ['decorator', 'wedding-planner'],
       phase: 'setup',
-      priority: 'high'
+      priority: 'high',
+      status: 'scheduled'
     },
     {
       id: 'setup-2',
@@ -79,7 +83,8 @@ export const LogisticsAISuggestions: React.FC<LogisticsAISuggestionsProps> = ({
       category: 'Logistique',
       assignedTo: ['caterer', 'decorator'],
       phase: 'setup',
-      priority: 'high'
+      priority: 'high',
+      status: 'scheduled'
     },
     {
       id: 'setup-3',
@@ -89,7 +94,8 @@ export const LogisticsAISuggestions: React.FC<LogisticsAISuggestionsProps> = ({
       category: 'Logistique',
       assignedTo: ['wedding-planner'],
       phase: 'setup',
-      priority: 'medium'
+      priority: 'medium',
+      status: 'scheduled'
     },
 
     // Phase Cérémonie (14h-17h)
@@ -101,7 +107,8 @@ export const LogisticsAISuggestions: React.FC<LogisticsAISuggestionsProps> = ({
       category: 'Cérémonie',
       assignedTo: ['ushers', 'wedding-planner'],
       phase: 'ceremony',
-      priority: 'high'
+      priority: 'high',
+      status: 'scheduled'
     },
     {
       id: 'ceremony-2',
@@ -111,7 +118,8 @@ export const LogisticsAISuggestions: React.FC<LogisticsAISuggestionsProps> = ({
       category: 'Cérémonie',
       assignedTo: ['wedding-planner', 'musician'],
       phase: 'ceremony',
-      priority: 'high'
+      priority: 'high',
+      status: 'scheduled'
     },
 
     // Phase Réception (17h-23h)
@@ -123,7 +131,8 @@ export const LogisticsAISuggestions: React.FC<LogisticsAISuggestionsProps> = ({
       category: 'Réception',
       assignedTo: ['wedding-planner', 'caterer'],
       phase: 'reception',
-      priority: 'medium'
+      priority: 'medium',
+      status: 'scheduled'
     },
     {
       id: 'reception-2',
@@ -133,7 +142,8 @@ export const LogisticsAISuggestions: React.FC<LogisticsAISuggestionsProps> = ({
       category: 'Logistique',
       assignedTo: ['wedding-planner', 'cleaning-crew'],
       phase: 'reception',
-      priority: 'medium'
+      priority: 'medium',
+      status: 'scheduled'
     }
   ];
 
@@ -176,7 +186,7 @@ export const LogisticsAISuggestions: React.FC<LogisticsAISuggestionsProps> = ({
       duration: suggestion.duration,
       category: suggestion.category,
       assignedTo: suggestion.assignedTo,
-      status: 'scheduled'
+      status: suggestion.status
     });
     
     setIsOpen(false);
