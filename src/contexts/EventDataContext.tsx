@@ -4,7 +4,7 @@ import { useTasks } from '@/hooks/useTasks';
 import { usePlanningItems } from '@/hooks/usePlanningItems';
 import { usePeople } from '@/hooks/usePeople';
 import { useVendors } from '@/hooks/useVendors';
-import { useEventConfiguration } from '@/hooks/useEventConfiguration';
+import { useEvents } from '@/hooks/useEvents';
 import { useDocuments } from '@/hooks/useDocuments';
 import { useCurrentEvent } from '@/contexts/CurrentEventContext';
 
@@ -14,13 +14,10 @@ interface EventDataContextType {
   people: any[];
   vendors: any[];
   documents: any[];
-  configuration: any;
-  roles: any[];
+  currentEvent: any;
+  events: any[];
   loading: boolean;
   refreshData: () => void;
-  saveConfiguration: (config: any) => Promise<void>;
-  updateRole: (roleId: string, updates: any) => Promise<void>;
-  addRole: (roleName: string) => Promise<void>;
   getProgressStats: () => {
     totalTasks: number;
     completedTasks: number;
@@ -46,7 +43,7 @@ export const EventDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const { people, loading: peopleLoading, loadPeople } = usePeople();
   const { vendors, loading: vendorsLoading, loadVendors } = useVendors();
   const { documents, loading: documentsLoading, loadDocuments, getStats: getDocumentStatsFromHook } = useDocuments();
-  const { configuration, roles, saveConfiguration: saveConfig, updateRole, addRole } = useEventConfiguration(currentEventId);
+  const { currentEvent, events, loading: eventsLoading } = useEvents();
   
   const [lastUpdate, setLastUpdate] = useState(Date.now());
   
@@ -59,7 +56,7 @@ export const EventDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return () => clearInterval(interval);
   }, []);
 
-  const loading = tasksLoading || peopleLoading || vendorsLoading || documentsLoading;
+  const loading = tasksLoading || peopleLoading || vendorsLoading || documentsLoading || eventsLoading;
 
   const refreshData = () => {
     refetchTasks();
@@ -67,11 +64,6 @@ export const EventDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     loadVendors();
     loadDocuments();
     setLastUpdate(Date.now());
-  };
-
-  const saveConfiguration = async (config: any) => {
-    await saveConfig(config);
-    refreshData(); // Synchroniser avec les autres onglets
   };
 
   const getProgressStats = () => {
@@ -95,8 +87,9 @@ export const EventDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const getDaysUntilEvent = () => {
-    // Calcule les jours jusqu'à l'événement (exemple avec date fixe)
-    const eventDate = new Date('2024-06-15'); // À adapter selon vos données
+    if (!currentEvent?.event_date) return 0;
+    
+    const eventDate = new Date(currentEvent.event_date);
     const today = new Date();
     const diffTime = eventDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -109,13 +102,10 @@ export const EventDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     people,
     vendors,
     documents,
-    configuration,
-    roles,
+    currentEvent,
+    events,
     loading,
     refreshData,
-    saveConfiguration,
-    updateRole,
-    addRole,
     getProgressStats,
     getDocumentStats,
     getDaysUntilEvent

@@ -131,6 +131,50 @@ export type Database = {
           },
         ]
       }
+      event_documents: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          file_path: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          name: string
+          source: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          name: string
+          source?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          name?: string
+          source?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_documents_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_roles: {
         Row: {
           created_at: string | null
@@ -175,6 +219,7 @@ export type Database = {
           description: string | null
           event_date: string
           event_type: string
+          google_drive_url: string | null
           id: string
           location: string | null
           name: string
@@ -188,6 +233,7 @@ export type Database = {
           description?: string | null
           event_date: string
           event_type: string
+          google_drive_url?: string | null
           id?: string
           location?: string | null
           name: string
@@ -201,6 +247,7 @@ export type Database = {
           description?: string | null
           event_date?: string
           event_type?: string
+          google_drive_url?: string | null
           id?: string
           location?: string | null
           name?: string

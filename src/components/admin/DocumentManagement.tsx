@@ -1,82 +1,64 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Upload, FileText, Download, Share, Trash2, Eye, Plus, Cloud, Filter } from 'lucide-react';
-import { useDocuments, Document } from '@/hooks/useDocuments';
-import { GoogleDriveIntegration } from './GoogleDriveIntegration';
-import { DocumentPreview } from './DocumentPreview';
+import { Link, Upload, X, FileText, Download, Trash2, Eye } from 'lucide-react';
+import { useEvents } from '@/hooks/useEvents';
+import { useEventDocuments } from '@/hooks/useEventDocuments';
+import { convertGoogleDriveUrl, isValidGoogleDriveUrl } from '@/utils/googleDriveUtils';
+import { useToast } from '@/hooks/use-toast';
 
 export const DocumentManagement = () => {
-  const { documents, loading, uploadDocument, deleteDocument, getStats } = useDocuments();
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [filterCategory, setFilterCategory] = useState<string>('all');
-  const [filterSource, setFilterSource] = useState<string>('all');
+  const { currentEvent, updateEventGoogleDriveUrl } = useEvents();
+  const { documents, uploading, uploadDocuments, deleteDocument, getDocumentUrl } = useEventDocuments(currentEvent?.id || null);
+  const { toast } = useToast();
+  
+  const [googleDriveUrl, setGoogleDriveUrl] = useState(currentEvent?.google_drive_url || '');
+  const [showIframe, setShowIframe] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // État pour l'upload
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadCategory, setUploadCategory] = useState('');
-  const [uploadDescription, setUploadDescription] = useState('');
+  const handleGoogleDriveUrlChange = (value: string) => {
+    setGoogleDriveUrl(value);
+    setShowIframe(isValidGoogleDriveUrl(value));
+    
+    // Auto-save after typing stops
+    const timeoutId = setTimeout(() => {
+      if (currentEvent && value !== currentEvent.google_drive_url) {
+        updateEventGoogleDriveUrl(currentEvent.id, value);
+      }
+    }, 1000);
 
-  const stats = getStats();
+    return () => clearTimeout(timeoutId);
+  };
 
-  const categories = [
-    'Contrats', 'Planning', 'Listes', 'Musique', 'Photos', 'Factures', 'Légal', 'Communications'
-  ];
-
-  const categoryColors = {
-    "Contrats": "bg-blue-100 text-blue-800",
-    "Planning": "bg-purple-100 text-purple-800",
-    "Listes": "bg-green-100 text-green-800",
-    "Musique": "bg-pink-100 text-pink-800",
-    "Photos": "bg-amber-100 text-amber-800",
-    "Factures": "bg-red-100 text-red-800",
-    "Légal": "bg-gray-100 text-gray-800",
-    "Communications": "bg-indigo-100 text-indigo-800"
+  const handleClearUrl = () => {
+    setGoogleDriveUrl('');
+    setShowIframe(false);
+    if (currentEvent) {
+      updateEventGoogleDriveUrl(currentEvent.id, '');
+    }
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setUploadFile(file);
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      uploadDocuments(files);
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
-  const handleUpload = async () => {
-    if (!uploadFile || !uploadCategory) return;
-
-    try {
-      await uploadDocument(uploadFile, uploadCategory, uploadDescription);
-      setIsUploadModalOpen(false);
-      setUploadFile(null);
-      setUploadCategory('');
-      setUploadDescription('');
-    } catch (error) {
-      console.error('Error uploading:', error);
-    }
-  };
-
-  const handlePreview = (document: Document) => {
-    setSelectedDocument(document);
-    setIsPreviewOpen(true);
-  };
-
-  const handleDelete = async (documentId: string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) {
-      await deleteDocument(documentId);
-    }
-  };
-
-  const getFileIcon = (mimeType: string | null) => {
-    return <FileText className="w-5 h-5 text-gray-500" />;
+  const handleDownloadDocument = (document: any) => {
+    const url = getDocumentUrl(document.file_path);
+    const link = window.document.createElement('a');
+    link.href = url;
+    link.download = document.name;
+    link.click();
   };
 
   const formatFileSize = (bytes: number | null) => {
@@ -87,241 +69,228 @@ export const DocumentManagement = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  // Filtrer les documents
-  const filteredDocuments = documents.filter(doc => {
-    const categoryMatch = filterCategory === 'all' || doc.category === filterCategory;
-    const sourceMatch = filterSource === 'all' || doc.source === filterSource;
-    return categoryMatch && sourceMatch;
-  });
+  const getFileIcon = (mimeType: string | null) => {
+    if (!mimeType) return '📄';
+    if (mimeType.startsWith('image/')) return '🖼️';
+    if (mimeType.includes('pdf')) return '📋';
+    if (mimeType.includes('word') || mimeType.includes('doc')) return '📝';
+    if (mimeType.includes('excel') || mimeType.includes('sheet')) return '📊';
+    return '📄';
+  };
+
+  if (!currentEvent) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center text-gray-500">
+          <p>Aucun événement sélectionné</p>
+          <p className="text-sm">Veuillez sélectionner un événement dans la configuration</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Gestion des Documents</h2>
-          <p className="text-gray-600">Centralisez et partagez tous vos documents</p>
+          <p className="text-gray-600">Centralisez vos documents pour {currentEvent.name}</p>
         </div>
-        <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-              <Upload className="w-4 h-4 mr-2" />
-              Uploader Document
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Uploader un nouveau document</DialogTitle>
-              <DialogDescription>
-                Ajoutez un document et définissez ses paramètres
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="document" className="text-right">Fichier</Label>
-                <Input 
-                  id="document" 
-                  type="file" 
-                  className="col-span-3" 
-                  onChange={handleFileUpload}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="doc-category" className="text-right">Catégorie</Label>
-                <Select value={uploadCategory} onValueChange={setUploadCategory}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Sélectionner une catégorie" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map(cat => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="description" className="text-right">Description</Label>
-                <Textarea 
-                  id="description"
-                  placeholder="Description du document (optionnel)"
-                  className="col-span-3"
-                  value={uploadDescription}
-                  onChange={(e) => setUploadDescription(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsUploadModalOpen(false)}>
-                Annuler
-              </Button>
-              <Button 
-                onClick={handleUpload}
-                disabled={!uploadFile || !uploadCategory}
-                className="bg-gradient-to-r from-purple-600 to-pink-600"
-              >
-                Uploader
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Badge variant="outline" className="text-sm">
+          {documents.length} document(s)
+        </Badge>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-purple-600">{stats.totalDocuments}</div>
-            <div className="text-sm text-gray-600">Documents</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">{formatFileSize(stats.totalSize)}</div>
-            <div className="text-sm text-gray-600">Espace utilisé</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">{stats.categoriesCount}</div>
-            <div className="text-sm text-gray-600">Catégories</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-amber-600">{stats.manualCount}</div>
-            <div className="text-sm text-gray-600">Upload manuel</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-indigo-600">{stats.googleDriveCount}</div>
-            <div className="text-sm text-gray-600">Google Drive</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Intégration Google Drive */}
-      <GoogleDriveIntegration />
-
-      {/* Filtres */}
+      {/* Section URL Google Drive */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Filter className="w-5 h-5" />
-            Filtres
+            <Link className="w-5 h-5 text-blue-600" />
+            Lien Google Drive
           </CardTitle>
+          <CardDescription>
+            Collez votre lien Google Drive pour un accès direct à vos documents
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Label htmlFor="google-drive-url">URL Google Drive</Label>
+              <div className="relative">
+                <Input
+                  id="google-drive-url"
+                  type="url"
+                  placeholder="Collez votre lien Google Drive ici..."
+                  value={googleDriveUrl}
+                  onChange={(e) => handleGoogleDriveUrlChange(e.target.value)}
+                  className="pr-10"
+                />
+                {googleDriveUrl && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearUrl}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {!isValidGoogleDriveUrl(googleDriveUrl) && googleDriveUrl && (
+            <p className="text-sm text-amber-600">
+              ⚠️ URL non reconnue. Utilisez un lien Google Drive valide.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Section iframe Google Drive */}
+      {showIframe && googleDriveUrl && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-green-600" />
+              Aperçu Google Drive
+            </CardTitle>
+            <CardDescription>
+              Accès direct à vos documents Google Drive
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="border rounded-lg overflow-hidden">
+              <iframe
+                src={convertGoogleDriveUrl(googleDriveUrl)}
+                className="w-full h-[500px] border-0"
+                title="Google Drive Preview"
+                loading="lazy"
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Section Upload Manuel */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Upload className="w-5 h-5 text-purple-600" />
+            Import Manuel
+          </CardTitle>
+          <CardDescription>
+            Uploadez vos documents directement sur la plateforme
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <Label htmlFor="filter-category">Catégorie</Label>
-              <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toutes les catégories</SelectItem>
-                  {categories.map(cat => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="space-y-4">
+            <div 
+              className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-purple-400 transition-colors cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-lg font-medium text-gray-600 mb-2">
+                📁 Ajouter des documents
+              </p>
+              <p className="text-sm text-gray-500 mb-4">
+                Cliquez ici ou glissez-déposez vos fichiers
+              </p>
+              <p className="text-xs text-gray-400">
+                Formats acceptés : PDF, DOC, DOCX, XLS, XLSX, JPG, JPEG, PNG
+              </p>
+              <Button 
+                variant="outline" 
+                disabled={uploading}
+                className="mt-4"
+              >
+                {uploading ? 'Upload en cours...' : 'Choisir des fichiers'}
+              </Button>
             </div>
-            <div className="flex-1">
-              <Label htmlFor="filter-source">Source</Label>
-              <Select value={filterSource} onValueChange={setFilterSource}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toutes les sources</SelectItem>
-                  <SelectItem value="manual">Upload manuel</SelectItem>
-                  <SelectItem value="google_drive">Google Drive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.doc,.docx,.xlsx,.xls,.jpg,.jpeg,.png"
+              onChange={handleFileUpload}
+              className="hidden"
+              disabled={uploading}
+            />
           </div>
         </CardContent>
       </Card>
 
-      {/* Liste des documents */}
-      <div className="grid gap-4">
-        {loading ? (
-          <Card>
-            <CardContent className="p-6 text-center">
-              Chargement des documents...
-            </CardContent>
-          </Card>
-        ) : filteredDocuments.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 text-center text-gray-500">
-              Aucun document trouvé pour les filtres sélectionnés
-            </CardContent>
-          </Card>
-        ) : (
-          filteredDocuments.map((doc) => (
-            <Card key={doc.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                      {getFileIcon(doc.mime_type)}
+      {/* Liste des documents uploadés */}
+      {documents.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-indigo-600" />
+              Documents Uploadés
+            </CardTitle>
+            <CardDescription>
+              Gérez vos documents uploadés localement
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {documents.map((document) => (
+                <div key={document.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                  <div className="flex items-center gap-3">
+                    <div className="text-2xl">
+                      {getFileIcon(document.mime_type)}
                     </div>
-                    
                     <div>
-                      <h3 className="font-semibold text-lg">{doc.name}</h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        {doc.category && (
-                          <Badge className={categoryColors[doc.category as keyof typeof categoryColors] || categoryColors.Légal}>
-                            {doc.category}
-                          </Badge>
-                        )}
-                        <Badge variant={doc.source === 'google_drive' ? 'default' : 'outline'}>
-                          {doc.source === 'google_drive' ? (
-                            <>
-                              <Cloud className="w-3 h-3 mr-1" />
-                              Google Drive
-                            </>
-                          ) : 'Upload manuel'}
+                      <h4 className="font-medium">{document.name}</h4>
+                      <div className="flex items-center gap-3 text-sm text-gray-500">
+                        <span>{formatFileSize(document.file_size)}</span>
+                        <span>•</span>
+                        <span>{new Date(document.created_at).toLocaleDateString('fr-FR')}</span>
+                        <Badge variant="outline" className="text-xs">
+                          Upload manuel
                         </Badge>
-                        <span className="text-sm text-gray-500">•</span>
-                        <span className="text-sm text-gray-500">{formatFileSize(doc.file_size)}</span>
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {doc.description || 'Aucune description'}
-                      </p>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Uploadé par {doc.uploaded_by} le {new Date(doc.created_at).toLocaleDateString('fr-FR')}
-                      </p>
                     </div>
                   </div>
                   
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => handlePreview(doc)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const url = getDocumentUrl(document.file_path);
+                        window.open(url, '_blank');
+                      }}
+                    >
                       <Eye className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => window.open(doc.file_url, '_blank')}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDownloadDocument(document)}
+                    >
                       <Download className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(doc.id)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) {
+                          deleteDocument(document.id);
+                        }
+                      }}
+                      className="text-red-600 hover:text-red-700"
+                    >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
-
-      {/* Modal d'aperçu */}
-      <DocumentPreview
-        document={selectedDocument}
-        isOpen={isPreviewOpen}
-        onClose={() => {
-          setIsPreviewOpen(false);
-          setSelectedDocument(null);
-        }}
-      />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

@@ -16,6 +16,7 @@ import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { AdminLoginModal } from '@/components/AdminLoginModal';
 import { useAdminProtectedRoute } from '@/hooks/useAdminProtectedRoute';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { useEventData } from '@/contexts/EventDataContext';
 
 export const AdminPortal = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -23,6 +24,7 @@ export const AdminPortal = () => {
   const { t } = useTranslation();
   const { isAuthenticated, logout } = useAdminAuth();
   const { showLoginModal, handleCloseLoginModal } = useAdminProtectedRoute();
+  const { currentEvent } = useEventData();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -45,10 +47,10 @@ export const AdminPortal = () => {
                 </Button>
                 <div>
                   <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                    Jour J - {t('admin_portal')}
+                    {currentEvent ? `${currentEvent.name} - Admin` : 'Jour J - Admin'}
                   </h1>
                   <p className="text-sm text-gray-600">
-                    {t === undefined ? 'Portail de gestion événementielle' : ''}
+                    {currentEvent ? `${currentEvent.event_type} • ${new Date(currentEvent.event_date).toLocaleDateString('fr-FR')}` : 'Portail de gestion événementielle'}
                   </p>
                 </div>
               </div>

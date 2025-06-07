@@ -6,443 +6,250 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, MapPin, Users, Settings, Save, Plus, X } from 'lucide-react';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
+import { Badge } from '@/components/ui/badge';
+import { CalendarDays, MapPin, Clock, Palette } from 'lucide-react';
+import { useEvents } from '@/hooks/useEvents';
 import { useToast } from '@/hooks/use-toast';
-import { useEventData } from '@/contexts/EventDataContext';
-import { useCurrentEvent } from '@/contexts/CurrentEventContext';
+import { supabase } from '@/integrations/supabase/client';
 
 export const EventConfiguration = () => {
-  const { currentEventId } = useCurrentEvent();
-  const { configuration, roles, saveConfiguration, updateRole, addRole, refreshData } = useEventData();
+  const { currentEvent, events, setCurrentEvent, loading } = useEvents();
   const { toast } = useToast();
-  
-  const [eventDate, setEventDate] = useState<Date>();
-  const [eventData, setEventData] = useState({
-    name: 'Mariage Sarah & James',
-    event_type: 'wedding',
-    location: 'Château de Malmaison, 92500 Rueil-Malmaison',
-    description: 'Célébration du mariage de Sarah et James avec leurs proches dans un cadre exceptionnel.',
-    start_time: '14:00'
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    event_type: '',
+    event_date: '',
+    start_time: '',
+    location: '',
+    description: '',
+    status: 'planning'
   });
-  const [loading, setLoading] = useState(false);
-  const [newRoleName, setNewRoleName] = useState('');
-  const [isAddingRole, setIsAddingRole] = useState(false);
 
-  // Charger les données de l'événement au montage
   useEffect(() => {
-    loadEventData();
-  }, [currentEventId]);
+    if (currentEvent) {
+      setFormData({
+        name: currentEvent.name || '',
+        event_type: currentEvent.event_type || '',
+        event_date: currentEvent.event_date || '',
+        start_time: currentEvent.start_time || '',
+        location: currentEvent.location || '',
+        description: currentEvent.description || '',
+        status: currentEvent.status || 'planning'
+      });
+    }
+  }, [currentEvent]);
 
-  const loadEventData = async () => {
+  const handleSave = async () => {
+    if (!currentEvent) return;
+
+    setSaving(true);
     try {
-      const { data: event, error } = await supabase
+      const { data, error } = await supabase
         .from('events')
-        .select('*')
-        .eq('id', currentEventId)
+        .update(formData)
+        .eq('id', currentEvent.id)
+        .select()
         .single();
 
       if (error) throw error;
 
-      if (event) {
-        setEventData({
-          name: event.name,
-          event_type: event.event_type,
-          location: event.location || '',
-          description: event.description || '',
-          start_time: event.start_time || '14:00'
-        });
-        
-        if (event.event_date) {
-          setEventDate(new Date(event.event_date));
-        }
-      }
-    } catch (error) {
-      console.error('Error loading event data:', error);
+      setCurrentEvent(data);
       toast({
-        title: "Erreur",
-        description: "Impossible de charger les données de l'événement",
-        variant: "destructive",
+        title: 'Configuration sauvegardée',
+        description: 'Les informations de l\'événement ont été mises à jour',
       });
-    }
-  };
-
-  // Auto-save function with debounce
-  const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null);
-
-  const handleAutoSave = (field: string, value: any) => {
-    if (autoSaveTimeout) {
-      clearTimeout(autoSaveTimeout);
-    }
-    
-    const timeout = setTimeout(() => {
-      handleSaveEvent(true);
-    }, 1000); // Auto-save après 1 seconde d'inactivité
-    
-    setAutoSaveTimeout(timeout);
-  };
-
-  const handleEventDataChange = (field: string, value: string) => {
-    setEventData(prev => ({ ...prev, [field]: value }));
-    handleAutoSave(field, value);
-  };
-
-  const handleSaveEvent = async (isAutoSave = false) => {
-    setLoading(true);
-    try {
-      // Save event details
-      const { error: eventError } = await supabase
-        .from('events')
-        .update({
-          name: eventData.name,
-          event_type: eventData.event_type,
-          event_date: eventDate?.toISOString().split('T')[0] || '2024-06-15',
-          start_time: eventData.start_time,
-          location: eventData.location,
-          description: eventData.description,
-        })
-        .eq('id', currentEventId);
-
-      if (eventError) throw eventError;
-
-      // Actualiser les données dans le contexte partagé
-      refreshData();
-
-      if (!isAutoSave) {
-        toast({
-          title: "Configuration sauvegardée",
-          description: "Tous les paramètres ont été enregistrés avec succès",
-        });
-      }
     } catch (error) {
-      console.error('Error saving:', error);
+      console.error('Error saving event configuration:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de sauvegarder la configuration",
-        variant: "destructive",
+        title: 'Erreur',
+        description: 'Impossible de sauvegarder la configuration',
+        variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  const handleRoleToggle = async (roleId: string, isActive: boolean) => {
-    await updateRole(roleId, { is_active: isActive });
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleAddCustomRole = async () => {
-    if (newRoleName.trim()) {
-      await addRole(newRoleName.trim());
-      setNewRoleName('');
-      setIsAddingRole(false);
-    }
-  };
-
-  const handleConfigurationChange = async (updates: any) => {
-    await saveConfiguration(updates);
-  };
-
-  const eventTypes = [
-    { value: 'wedding', label: 'Mariage' },
-    { value: 'pacs', label: 'PACS' },
-    { value: 'birthday', label: 'Anniversaire' },
-    { value: 'corporate', label: 'Événement Corporate' },
-    { value: 'other', label: 'Autres' }
-  ];
-
-  const themeColors = [
-    { color: '#9333ea', name: 'Violet' },
-    { color: '#ec4899', name: 'Rose' },
-    { color: '#3b82f6', name: 'Bleu' },
-    { color: '#10b981', name: 'Vert' },
-    { color: '#f59e0b', name: 'Orange' }
-  ];
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-purple-600">Chargement de la configuration...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold text-gray-900">Configuration Événement</h2>
-        <p className="text-gray-600">Paramétrez votre événement et ses options</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900">Configuration de l'Événement</h2>
+          <p className="text-gray-600">Gérez les informations principales de votre événement</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {currentEvent && (
+            <Badge variant="outline" className="text-sm">
+              Événement actuel : {currentEvent.name}
+            </Badge>
+          )}
+          {events.length > 1 && (
+            <Select value={currentEvent?.id} onValueChange={(value) => {
+              const selectedEvent = events.find(e => e.id === value);
+              if (selectedEvent) setCurrentEvent(selectedEvent);
+            }}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Changer d'événement" />
+              </SelectTrigger>
+              <SelectContent>
+                {events.map(event => (
+                  <SelectItem key={event.id} value={event.id}>
+                    {event.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
 
-      {/* Event Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5" />
-            Détails de l'Événement
-          </CardTitle>
-          <CardDescription>Informations principales de votre événement</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Informations générales */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Palette className="w-5 h-5" />
+              Informations Générales
+            </CardTitle>
+            <CardDescription>
+              Configurez les détails de base de votre événement
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="event-name">Nom de l'événement</Label>
-              <Input 
-                id="event-name" 
-                value={eventData.name}
-                onChange={(e) => handleEventDataChange('name', e.target.value)}
+              <Input
+                id="event-name"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder="Nom de votre événement"
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="event-type">Type d'événement</Label>
-              <Select 
-                value={eventData.event_type} 
-                onValueChange={(value) => handleEventDataChange('event_type', value)}
-              >
+              <Select value={formData.event_type} onValueChange={(value) => handleInputChange('event_type', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner le type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mariage">Mariage</SelectItem>
+                  <SelectItem value="anniversaire">Anniversaire</SelectItem>
+                  <SelectItem value="conference">Conférence</SelectItem>
+                  <SelectItem value="seminaire">Séminaire</SelectItem>
+                  <SelectItem value="soiree">Soirée</SelectItem>
+                  <SelectItem value="autre">Autre</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="status">Statut</Label>
+              <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {eventTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="planning">En planification</SelectItem>
+                  <SelectItem value="confirmed">Confirmé</SelectItem>
+                  <SelectItem value="in_progress">En cours</SelectItem>
+                  <SelectItem value="completed">Terminé</SelectItem>
+                  <SelectItem value="cancelled">Annulé</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Date de l'événement</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !eventDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {eventDate ? format(eventDate, "PPP", { locale: fr }) : "Sélectionner une date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={eventDate}
-                    onSelect={(date) => {
-                      setEventDate(date);
-                      if (date) handleAutoSave('event_date', date);
-                    }}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="event-time">Heure de début</Label>
-              <Input 
-                id="event-time" 
-                type="time" 
-                value={eventData.start_time}
-                onChange={(e) => handleEventDataChange('start_time', e.target.value)}
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                placeholder="Description de l'événement"
+                rows={3}
               />
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          <div className="space-y-2">
-            <Label htmlFor="event-location">Lieu de l'événement</Label>
-            <div className="flex gap-2">
-              <Input 
-                id="event-location" 
-                value={eventData.location}
-                onChange={(e) => handleEventDataChange('location', e.target.value)}
-                className="flex-1"
+        {/* Date et lieu */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarDays className="w-5 h-5" />
+              Date et Lieu
+            </CardTitle>
+            <CardDescription>
+              Définissez quand et où aura lieu votre événement
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="event-date" className="flex items-center gap-2">
+                <CalendarDays className="w-4 h-4" />
+                Date de l'événement
+              </Label>
+              <Input
+                id="event-date"
+                type="date"
+                value={formData.event_date}
+                onChange={(e) => handleInputChange('event_date', e.target.value)}
               />
-              <Button variant="outline">
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="start-time" className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Heure de début
+              </Label>
+              <Input
+                id="start-time"
+                type="time"
+                value={formData.start_time}
+                onChange={(e) => handleInputChange('start_time', e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="location" className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-              </Button>
+                Lieu
+              </Label>
+              <Input
+                id="location"
+                value={formData.location}
+                onChange={(e) => handleInputChange('location', e.target.value)}
+                placeholder="Adresse ou nom du lieu"
+              />
             </div>
-          </div>
+          </CardContent>
+        </Card>
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="event-description">Description</Label>
-            <Textarea 
-              id="event-description" 
-              value={eventData.description}
-              onChange={(e) => handleEventDataChange('description', e.target.value)}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Role Configuration */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            Configuration des Rôles
-          </CardTitle>
-          <CardDescription>Personnalisez les rôles disponibles pour votre événement</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="text-sm font-medium text-gray-700 mb-3">Rôles actifs :</div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {roles.map((role) => (
-                <div key={role.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <span className="text-sm capitalize">{role.role_name.replace('-', ' ')}</span>
-                  <Switch 
-                    checked={role.is_active}
-                    onCheckedChange={(checked) => role.id && handleRoleToggle(role.id, checked)}
-                  />
-                </div>
-              ))}
-            </div>
-            
-            {/* Add Custom Role */}
-            {isAddingRole ? (
-              <div className="flex gap-2 items-center">
-                <Input
-                  placeholder="Nom du rôle personnalisé"
-                  value={newRoleName}
-                  onChange={(e) => setNewRoleName(e.target.value)}
-                  className="flex-1"
-                />
-                <Button onClick={handleAddCustomRole} size="sm">
-                  <Plus className="w-4 h-4" />
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    setIsAddingRole(false);
-                    setNewRoleName('');
-                  }}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            ) : (
-              <Button 
-                variant="outline" 
-                className="w-full mt-4" 
-                onClick={() => setIsAddingRole(true)}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Ajouter un rôle personnalisé
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* System Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            Paramètres Système
-          </CardTitle>
-          <CardDescription>Options de fonctionnement de l'application</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {configuration && (
-            <>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">Notifications en temps réel</div>
-                  <div className="text-sm text-gray-600">Recevoir des alertes instantanées</div>
-                </div>
-                <Switch 
-                  checked={configuration.notifications_enabled}
-                  onCheckedChange={(checked) => handleConfigurationChange({notifications_enabled: checked})}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">Synchronisation temps réel</div>
-                  <div className="text-sm text-gray-600">Mise à jour automatique des données</div>
-                </div>
-                <Switch 
-                  checked={configuration.realtime_sync_enabled}
-                  onCheckedChange={(checked) => handleConfigurationChange({realtime_sync_enabled: checked})}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">Accès invités</div>
-                  <div className="text-sm text-gray-600">Permettre aux invités de voir certaines informations</div>
-                </div>
-                <Switch 
-                  checked={configuration.guest_access_enabled}
-                  onCheckedChange={(checked) => handleConfigurationChange({guest_access_enabled: checked})}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">Sauvegarde automatique</div>
-                  <div className="text-sm text-gray-600">Backup quotidien des données</div>
-                </div>
-                <Switch 
-                  checked={configuration.auto_backup_enabled}
-                  onCheckedChange={(checked) => handleConfigurationChange({auto_backup_enabled: checked})}
-                />
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Branding */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Personnalisation</CardTitle>
-          <CardDescription>Thème et branding de votre événement</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Couleur principale</Label>
-            <div className="flex gap-2">
-              {themeColors.map((theme) => (
-                <button
-                  key={theme.color}
-                  className={cn(
-                    "w-10 h-10 rounded-lg border-2 transition-all",
-                    configuration?.theme_color === theme.color 
-                      ? "border-gray-800 scale-110" 
-                      : "border-gray-300 hover:scale-105"
-                  )}
-                  style={{ backgroundColor: theme.color }}
-                  onClick={() => handleConfigurationChange({ theme_color: theme.color })}
-                  title={theme.name}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="logo">Logo de l'événement</Label>
-            <Input id="logo" type="file" accept="image/*" />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Save Button */}
-      <div className="flex justify-between items-center">
-        <div className="text-sm text-gray-500">
-          Sauvegarde automatique activée
-        </div>
+      {/* Bouton de sauvegarde */}
+      <div className="flex justify-end">
         <Button 
-          onClick={() => handleSaveEvent(false)}
-          disabled={loading}
+          onClick={handleSave}
+          disabled={saving}
           className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
         >
-          <Save className="w-4 h-4 mr-2" />
-          {loading ? 'Sauvegarde...' : 'Sauvegarder Maintenant'}
+          {saving ? 'Sauvegarde...' : 'Sauvegarder la configuration'}
         </Button>
       </div>
     </div>
