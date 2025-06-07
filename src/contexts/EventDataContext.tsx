@@ -5,6 +5,7 @@ import { usePlanningItems } from '@/hooks/usePlanningItems';
 import { usePeople } from '@/hooks/usePeople';
 import { useVendors } from '@/hooks/useVendors';
 import { useEventConfiguration } from '@/hooks/useEventConfiguration';
+import { useDocuments } from '@/hooks/useDocuments';
 import { useCurrentEvent } from '@/contexts/CurrentEventContext';
 
 interface EventDataContextType {
@@ -12,6 +13,7 @@ interface EventDataContextType {
   planningItems: any[];
   people: any[];
   vendors: any[];
+  documents: any[];
   configuration: any;
   roles: any[];
   loading: boolean;
@@ -26,6 +28,13 @@ interface EventDataContextType {
     criticalTasks: number;
   };
   getDaysUntilEvent: () => number;
+  getDocumentStats: () => {
+    totalDocuments: number;
+    totalSize: number;
+    categoriesCount: number;
+    googleDriveCount: number;
+    manualCount: number;
+  };
 }
 
 const EventDataContext = createContext<EventDataContextType | undefined>(undefined);
@@ -36,6 +45,7 @@ export const EventDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const { planningItems } = usePlanningItems();
   const { people, loading: peopleLoading, loadPeople } = usePeople();
   const { vendors, loading: vendorsLoading, loadVendors } = useVendors();
+  const { documents, loading: documentsLoading, loadDocuments, getStats: getDocumentStatsFromHook } = useDocuments();
   const { configuration, roles, saveConfiguration: saveConfig, updateRole, addRole } = useEventConfiguration(currentEventId);
   
   const [lastUpdate, setLastUpdate] = useState(Date.now());
@@ -49,12 +59,13 @@ export const EventDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return () => clearInterval(interval);
   }, []);
 
-  const loading = tasksLoading || peopleLoading || vendorsLoading;
+  const loading = tasksLoading || peopleLoading || vendorsLoading || documentsLoading;
 
   const refreshData = () => {
     refetchTasks();
     loadPeople();
     loadVendors();
+    loadDocuments();
     setLastUpdate(Date.now());
   };
 
@@ -79,6 +90,10 @@ export const EventDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
   };
 
+  const getDocumentStats = () => {
+    return getDocumentStatsFromHook();
+  };
+
   const getDaysUntilEvent = () => {
     // Calcule les jours jusqu'à l'événement (exemple avec date fixe)
     const eventDate = new Date('2024-06-15'); // À adapter selon vos données
@@ -93,6 +108,7 @@ export const EventDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     planningItems,
     people,
     vendors,
+    documents,
     configuration,
     roles,
     loading,
@@ -101,6 +117,7 @@ export const EventDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     updateRole,
     addRole,
     getProgressStats,
+    getDocumentStats,
     getDaysUntilEvent
   };
 

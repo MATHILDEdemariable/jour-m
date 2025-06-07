@@ -3,87 +3,58 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useSharedEventData } from '@/hooks/useSharedEventData';
+import { useEventData } from '@/contexts/EventDataContext';
 
 const CATEGORY_COLORS = {
   'Planning': 'bg-purple-100 text-purple-800',
-  'Music': 'bg-blue-100 text-blue-800',
-  'Speeches': 'bg-green-100 text-green-800',
-  'Legal': 'bg-red-100 text-red-800',
+  'Musique': 'bg-blue-100 text-blue-800',
+  'Contrats': 'bg-green-100 text-green-800',
+  'Légal': 'bg-red-100 text-red-800',
   'Photos': 'bg-yellow-100 text-yellow-800',
-  'Contract': 'bg-red-100 text-red-800',
-  'Invoice': 'bg-orange-100 text-orange-800',
+  'Factures': 'bg-orange-100 text-orange-800',
+  'Listes': 'bg-indigo-100 text-indigo-800',
+  'Communications': 'bg-pink-100 text-pink-800',
   'Other': 'bg-gray-100 text-gray-800'
 };
 
 const TYPE_ICONS = {
-  'PDF': '📄',
-  'Audio': '🎵',
-  'Document': '📝',
-  'Archive': '📦',
-  'Spreadsheet': '📊',
-  'Image': '🖼️',
-  'Video': '🎥',
   'application/pdf': '📄',
   'image/': '🖼️',
   'audio/': '🎵',
-  'video/': '🎥'
+  'video/': '🎥',
+  'application/zip': '📦',
+  'text/': '📝'
 };
 
 export const DocumentHub: React.FC = () => {
-  const { loading } = useSharedEventData();
-
-  // Pour l'instant, nous utilisons des données d'exemple car le système de documents
-  // n'est pas encore complètement intégré avec la base de données
-  const sampleDocuments = [
-    {
-      id: '1',
-      name: 'Planning Final.pdf',
-      file_type: 'application/pdf',
-      category: 'Planning',
-      file_size: 2100000,
-      uploaded_by: 'Wedding Planner',
-      created_at: '2024-06-01T10:00:00Z'
-    },
-    {
-      id: '2',
-      name: 'Contrat Traiteur.pdf',
-      file_type: 'application/pdf',
-      category: 'Legal',
-      file_size: 1500000,
-      uploaded_by: 'Admin',
-      created_at: '2024-05-28T14:30:00Z'
-    },
-    {
-      id: '3',
-      name: 'Plan de Table.xlsx',
-      file_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      category: 'Planning',
-      file_size: 850000,
-      uploaded_by: 'Wedding Planner',
-      created_at: '2024-06-02T16:15:00Z'
-    }
-  ];
+  const { documents, loading } = useEventData();
 
   const handleDownload = (documentId: string) => {
-    console.log(`Downloading document ${documentId}`);
-    // Dans une vraie app, cela déclencherait le téléchargement
+    const document = documents.find(doc => doc.id === documentId);
+    if (document?.file_url) {
+      window.open(document.file_url, '_blank');
+    }
   };
 
   const handleView = (documentId: string) => {
-    console.log(`Viewing document ${documentId}`);
-    // Dans une vraie app, cela ouvrirait le visualiseur de documents
+    const document = documents.find(doc => doc.id === documentId);
+    if (document?.google_drive_url) {
+      window.open(document.google_drive_url, '_blank');
+    } else if (document?.file_url) {
+      window.open(document.file_url, '_blank');
+    }
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+  const formatFileSize = (bytes: number | null) => {
+    if (!bytes) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const getTypeIcon = (fileType: string) => {
+  const getTypeIcon = (fileType: string | null) => {
+    if (!fileType) return '📄';
     for (const [type, icon] of Object.entries(TYPE_ICONS)) {
       if (fileType.includes(type)) return icon;
     }
@@ -101,11 +72,11 @@ export const DocumentHub: React.FC = () => {
     );
   }
 
-  const highPriorityDocs = sampleDocuments.filter(doc => 
-    doc.category === 'Planning' || doc.category === 'Legal'
+  const highPriorityDocs = documents.filter(doc => 
+    doc.category === 'Planning' || doc.category === 'Légal' || doc.category === 'Contrats'
   );
-  const otherDocs = sampleDocuments.filter(doc => 
-    doc.category !== 'Planning' && doc.category !== 'Legal'
+  const otherDocs = documents.filter(doc => 
+    doc.category !== 'Planning' && doc.category !== 'Légal' && doc.category !== 'Contrats'
   );
 
   return (
@@ -113,7 +84,7 @@ export const DocumentHub: React.FC = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Documents</h2>
         <Badge variant="secondary" className="text-xs">
-          {sampleDocuments.length} fichiers
+          {documents.length} fichiers
         </Badge>
       </div>
 
@@ -155,7 +126,7 @@ export const DocumentHub: React.FC = () => {
         </div>
       )}
 
-      {sampleDocuments.length === 0 && (
+      {documents.length === 0 && (
         <div className="text-center py-8 text-gray-500">
           <p>Aucun document trouvé</p>
           <p className="text-xs mt-2">Les documents ajoutés dans l'admin apparaîtront ici</p>
@@ -170,8 +141,8 @@ interface DocumentCardProps {
   onDownload: (id: string) => void;
   onView: (id: string) => void;
   isHighPriority: boolean;
-  formatFileSize: (bytes: number) => string;
-  getTypeIcon: (fileType: string) => string;
+  formatFileSize: (bytes: number | null) => string;
+  getTypeIcon: (fileType: string | null) => string;
 }
 
 const DocumentCard: React.FC<DocumentCardProps> = ({ 
@@ -183,7 +154,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
   getTypeIcon
 }) => {
   const categoryColor = CATEGORY_COLORS[document.category as keyof typeof CATEGORY_COLORS] || CATEGORY_COLORS.Other;
-  const typeIcon = getTypeIcon(document.file_type);
+  const typeIcon = getTypeIcon(document.mime_type || document.file_type);
 
   return (
     <Card className={`hover:shadow-md transition-all ${isHighPriority ? 'border-l-4 border-l-purple-500 bg-purple-50' : ''}`}>
@@ -194,9 +165,16 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-medium truncate">{document.name}</h3>
-              <Badge className={categoryColor} variant="secondary">
-                {document.category}
-              </Badge>
+              {document.category && (
+                <Badge className={categoryColor} variant="secondary">
+                  {document.category}
+                </Badge>
+              )}
+              {document.source === 'google_drive' && (
+                <Badge variant="outline" className="text-xs">
+                  🌥️ Drive
+                </Badge>
+              )}
             </div>
             
             <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
@@ -206,6 +184,10 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
               <span>•</span>
               <span>{new Date(document.created_at).toLocaleDateString('fr-FR')}</span>
             </div>
+
+            {document.description && (
+              <p className="text-xs text-gray-600 mb-2 line-clamp-2">{document.description}</p>
+            )}
 
             <div className="flex gap-2">
               <Button 

@@ -13,39 +13,57 @@ export type Database = {
         Row: {
           category: string | null
           created_at: string | null
+          description: string | null
           event_id: string | null
           file_size: number | null
           file_type: string | null
           file_url: string
+          google_drive_id: string | null
+          google_drive_url: string | null
           id: string
           is_shared: boolean | null
+          mime_type: string | null
           name: string
+          preview_url: string | null
+          source: string | null
           uploaded_by: string | null
           vendor_id: string | null
         }
         Insert: {
           category?: string | null
           created_at?: string | null
+          description?: string | null
           event_id?: string | null
           file_size?: number | null
           file_type?: string | null
           file_url: string
+          google_drive_id?: string | null
+          google_drive_url?: string | null
           id?: string
           is_shared?: boolean | null
+          mime_type?: string | null
           name: string
+          preview_url?: string | null
+          source?: string | null
           uploaded_by?: string | null
           vendor_id?: string | null
         }
         Update: {
           category?: string | null
           created_at?: string | null
+          description?: string | null
           event_id?: string | null
           file_size?: number | null
           file_type?: string | null
           file_url?: string
+          google_drive_id?: string | null
+          google_drive_url?: string | null
           id?: string
           is_shared?: boolean | null
+          mime_type?: string | null
           name?: string
+          preview_url?: string | null
+          source?: string | null
           uploaded_by?: string | null
           vendor_id?: string | null
         }
@@ -192,6 +210,53 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      google_drive_configs: {
+        Row: {
+          access_token: string | null
+          created_at: string | null
+          event_id: string
+          folder_id: string
+          folder_url: string | null
+          id: string
+          is_connected: boolean | null
+          last_sync_at: string | null
+          refresh_token: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string | null
+          event_id: string
+          folder_id: string
+          folder_url?: string | null
+          id?: string
+          is_connected?: boolean | null
+          last_sync_at?: string | null
+          refresh_token?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string | null
+          event_id?: string
+          folder_id?: string
+          folder_url?: string | null
+          id?: string
+          is_connected?: boolean | null
+          last_sync_at?: string | null
+          refresh_token?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_drive_configs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       people: {
         Row: {
