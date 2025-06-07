@@ -4,14 +4,21 @@ import { useTasks } from '@/hooks/useTasks';
 import { usePlanningItems } from '@/hooks/usePlanningItems';
 import { usePeople } from '@/hooks/usePeople';
 import { useVendors } from '@/hooks/useVendors';
+import { useEventConfiguration } from '@/hooks/useEventConfiguration';
+import { useCurrentEvent } from '@/contexts/CurrentEventContext';
 
 interface EventDataContextType {
   tasks: any[];
   planningItems: any[];
   people: any[];
   vendors: any[];
+  configuration: any;
+  roles: any[];
   loading: boolean;
   refreshData: () => void;
+  saveConfiguration: (config: any) => Promise<void>;
+  updateRole: (roleId: string, updates: any) => Promise<void>;
+  addRole: (roleName: string) => Promise<void>;
   getProgressStats: () => {
     totalTasks: number;
     completedTasks: number;
@@ -24,10 +31,12 @@ interface EventDataContextType {
 const EventDataContext = createContext<EventDataContextType | undefined>(undefined);
 
 export const EventDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { currentEventId } = useCurrentEvent();
   const { data: tasks = [], isLoading: tasksLoading, refetch: refetchTasks } = useTasks();
   const { planningItems } = usePlanningItems();
   const { people, loading: peopleLoading, loadPeople } = usePeople();
   const { vendors, loading: vendorsLoading, loadVendors } = useVendors();
+  const { configuration, roles, saveConfiguration: saveConfig, updateRole, addRole } = useEventConfiguration(currentEventId);
   
   const [lastUpdate, setLastUpdate] = useState(Date.now());
   
@@ -47,6 +56,11 @@ export const EventDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     loadPeople();
     loadVendors();
     setLastUpdate(Date.now());
+  };
+
+  const saveConfiguration = async (config: any) => {
+    await saveConfig(config);
+    refreshData(); // Synchroniser avec les autres onglets
   };
 
   const getProgressStats = () => {
@@ -79,8 +93,13 @@ export const EventDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     planningItems,
     people,
     vendors,
+    configuration,
+    roles,
     loading,
     refreshData,
+    saveConfiguration,
+    updateRole,
+    addRole,
     getProgressStats,
     getDaysUntilEvent
   };

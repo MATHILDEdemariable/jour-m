@@ -13,11 +13,16 @@ import { CalendarIcon, MapPin, Users, Settings, Save, Plus, X } from 'lucide-rea
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { useEventConfiguration } from '@/hooks/useEventConfiguration';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useEventData } from '@/contexts/EventDataContext';
+import { useCurrentEvent } from '@/contexts/CurrentEventContext';
 
 export const EventConfiguration = () => {
+  const { currentEventId } = useCurrentEvent();
+  const { configuration, roles, saveConfiguration, updateRole, addRole, refreshData } = useEventData();
+  const { toast } = useToast();
+  
   const [eventDate, setEventDate] = useState<Date>();
   const [eventData, setEventData] = useState({
     name: 'Mariage Sarah & James',
@@ -27,12 +32,46 @@ export const EventConfiguration = () => {
     start_time: '14:00'
   });
   const [loading, setLoading] = useState(false);
-  const [eventId] = useState('default-event-id'); // In a real app, this would come from context or props
   const [newRoleName, setNewRoleName] = useState('');
   const [isAddingRole, setIsAddingRole] = useState(false);
-  
-  const { configuration, roles, saveConfiguration, updateRole, addRole } = useEventConfiguration(eventId);
-  const { toast } = useToast();
+
+  // Charger les données de l'événement au montage
+  useEffect(() => {
+    loadEventData();
+  }, [currentEventId]);
+
+  const loadEventData = async () => {
+    try {
+      const { data: event, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', currentEventId)
+        .single();
+
+      if (error) throw error;
+
+      if (event) {
+        setEventData({
+          name: event.name,
+          event_type: event.event_type,
+          location: event.location || '',
+          description: event.description || '',
+          start_time: event.start_time || '14:00'
+        });
+        
+        if (event.event_date) {
+          setEventDate(new Date(event.event_date));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading event data:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les données de l'événement",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Auto-save function with debounce
   const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -60,23 +99,20 @@ export const EventConfiguration = () => {
       // Save event details
       const { error: eventError } = await supabase
         .from('events')
-        .upsert({
-          id: eventId,
+        .update({
           name: eventData.name,
           event_type: eventData.event_type,
           event_date: eventDate?.toISOString().split('T')[0] || '2024-06-15',
           start_time: eventData.start_time,
           location: eventData.location,
           description: eventData.description,
-          status: 'planning'
-        });
+        })
+        .eq('id', currentEventId);
 
       if (eventError) throw eventError;
 
-      // Save configuration
-      if (configuration) {
-        await saveConfiguration(configuration);
-      }
+      // Actualiser les données dans le contexte partagé
+      refreshData();
 
       if (!isAutoSave) {
         toast({
@@ -96,8 +132,8 @@ export const EventConfiguration = () => {
     }
   };
 
-  const handleRoleToggle = (roleId: string, isActive: boolean) => {
-    updateRole(roleId, { is_active: isActive });
+  const handleRoleToggle = async (roleId: string, isActive: boolean) => {
+    await updateRole(roleId, { is_active: isActive });
   };
 
   const handleAddCustomRole = async () => {
@@ -106,6 +142,10 @@ export const EventConfiguration = () => {
       setNewRoleName('');
       setIsAddingRole(false);
     }
+  };
+
+  const handleConfigurationChange = async (updates: any) => {
+    await saveConfiguration(updates);
   };
 
   const eventTypes = [
@@ -195,7 +235,6 @@ export const EventConfiguration = () => {
                       if (date) handleAutoSave('event_date', date);
                     }}
                     initialFocus
-                    className="p-3 pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
@@ -317,7 +356,7 @@ export const EventConfiguration = () => {
                 </div>
                 <Switch 
                   checked={configuration.notifications_enabled}
-                  onCheckedChange={(checked) => saveConfiguration({notifications_enabled: checked})}
+                  onCheckedChange={(checked) => handleConfigurationChange({notifications_enabled: checked})}
                 />
               </div>
 
@@ -328,7 +367,7 @@ export const EventConfiguration = () => {
                 </div>
                 <Switch 
                   checked={configuration.realtime_sync_enabled}
-                  onCheckedChange={(checked) => saveConfiguration({realtime_sync_enabled: checked})}
+                  onCheckedChange={(checked) => handleConfigurationChange({realtime_sync_enabled: checked})}
                 />
               </div>
 
@@ -339,7 +378,7 @@ export const EventConfiguration = () => {
                 </div>
                 <Switch 
                   checked={configuration.guest_access_enabled}
-                  onCheckedChange={(checked) => saveConfiguration({guest_access_enabled: checked})}
+                  onCheckedChange={(checked) => handleConfigurationChange({guest_access_enabled: checked})}
                 />
               </div>
 
@@ -350,7 +389,7 @@ export const EventConfiguration = () => {
                 </div>
                 <Switch 
                   checked={configuration.auto_backup_enabled}
-                  onCheckedChange={(checked) => saveConfiguration({auto_backup_enabled: checked})}
+                  onCheckedChange={(checked) => handleConfigurationChange({auto_backup_enabled: checked})}
                 />
               </div>
             </>
@@ -378,7 +417,7 @@ export const EventConfiguration = () => {
                       : "border-gray-300 hover:scale-105"
                   )}
                   style={{ backgroundColor: theme.color }}
-                  onClick={() => saveConfiguration({ theme_color: theme.color })}
+                  onClick={() => handleConfigurationChange({ theme_color: theme.color })}
                   title={theme.name}
                 />
               ))}
