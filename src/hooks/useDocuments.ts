@@ -58,7 +58,14 @@ export const useDocuments = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setDocuments(data || []);
+      
+      // Conversion des données Supabase vers notre interface avec validation du type source
+      const typedDocuments: Document[] = (data || []).map(doc => ({
+        ...doc,
+        source: (doc.source === 'google_drive' ? 'google_drive' : 'manual') as 'manual' | 'google_drive'
+      }));
+      
+      setDocuments(typedDocuments);
     } catch (error) {
       console.error('Error loading documents:', error);
       toast({
@@ -119,13 +126,19 @@ export const useDocuments = () => {
 
       if (error) throw error;
       
-      setDocuments(prev => [data, ...prev]);
+      // Conversion avec validation du type source
+      const typedDocument: Document = {
+        ...data,
+        source: 'manual' as const
+      };
+      
+      setDocuments(prev => [typedDocument, ...prev]);
       toast({
         title: 'Succès',
         description: 'Document uploadé avec succès',
       });
       
-      return data;
+      return typedDocument;
     } catch (error) {
       console.error('Error uploading document:', error);
       toast({
@@ -233,7 +246,14 @@ export const useDocuments = () => {
             .single();
 
           if (error) throw error;
-          setDocuments(prev => [data, ...prev]);
+          
+          // Conversion avec validation du type source
+          const typedDocument: Document = {
+            ...data,
+            source: 'google_drive' as const
+          };
+          
+          setDocuments(prev => [typedDocument, ...prev]);
         }
       }
 
@@ -288,7 +308,7 @@ export const useDocuments = () => {
   };
 
   // Mettre à jour un document
-  const updateDocument = async (documentId: string, updates: Partial<Document>) => {
+  const updateDocument = async (documentId: string, updates: Partial<Omit<Document, 'id' | 'created_at'>>) => {
     try {
       const { data, error } = await supabase
         .from('documents')
@@ -299,8 +319,14 @@ export const useDocuments = () => {
 
       if (error) throw error;
       
+      // Conversion avec validation du type source
+      const typedDocument: Document = {
+        ...data,
+        source: (data.source === 'google_drive' ? 'google_drive' : 'manual') as 'manual' | 'google_drive'
+      };
+      
       setDocuments(prev => prev.map(doc => 
-        doc.id === documentId ? { ...doc, ...data } : doc
+        doc.id === documentId ? typedDocument : doc
       ));
       
       toast({
