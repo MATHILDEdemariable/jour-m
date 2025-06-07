@@ -48,6 +48,39 @@ export const frTranslation = {
   'medium': 'Moyenne',
   'low': 'Basse',
 
+  // Rôles
+  'bride': 'Mariée',
+  'groom': 'Marié',
+  'best-man': 'Témoin',
+  'maid-of-honor': 'Demoiselle d\'honneur',
+  'wedding-planner': 'Wedding Planner',
+  'photographer': 'Photographe',
+  'caterer': 'Traiteur',
+  'guest': 'Invité',
+  'family': 'Famille',
+
+  // Interface Event
+  'welcome_to_event': 'Bienvenue à votre événement !',
+  'select_role_subtitle': 'Sélectionnez votre rôle pour commencer avec un accès personnalisé',
+  'i_am': 'Je suis...',
+  'select_your_role': 'Sélectionnez votre rôle',
+  'my_name_is': 'Mon nom est...',
+  'select_your_name': 'Sélectionnez votre nom',
+  'enter_jour_j': 'Entrer dans Jour J',
+  'secure_simple': '🔒 Sécurisé et Simple - Aucun mot de passe requis',
+  'personalized_experience': '✨ Expérience personnalisée pour votre rôle',
+  'timeline': 'Planning',
+  'my_tasks': 'Mes Tâches',
+  'all_tasks': 'Toutes les Tâches',
+  'contacts': 'Contacts',
+  'personal_view': 'Vue Personnelle',
+  'global_view': 'Vue Globale',
+  'loading_timeline': 'Chargement du planning...',
+  'loading_tasks': 'Chargement des tâches...',
+  'loading_contacts': 'Chargement des contacts...',
+  'loading_documents': 'Chargement des documents...',
+  'no_people_for_role': 'Aucune personne assignée à ce rôle',
+
   // Footer
   'admin_access': 'Accès administrateur',
   'simplify_organization': 'Simplifiez l\'organisation de vos événements'

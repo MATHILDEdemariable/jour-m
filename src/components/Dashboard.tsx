@@ -1,11 +1,13 @@
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { Timeline } from '@/components/Timeline';
 import { TaskList } from '@/components/TaskList';
 import { ContactList } from '@/components/ContactList';
 import { DocumentHub } from '@/components/DocumentHub';
 import { ViewToggle } from '@/components/ViewToggle';
+import { LanguageToggle } from '@/components/LanguageToggle';
 
 interface DashboardProps {
   userRole: string;
@@ -13,6 +15,7 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ userRole, userName }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('timeline');
   const [viewMode, setViewMode] = useState<'personal' | 'global'>('personal');
 
@@ -42,7 +45,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ userRole, userName }) => {
             </h1>
             <p className="text-sm text-gray-600">Welcome, {userName}</p>
           </div>
-          <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
+          <div className="flex items-center gap-3">
+            <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
+            <LanguageToggle />
+          </div>
         </div>
       </div>
 

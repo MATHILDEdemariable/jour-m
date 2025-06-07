@@ -13,6 +13,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { AdminLoginForm } from '@/components/admin/AdminLoginForm';
+import { Footer } from '@/components/Footer';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -112,9 +113,7 @@ const Home: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <footer className="bg-stone-50 border-t border-stone-200 p-4 text-center text-stone-500 text-sm">
-        © {new Date().getFullYear()} Event Planner. Tous droits réservés.
-      </footer>
+      <Footer />
 
       {/* Admin Login Modal */}
       <Dialog open={showAdminLogin} onOpenChange={setShowAdminLogin}>

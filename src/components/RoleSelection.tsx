@@ -1,37 +1,32 @@
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { LanguageToggle } from '@/components/LanguageToggle';
+import { useSharedEventData } from '@/hooks/useSharedEventData';
 
 interface RoleSelectionProps {
   onRoleSelect: (role: string, name: string) => void;
 }
 
 const ROLES = [
-  { id: 'bride', label: 'Bride', color: 'bg-pink-100 text-pink-800' },
-  { id: 'groom', label: 'Groom', color: 'bg-blue-100 text-blue-800' },
-  { id: 'wedding-planner', label: 'Wedding Planner', color: 'bg-purple-100 text-purple-800' },
-  { id: 'best-man', label: 'Best Man', color: 'bg-emerald-100 text-emerald-800' },
-  { id: 'maid-of-honor', label: 'Maid of Honor', color: 'bg-rose-100 text-rose-800' },
-  { id: 'photographer', label: 'Photographer', color: 'bg-amber-100 text-amber-800' },
-  { id: 'caterer', label: 'Caterer', color: 'bg-orange-100 text-orange-800' },
-  { id: 'guest', label: 'Guest', color: 'bg-gray-100 text-gray-800' },
+  { id: 'bride', color: 'bg-pink-100 text-pink-800' },
+  { id: 'groom', color: 'bg-blue-100 text-blue-800' },
+  { id: 'wedding-planner', color: 'bg-purple-100 text-purple-800' },
+  { id: 'best-man', color: 'bg-emerald-100 text-emerald-800' },
+  { id: 'maid-of-honor', color: 'bg-rose-100 text-rose-800' },
+  { id: 'photographer', color: 'bg-amber-100 text-amber-800' },
+  { id: 'caterer', color: 'bg-orange-100 text-orange-800' },
+  { id: 'guest', color: 'bg-gray-100 text-gray-800' },
+  { id: 'family', color: 'bg-green-100 text-green-800' },
 ];
 
-const NAMES_BY_ROLE = {
-  'bride': ['Sarah', 'Emma', 'Sophie', 'Marie'],
-  'groom': ['James', 'Michael', 'David', 'Thomas'],
-  'wedding-planner': ['Patricia Wilson', 'Jennifer Events', 'Perfect Day Co.'],
-  'best-man': ['Alex', 'Ryan', 'Chris', 'Mark'],
-  'maid-of-honor': ['Jessica', 'Amanda', 'Lisa', 'Rachel'],
-  'photographer': ['Studio Light', 'Moments Captured', 'Creative Lens'],
-  'caterer': ['Gourmet Catering', 'Delicious Events', 'Fine Dining Co.'],
-  'guest': ['Family Member', 'Friend', 'Plus One'],
-};
-
 export const RoleSelection: React.FC<RoleSelectionProps> = ({ onRoleSelect }) => {
+  const { t } = useTranslation();
+  const { people, loading } = useSharedEventData();
   const [selectedRole, setSelectedRole] = useState<string>('');
   const [selectedName, setSelectedName] = useState<string>('');
 
@@ -46,31 +41,41 @@ export const RoleSelection: React.FC<RoleSelectionProps> = ({ onRoleSelect }) =>
     }
   };
 
+  // Filtrer les personnes par rôle sélectionné
+  const peopleForRole = selectedRole 
+    ? people.filter(person => person.role === selectedRole)
+    : [];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 flex items-center justify-center p-4">
+      {/* Language Toggle */}
+      <div className="absolute top-4 right-4">
+        <LanguageToggle />
+      </div>
+
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center space-y-2">
           <div className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
             Jour J
           </div>
-          <CardTitle className="text-xl">Welcome to your event!</CardTitle>
+          <CardTitle className="text-xl">{t('welcome_to_event')}</CardTitle>
           <CardDescription>
-            Select your role to get started with personalized access
+            {t('select_role_subtitle')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-3">
-            <label className="text-sm font-medium">I am the...</label>
-            <Select value={selectedRole} onValueChange={handleRoleChange}>
+            <label className="text-sm font-medium">{t('i_am')}</label>
+            <Select value={selectedRole} onValueChange={handleRoleChange} disabled={loading}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select your role" />
+                <SelectValue placeholder={t('select_your_role')} />
               </SelectTrigger>
               <SelectContent>
                 {ROLES.map((role) => (
                   <SelectItem key={role.id} value={role.id}>
                     <div className="flex items-center gap-2">
                       <Badge className={role.color} variant="secondary">
-                        {role.label}
+                        {t(role.id)}
                       </Badge>
                     </div>
                   </SelectItem>
@@ -81,17 +86,23 @@ export const RoleSelection: React.FC<RoleSelectionProps> = ({ onRoleSelect }) =>
 
           {selectedRole && (
             <div className="space-y-3 animate-fade-in">
-              <label className="text-sm font-medium">My name is...</label>
-              <Select value={selectedName} onValueChange={setSelectedName}>
+              <label className="text-sm font-medium">{t('my_name_is')}</label>
+              <Select value={selectedName} onValueChange={setSelectedName} disabled={loading}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select your name" />
+                  <SelectValue placeholder={t('select_your_name')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {(NAMES_BY_ROLE[selectedRole as keyof typeof NAMES_BY_ROLE] || []).map((name) => (
-                    <SelectItem key={name} value={name}>
-                      {name}
-                    </SelectItem>
-                  ))}
+                  {peopleForRole.length > 0 ? (
+                    peopleForRole.map((person) => (
+                      <SelectItem key={person.id} value={person.name}>
+                        {person.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-2 text-sm text-gray-500 text-center">
+                      {t('no_people_for_role')}
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -99,15 +110,15 @@ export const RoleSelection: React.FC<RoleSelectionProps> = ({ onRoleSelect }) =>
 
           <Button 
             onClick={handleSubmit}
-            disabled={!selectedRole || !selectedName}
+            disabled={!selectedRole || !selectedName || loading}
             className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
           >
-            Enter Jour J
+            {t('enter_jour_j')}
           </Button>
 
           <div className="text-xs text-center text-gray-500 space-y-1">
-            <p>🔒 Secure & Simple - No passwords required</p>
-            <p>✨ Personalized experience for your role</p>
+            <p>{t('secure_simple')}</p>
+            <p>{t('personalized_experience')}</p>
           </div>
         </CardContent>
       </Card>

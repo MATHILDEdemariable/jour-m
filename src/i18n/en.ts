@@ -48,6 +48,39 @@ export const enTranslation = {
   'medium': 'Medium',
   'low': 'Low',
 
+  // Roles
+  'bride': 'Bride',
+  'groom': 'Groom',
+  'best-man': 'Best Man',
+  'maid-of-honor': 'Maid of Honor',
+  'wedding-planner': 'Wedding Planner',
+  'photographer': 'Photographer',
+  'caterer': 'Caterer',
+  'guest': 'Guest',
+  'family': 'Family',
+
+  // Event Interface
+  'welcome_to_event': 'Welcome to your event!',
+  'select_role_subtitle': 'Select your role to get started with personalized access',
+  'i_am': 'I am the...',
+  'select_your_role': 'Select your role',
+  'my_name_is': 'My name is...',
+  'select_your_name': 'Select your name',
+  'enter_jour_j': 'Enter Jour J',
+  'secure_simple': '🔒 Secure & Simple - No passwords required',
+  'personalized_experience': '✨ Personalized experience for your role',
+  'timeline': 'Timeline',
+  'my_tasks': 'My Tasks',
+  'all_tasks': 'All Tasks',
+  'contacts': 'Contacts',
+  'personal_view': 'Personal View',
+  'global_view': 'Global View',
+  'loading_timeline': 'Loading timeline...',
+  'loading_tasks': 'Loading tasks...',
+  'loading_contacts': 'Loading contacts...',
+  'loading_documents': 'Loading documents...',
+  'no_people_for_role': 'No people assigned to this role',
+
   // Footer
   'admin_access': 'Admin access',
   'simplify_organization': 'Simplify your event organization'
