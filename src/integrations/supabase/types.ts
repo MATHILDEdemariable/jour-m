@@ -66,6 +66,91 @@ export type Database = {
           },
         ]
       }
+      event_configurations: {
+        Row: {
+          auto_backup_enabled: boolean | null
+          created_at: string | null
+          event_id: string | null
+          guest_access_enabled: boolean | null
+          id: string
+          logo_url: string | null
+          notifications_enabled: boolean | null
+          realtime_sync_enabled: boolean | null
+          theme_color: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_backup_enabled?: boolean | null
+          created_at?: string | null
+          event_id?: string | null
+          guest_access_enabled?: boolean | null
+          id?: string
+          logo_url?: string | null
+          notifications_enabled?: boolean | null
+          realtime_sync_enabled?: boolean | null
+          theme_color?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_backup_enabled?: boolean | null
+          created_at?: string | null
+          event_id?: string | null
+          guest_access_enabled?: boolean | null
+          id?: string
+          logo_url?: string | null
+          notifications_enabled?: boolean | null
+          realtime_sync_enabled?: boolean | null
+          theme_color?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_configurations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_roles: {
+        Row: {
+          created_at: string | null
+          event_id: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          role_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          role_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          role_name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_roles_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           created_at: string | null
@@ -78,6 +163,7 @@ export type Database = {
           start_time: string | null
           status: string
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -90,6 +176,7 @@ export type Database = {
           start_time?: string | null
           status?: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -102,6 +189,7 @@ export type Database = {
           start_time?: string | null
           status?: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

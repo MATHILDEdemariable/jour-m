@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,20 +7,71 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, MapPin, Users, Settings } from 'lucide-react';
+import { CalendarIcon, MapPin, Users, Settings, Save } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useEventConfiguration } from '@/hooks/useEventConfiguration';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export const EventConfiguration = () => {
   const [eventDate, setEventDate] = useState<Date>();
-  const [settings, setSettings] = useState({
-    notifications: true,
-    realTimeSync: true,
-    guestAccess: false,
-    autoBackup: true
+  const [eventData, setEventData] = useState({
+    name: 'Mariage Sarah & James',
+    event_type: 'wedding',
+    location: 'Château de Malmaison, 92500 Rueil-Malmaison',
+    description: 'Célébration du mariage de Sarah et James avec leurs proches dans un cadre exceptionnel.',
+    start_time: '14:00'
   });
+  const [loading, setLoading] = useState(false);
+  const [eventId] = useState('default-event-id'); // In a real app, this would come from context or props
+  
+  const { configuration, roles, saveConfiguration, updateRole, addRole } = useEventConfiguration(eventId);
+  const { toast } = useToast();
+
+  const handleSaveEvent = async () => {
+    setLoading(true);
+    try {
+      // Save event details
+      const { error: eventError } = await supabase
+        .from('events')
+        .upsert({
+          id: eventId,
+          name: eventData.name,
+          event_type: eventData.event_type,
+          event_date: eventDate?.toISOString().split('T')[0] || '2024-06-15',
+          start_time: eventData.start_time,
+          location: eventData.location,
+          description: eventData.description,
+          status: 'planning'
+        });
+
+      if (eventError) throw eventError;
+
+      // Save configuration
+      if (configuration) {
+        await saveConfiguration(configuration);
+      }
+
+      toast({
+        title: "Configuration sauvegardée",
+        description: "Tous les paramètres ont été enregistrés avec succès",
+      });
+    } catch (error) {
+      console.error('Error saving:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder la configuration",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRoleToggle = (roleId: string, isActive: boolean) => {
+    updateRole(roleId, { is_active: isActive });
+  };
 
   return (
     <div className="space-y-6">
@@ -33,7 +84,7 @@ export const EventConfiguration = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
+            <CalendarIcon className="w-5 h-5" />
             Détails de l'Événement
           </CardTitle>
           <CardDescription>Informations principales de votre événement</CardDescription>
@@ -42,19 +93,24 @@ export const EventConfiguration = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="event-name">Nom de l'événement</Label>
-              <Input id="event-name" placeholder="Mariage Sarah & James" defaultValue="Mariage Sarah & James" />
+              <Input 
+                id="event-name" 
+                value={eventData.name}
+                onChange={(e) => setEventData({...eventData, name: e.target.value})}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="event-type">Type d'événement</Label>
-              <Select defaultValue="wedding">
+              <Select value={eventData.event_type} onValueChange={(value) => setEventData({...eventData, event_type: value})}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="wedding">Mariage</SelectItem>
+                  <SelectItem value="pacs">PACS</SelectItem>
                   <SelectItem value="birthday">Anniversaire</SelectItem>
                   <SelectItem value="corporate">Événement Corporate</SelectItem>
-                  <SelectItem value="private">Événement Privé</SelectItem>
+                  <SelectItem value="other">Autres</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -63,26 +119,21 @@ export const EventConfiguration = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Date de l'événement</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {eventDate ? format(eventDate, "PPP", { locale: fr }) : "Sélectionner une date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={eventDate}
-                    onSelect={setEventDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <Input
+                type="date"
+                value={eventDate ? format(eventDate, 'yyyy-MM-dd') : '2024-06-15'}
+                onChange={(e) => setEventDate(new Date(e.target.value))}
+                className="w-full"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="event-time">Heure de début</Label>
-              <Input id="event-time" type="time" defaultValue="14:00" />
+              <Input 
+                id="event-time" 
+                type="time" 
+                value={eventData.start_time}
+                onChange={(e) => setEventData({...eventData, start_time: e.target.value})}
+              />
             </div>
           </div>
 
@@ -91,8 +142,8 @@ export const EventConfiguration = () => {
             <div className="flex gap-2">
               <Input 
                 id="event-location" 
-                placeholder="Château de Malmaison, 92500 Rueil-Malmaison" 
-                defaultValue="Château de Malmaison, 92500 Rueil-Malmaison"
+                value={eventData.location}
+                onChange={(e) => setEventData({...eventData, location: e.target.value})}
                 className="flex-1"
               />
               <Button variant="outline">
@@ -105,8 +156,8 @@ export const EventConfiguration = () => {
             <Label htmlFor="event-description">Description</Label>
             <Textarea 
               id="event-description" 
-              placeholder="Description de votre événement"
-              defaultValue="Célébration du mariage de Sarah et James avec leurs proches dans un cadre exceptionnel."
+              value={eventData.description}
+              onChange={(e) => setEventData({...eventData, description: e.target.value})}
             />
           </div>
         </CardContent>
@@ -125,18 +176,18 @@ export const EventConfiguration = () => {
           <div className="space-y-4">
             <div className="text-sm font-medium text-gray-700 mb-3">Rôles actifs :</div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {[
-                'Mariée', 'Marié', 'Témoin', 'Demoiselle d\'honneur',
-                'Wedding Planner', 'Photographe', 'Traiteur', 'Invité'
-              ].map((role) => (
-                <div key={role} className="flex items-center justify-between p-3 border rounded-lg">
-                  <span className="text-sm">{role}</span>
-                  <Switch defaultChecked />
+              {roles.map((role) => (
+                <div key={role.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <span className="text-sm capitalize">{role.role_name.replace('-', ' ')}</span>
+                  <Switch 
+                    checked={role.is_active}
+                    onCheckedChange={(checked) => role.id && handleRoleToggle(role.id, checked)}
+                  />
                 </div>
               ))}
             </div>
             
-            <Button variant="outline" className="w-full mt-4">
+            <Button variant="outline" className="w-full mt-4" onClick={() => addRole('custom-role')}>
               <Users className="w-4 h-4 mr-2" />
               Ajouter un rôle personnalisé
             </Button>
@@ -154,49 +205,53 @@ export const EventConfiguration = () => {
           <CardDescription>Options de fonctionnement de l'application</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-medium">Notifications en temps réel</div>
-              <div className="text-sm text-gray-600">Recevoir des alertes instantanées</div>
-            </div>
-            <Switch 
-              checked={settings.notifications}
-              onCheckedChange={(checked) => setSettings({...settings, notifications: checked})}
-            />
-          </div>
+          {configuration && (
+            <>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Notifications en temps réel</div>
+                  <div className="text-sm text-gray-600">Recevoir des alertes instantanées</div>
+                </div>
+                <Switch 
+                  checked={configuration.notifications_enabled}
+                  onCheckedChange={(checked) => saveConfiguration({notifications_enabled: checked})}
+                />
+              </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-medium">Synchronisation temps réel</div>
-              <div className="text-sm text-gray-600">Mise à jour automatique des données</div>
-            </div>
-            <Switch 
-              checked={settings.realTimeSync}
-              onCheckedChange={(checked) => setSettings({...settings, realTimeSync: checked})}
-            />
-          </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Synchronisation temps réel</div>
+                  <div className="text-sm text-gray-600">Mise à jour automatique des données</div>
+                </div>
+                <Switch 
+                  checked={configuration.realtime_sync_enabled}
+                  onCheckedChange={(checked) => saveConfiguration({realtime_sync_enabled: checked})}
+                />
+              </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-medium">Accès invités</div>
-              <div className="text-sm text-gray-600">Permettre aux invités de voir certaines informations</div>
-            </div>
-            <Switch 
-              checked={settings.guestAccess}
-              onCheckedChange={(checked) => setSettings({...settings, guestAccess: checked})}
-            />
-          </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Accès invités</div>
+                  <div className="text-sm text-gray-600">Permettre aux invités de voir certaines informations</div>
+                </div>
+                <Switch 
+                  checked={configuration.guest_access_enabled}
+                  onCheckedChange={(checked) => saveConfiguration({guest_access_enabled: checked})}
+                />
+              </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-medium">Sauvegarde automatique</div>
-              <div className="text-sm text-gray-600">Backup quotidien des données</div>
-            </div>
-            <Switch 
-              checked={settings.autoBackup}
-              onCheckedChange={(checked) => setSettings({...settings, autoBackup: checked})}
-            />
-          </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Sauvegarde automatique</div>
+                  <div className="text-sm text-gray-600">Backup quotidien des données</div>
+                </div>
+                <Switch 
+                  checked={configuration.auto_backup_enabled}
+                  onCheckedChange={(checked) => saveConfiguration({auto_backup_enabled: checked})}
+                />
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -227,8 +282,13 @@ export const EventConfiguration = () => {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-          Sauvegarder la Configuration
+        <Button 
+          onClick={handleSaveEvent}
+          disabled={loading}
+          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+        >
+          <Save className="w-4 h-4 mr-2" />
+          {loading ? 'Sauvegarde...' : 'Sauvegarder la Configuration'}
         </Button>
       </div>
     </div>

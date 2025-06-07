@@ -193,8 +193,6 @@ export const LogisticsAISuggestions: React.FC<LogisticsAISuggestionsProps> = ({
       priority: suggestion.priority,
       status: suggestion.status
     });
-    
-    onClose();
   };
 
   return (
@@ -274,10 +272,10 @@ export const LogisticsAISuggestions: React.FC<LogisticsAISuggestionsProps> = ({
                   <Button 
                     size="sm" 
                     onClick={() => handleAddSuggestion(suggestion)}
-                    className="bg-sage-600 hover:bg-sage-700 text-white"
+                    className="bg-sage-600 hover:bg-sage-700 text-white flex items-center gap-1"
                   >
-                    <Plus className="w-3 h-3 mr-1" />
-                    Ajouter cette étape
+                    <Plus className="w-3 h-3" />
+                    Ajouter au Planning
                   </Button>
                 </div>
               </CardContent>
