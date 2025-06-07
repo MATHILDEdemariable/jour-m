@@ -7,9 +7,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { CalendarIcon, MapPin, Users, Settings, Save } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon, MapPin, Users, Settings, Save, Plus, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 import { useEventConfiguration } from '@/hooks/useEventConfiguration';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -25,11 +28,33 @@ export const EventConfiguration = () => {
   });
   const [loading, setLoading] = useState(false);
   const [eventId] = useState('default-event-id'); // In a real app, this would come from context or props
+  const [newRoleName, setNewRoleName] = useState('');
+  const [isAddingRole, setIsAddingRole] = useState(false);
   
   const { configuration, roles, saveConfiguration, updateRole, addRole } = useEventConfiguration(eventId);
   const { toast } = useToast();
 
-  const handleSaveEvent = async () => {
+  // Auto-save function with debounce
+  const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  const handleAutoSave = (field: string, value: any) => {
+    if (autoSaveTimeout) {
+      clearTimeout(autoSaveTimeout);
+    }
+    
+    const timeout = setTimeout(() => {
+      handleSaveEvent(true);
+    }, 1000); // Auto-save après 1 seconde d'inactivité
+    
+    setAutoSaveTimeout(timeout);
+  };
+
+  const handleEventDataChange = (field: string, value: string) => {
+    setEventData(prev => ({ ...prev, [field]: value }));
+    handleAutoSave(field, value);
+  };
+
+  const handleSaveEvent = async (isAutoSave = false) => {
     setLoading(true);
     try {
       // Save event details
@@ -53,10 +78,12 @@ export const EventConfiguration = () => {
         await saveConfiguration(configuration);
       }
 
-      toast({
-        title: "Configuration sauvegardée",
-        description: "Tous les paramètres ont été enregistrés avec succès",
-      });
+      if (!isAutoSave) {
+        toast({
+          title: "Configuration sauvegardée",
+          description: "Tous les paramètres ont été enregistrés avec succès",
+        });
+      }
     } catch (error) {
       console.error('Error saving:', error);
       toast({
@@ -72,6 +99,30 @@ export const EventConfiguration = () => {
   const handleRoleToggle = (roleId: string, isActive: boolean) => {
     updateRole(roleId, { is_active: isActive });
   };
+
+  const handleAddCustomRole = async () => {
+    if (newRoleName.trim()) {
+      await addRole(newRoleName.trim());
+      setNewRoleName('');
+      setIsAddingRole(false);
+    }
+  };
+
+  const eventTypes = [
+    { value: 'wedding', label: 'Mariage' },
+    { value: 'pacs', label: 'PACS' },
+    { value: 'birthday', label: 'Anniversaire' },
+    { value: 'corporate', label: 'Événement Corporate' },
+    { value: 'other', label: 'Autres' }
+  ];
+
+  const themeColors = [
+    { color: '#9333ea', name: 'Violet' },
+    { color: '#ec4899', name: 'Rose' },
+    { color: '#3b82f6', name: 'Bleu' },
+    { color: '#10b981', name: 'Vert' },
+    { color: '#f59e0b', name: 'Orange' }
+  ];
 
   return (
     <div className="space-y-6">
@@ -96,21 +147,24 @@ export const EventConfiguration = () => {
               <Input 
                 id="event-name" 
                 value={eventData.name}
-                onChange={(e) => setEventData({...eventData, name: e.target.value})}
+                onChange={(e) => handleEventDataChange('name', e.target.value)}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="event-type">Type d'événement</Label>
-              <Select value={eventData.event_type} onValueChange={(value) => setEventData({...eventData, event_type: value})}>
+              <Select 
+                value={eventData.event_type} 
+                onValueChange={(value) => handleEventDataChange('event_type', value)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="wedding">Mariage</SelectItem>
-                  <SelectItem value="pacs">PACS</SelectItem>
-                  <SelectItem value="birthday">Anniversaire</SelectItem>
-                  <SelectItem value="corporate">Événement Corporate</SelectItem>
-                  <SelectItem value="other">Autres</SelectItem>
+                  {eventTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -119,12 +173,32 @@ export const EventConfiguration = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Date de l'événement</Label>
-              <Input
-                type="date"
-                value={eventDate ? format(eventDate, 'yyyy-MM-dd') : '2024-06-15'}
-                onChange={(e) => setEventDate(new Date(e.target.value))}
-                className="w-full"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !eventDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {eventDate ? format(eventDate, "PPP", { locale: fr }) : "Sélectionner une date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={eventDate}
+                    onSelect={(date) => {
+                      setEventDate(date);
+                      if (date) handleAutoSave('event_date', date);
+                    }}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-2">
               <Label htmlFor="event-time">Heure de début</Label>
@@ -132,7 +206,7 @@ export const EventConfiguration = () => {
                 id="event-time" 
                 type="time" 
                 value={eventData.start_time}
-                onChange={(e) => setEventData({...eventData, start_time: e.target.value})}
+                onChange={(e) => handleEventDataChange('start_time', e.target.value)}
               />
             </div>
           </div>
@@ -143,7 +217,7 @@ export const EventConfiguration = () => {
               <Input 
                 id="event-location" 
                 value={eventData.location}
-                onChange={(e) => setEventData({...eventData, location: e.target.value})}
+                onChange={(e) => handleEventDataChange('location', e.target.value)}
                 className="flex-1"
               />
               <Button variant="outline">
@@ -157,7 +231,7 @@ export const EventConfiguration = () => {
             <Textarea 
               id="event-description" 
               value={eventData.description}
-              onChange={(e) => setEventData({...eventData, description: e.target.value})}
+              onChange={(e) => handleEventDataChange('description', e.target.value)}
             />
           </div>
         </CardContent>
@@ -187,10 +261,39 @@ export const EventConfiguration = () => {
               ))}
             </div>
             
-            <Button variant="outline" className="w-full mt-4" onClick={() => addRole('custom-role')}>
-              <Users className="w-4 h-4 mr-2" />
-              Ajouter un rôle personnalisé
-            </Button>
+            {/* Add Custom Role */}
+            {isAddingRole ? (
+              <div className="flex gap-2 items-center">
+                <Input
+                  placeholder="Nom du rôle personnalisé"
+                  value={newRoleName}
+                  onChange={(e) => setNewRoleName(e.target.value)}
+                  className="flex-1"
+                />
+                <Button onClick={handleAddCustomRole} size="sm">
+                  <Plus className="w-4 h-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setIsAddingRole(false);
+                    setNewRoleName('');
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button 
+                variant="outline" 
+                className="w-full mt-4" 
+                onClick={() => setIsAddingRole(true)}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Ajouter un rôle personnalisé
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -265,11 +368,20 @@ export const EventConfiguration = () => {
           <div className="space-y-2">
             <Label>Couleur principale</Label>
             <div className="flex gap-2">
-              <div className="w-10 h-10 bg-purple-500 rounded-lg border-2 border-purple-600"></div>
-              <div className="w-10 h-10 bg-pink-500 rounded-lg border"></div>
-              <div className="w-10 h-10 bg-blue-500 rounded-lg border"></div>
-              <div className="w-10 h-10 bg-green-500 rounded-lg border"></div>
-              <div className="w-10 h-10 bg-amber-500 rounded-lg border"></div>
+              {themeColors.map((theme) => (
+                <button
+                  key={theme.color}
+                  className={cn(
+                    "w-10 h-10 rounded-lg border-2 transition-all",
+                    configuration?.theme_color === theme.color 
+                      ? "border-gray-800 scale-110" 
+                      : "border-gray-300 hover:scale-105"
+                  )}
+                  style={{ backgroundColor: theme.color }}
+                  onClick={() => saveConfiguration({ theme_color: theme.color })}
+                  title={theme.name}
+                />
+              ))}
             </div>
           </div>
 
@@ -281,14 +393,17 @@ export const EventConfiguration = () => {
       </Card>
 
       {/* Save Button */}
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center">
+        <div className="text-sm text-gray-500">
+          Sauvegarde automatique activée
+        </div>
         <Button 
-          onClick={handleSaveEvent}
+          onClick={() => handleSaveEvent(false)}
           disabled={loading}
           className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
         >
           <Save className="w-4 h-4 mr-2" />
-          {loading ? 'Sauvegarde...' : 'Sauvegarder la Configuration'}
+          {loading ? 'Sauvegarde...' : 'Sauvegarder Maintenant'}
         </Button>
       </div>
     </div>
