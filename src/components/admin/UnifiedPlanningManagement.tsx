@@ -18,6 +18,8 @@ export const UnifiedPlanningManagement = () => {
   const [isAISuggestionsOpen, setIsAISuggestionsOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<TimelineItem | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [draggedOverIndex, setDraggedOverIndex] = useState<number | null>(null);
+  const [previewItems, setPreviewItems] = useState<TimelineItem[] | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -69,6 +71,38 @@ export const UnifiedPlanningManagement = () => {
     if (!personId) return null;
     const person = people.find(p => p.id === personId);
     return person?.name || null;
+  };
+
+  // Calculate preview times for drag and drop
+  const calculatePreviewTimes = (items: TimelineItem[], draggedIndex: number, dropIndex: number) => {
+    const newItems = [...items];
+    const [draggedItem] = newItems.splice(draggedIndex, 1);
+    newItems.splice(dropIndex, 0, draggedItem);
+
+    // Recalculate times starting from the first item
+    let currentTime = newItems.length > 0 ? newItems[0].time : '08:00';
+    
+    return newItems.map((item, index) => {
+      if (index === 0) {
+        // First item keeps its original time
+        const endTime = calculateEndTime(currentTime, item.duration);
+        return {
+          ...item,
+          time: currentTime,
+          calculatedEndTime: endTime
+        };
+      } else {
+        // Subsequent items start when previous item ends
+        const startTime = calculateEndTime(currentTime, newItems[index - 1].duration);
+        const endTime = calculateEndTime(startTime, item.duration);
+        currentTime = startTime;
+        return {
+          ...item,
+          time: startTime,
+          calculatedEndTime: endTime
+        };
+      }
+    });
   };
 
   const handleEditItem = (item: TimelineItem) => {
@@ -125,18 +159,54 @@ export const UnifiedPlanningManagement = () => {
 
   const handleDragStart = (index: number) => {
     setDraggedIndex(index);
+    setPreviewItems(null);
   };
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDraggedOverIndex(index);
+      // Calculate preview times
+      const preview = calculatePreviewTimes(timelineItems, draggedIndex, index);
+      setPreviewItems(preview);
+    }
   };
 
-  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+  const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
     if (draggedIndex !== null && draggedIndex !== dropIndex) {
-      reorderItems(draggedIndex, dropIndex);
+      try {
+        await reorderItems(draggedIndex, dropIndex);
+        toast({
+          title: 'Succès',
+          description: 'Ordre des étapes mis à jour avec recalcul automatique',
+        });
+      } catch (error) {
+        console.error('Error reordering items:', error);
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de réorganiser les étapes',
+          variant: 'destructive',
+        });
+      }
     }
+    handleDragEnd();
+  };
+
+  const handleDragEnd = () => {
     setDraggedIndex(null);
+    setDraggedOverIndex(null);
+    setPreviewItems(null);
+  };
+
+  const getPreviewTimesForItem = (item: TimelineItem, index: number) => {
+    if (!previewItems) return null;
+    const previewItem = previewItems.find(p => p.id === item.id);
+    if (!previewItem) return null;
+    return {
+      startTime: previewItem.time,
+      endTime: previewItem.calculatedEndTime
+    };
   };
 
   const filteredItems = timelineItems.filter(item => {
@@ -173,7 +243,7 @@ export const UnifiedPlanningManagement = () => {
               variant={viewMode === 'timeline' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('timeline')}
-              className={viewMode === 'timeline' ? 'bg-purple-600 text-white' : 'text-stone-600'}
+              className={viewMode === 'timeline' ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'text-stone-600'}
             >
               Timeline
             </Button>
@@ -181,7 +251,7 @@ export const UnifiedPlanningManagement = () => {
               variant={viewMode === 'calendar' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('calendar')}
-              className={viewMode === 'calendar' ? 'bg-purple-600 text-white' : 'text-stone-600'}
+              className={viewMode === 'calendar' ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'text-stone-600'}
             >
               Calendrier
             </Button>
@@ -289,7 +359,7 @@ export const UnifiedPlanningManagement = () => {
               <div className="flex items-center gap-3">
                 <Button 
                   onClick={() => setIsAISuggestionsOpen(true)}
-                  className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
                   Ajouter Étape/Tâche - Suggestions
@@ -332,9 +402,12 @@ export const UnifiedPlanningManagement = () => {
                     getPersonName={getPersonName}
                     getStatusLabel={getStatusLabel}
                     isDragging={draggedIndex === index}
+                    draggedOverIndex={draggedOverIndex}
+                    previewTimes={getPreviewTimesForItem(item, index)}
                     onDragStart={handleDragStart}
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
+                    onDragEnd={handleDragEnd}
                   />
                 ))}
               </div>

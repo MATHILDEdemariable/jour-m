@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -173,21 +172,40 @@ export const useTimelineItems = () => {
     const [removed] = newItems.splice(fromIndex, 1);
     newItems.splice(toIndex, 0, removed);
 
-    // Update order_index for all affected items
-    const updates = newItems.map((item, index) => ({
-      id: item.id,
-      order_index: index,
-    }));
+    // Recalculate times for all items starting from the first one
+    let currentTime = newItems.length > 0 ? newItems[0].time : '08:00';
+    
+    const updatedItems = newItems.map((item, index) => {
+      if (index === 0) {
+        // First item keeps its original time or 08:00 if no items
+        return { ...item, order_index: index };
+      } else {
+        // Calculate start time based on previous item's end time
+        const prevItem = newItems[index - 1];
+        const startTime = calculateEndTime(currentTime, prevItem.duration);
+        currentTime = startTime;
+        return { ...item, time: startTime, order_index: index };
+      }
+    });
 
     try {
-      for (const update of updates) {
+      // Update all items in the database with new order and times
+      for (const item of updatedItems) {
         await supabase
           .from('timeline_items')
-          .update({ order_index: update.order_index })
-          .eq('id', update.id);
+          .update({ 
+            order_index: item.order_index,
+            time: item.time
+          })
+          .eq('id', item.id);
       }
       
-      setTimelineItems(newItems);
+      setTimelineItems(updatedItems);
+      
+      toast({
+        title: 'Succès',
+        description: 'Timeline réorganisée avec recalcul automatique des horaires',
+      });
     } catch (error) {
       console.error('Error reordering items:', error);
       toast({
@@ -199,7 +217,9 @@ export const useTimelineItems = () => {
   };
 
   const calculateEndTime = (startTime: string, duration: number) => {
-    const [hours, minutes] = startTime.split(':').map(Number);
+    // Remove seconds if present and parse time
+    const timeWithoutSeconds = startTime.substring(0, 5);
+    const [hours, minutes] = timeWithoutSeconds.split(':').map(Number);
     const totalMinutes = hours * 60 + minutes + duration;
     const endHours = Math.floor(totalMinutes / 60);
     const endMins = totalMinutes % 60;
