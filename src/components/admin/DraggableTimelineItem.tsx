@@ -54,59 +54,34 @@ export const DraggableTimelineItem: React.FC<DraggableTimelineItemProps> = ({
       <CardContent className="p-4">
         <div className="flex items-start gap-4">
           {/* Drag Handle */}
-          <div className="flex flex-col items-center cursor-move">
+          <div className="flex flex-col items-center cursor-move pt-2">
             <GripVertical className="w-5 h-5 text-stone-400" />
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm mt-2">
-              {item.time}
-            </div>
           </div>
           
           <div className="flex-1">
-            {/* Header */}
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <h4 className="font-semibold text-stone-800">{item.title}</h4>
-                <Badge className={categoryColors[item.category] || categoryColors["Préparation"]}>
-                  {item.category}
-                </Badge>
-                <Badge className={statusColors[item.status]}>
-                  {getStatusLabel(item.status)}
-                </Badge>
-                {item.priority === 'high' && (
-                  <Badge variant="destructive" className="text-xs">
-                    🔴 Urgent
-                  </Badge>
-                )}
-              </div>
-              <Badge variant="outline" className="text-xs border-purple-200 text-purple-700">
-                {item.time} - {endTime}
-              </Badge>
-            </div>
-            
-            {/* Description */}
-            {item.description && (
-              <p className="text-sm text-stone-600 mb-3">{item.description}</p>
-            )}
-            
-            {/* Details */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4 text-xs text-stone-500">
-                <div className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {formatDuration(item.duration)}
+            {/* Header avec horaires en priorité */}
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                {/* Horaires en gros et priorité */}
+                <div className="text-2xl font-bold text-purple-700 mb-1">
+                  {item.time} - {endTime}
                 </div>
-                {personName && (
-                  <div className="flex items-center gap-1">
-                    <Users className="w-3 h-3" />
-                    <span>{personName}</span>
-                  </div>
-                )}
-                {item.assigned_role && !personName && (
-                  <div className="flex items-center gap-1">
-                    <Users className="w-3 h-3" />
-                    <span>{item.assigned_role.replace('-', ' ')}</span>
-                  </div>
-                )}
+                
+                {/* Titre et badges */}
+                <div className="flex items-center gap-2 mb-2">
+                  <h4 className="font-semibold text-stone-800 text-lg">{item.title}</h4>
+                  <Badge className={categoryColors[item.category] || categoryColors["Préparation"]}>
+                    {item.category}
+                  </Badge>
+                  <Badge className={statusColors[item.status]}>
+                    {getStatusLabel(item.status)}
+                  </Badge>
+                  {item.priority === 'high' && (
+                    <Badge variant="destructive" className="text-xs">
+                      🔴 Urgent
+                    </Badge>
+                  )}
+                </div>
               </div>
               
               {/* Actions */}
@@ -148,6 +123,33 @@ export const DraggableTimelineItem: React.FC<DraggableTimelineItemProps> = ({
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
+              </div>
+            </div>
+            
+            {/* Description */}
+            {item.description && (
+              <p className="text-sm text-stone-600 mb-3">{item.description}</p>
+            )}
+            
+            {/* Details */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4 text-xs text-stone-500">
+                <div className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {formatDuration(item.duration)}
+                </div>
+                {personName && (
+                  <div className="flex items-center gap-1">
+                    <Users className="w-3 h-3" />
+                    <span>{personName}</span>
+                  </div>
+                )}
+                {item.assigned_role && !personName && (
+                  <div className="flex items-center gap-1">
+                    <Users className="w-3 h-3" />
+                    <span>{item.assigned_role.replace('-', ' ')}</span>
+                  </div>
+                )}
               </div>
             </div>
 

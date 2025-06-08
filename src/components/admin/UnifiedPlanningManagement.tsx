@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,12 +8,14 @@ import { useTimelineItems, TimelineItem } from '@/hooks/useTimelineItems';
 import { useEvents } from '@/hooks/useEvents';
 import { usePeople } from '@/hooks/usePeople';
 import { TimelineItemModal } from './TimelineItemModal';
+import { TimelineAISuggestions } from './TimelineAISuggestions';
 import { DraggableTimelineItem } from './DraggableTimelineItem';
 import { useToast } from '@/hooks/use-toast';
 
 export const UnifiedPlanningManagement = () => {
   const [viewMode, setViewMode] = useState<'timeline' | 'calendar'>('timeline');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAISuggestionsOpen, setIsAISuggestionsOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<TimelineItem | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -99,6 +100,26 @@ export const UnifiedPlanningManagement = () => {
       setEditingItem(null);
     } catch (error) {
       console.error('Error saving timeline item:', error);
+    }
+  };
+
+  const handleAddAISuggestion = async (suggestion: Omit<TimelineItem, 'id' | 'event_id' | 'created_at' | 'updated_at'>) => {
+    try {
+      await addTimelineItem({
+        ...suggestion,
+        order_index: timelineItems.length
+      });
+      toast({
+        title: 'Succès',
+        description: 'Étape IA ajoutée avec succès',
+      });
+    } catch (error) {
+      console.error('Error adding AI suggestion:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible d\'ajouter la suggestion IA',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -265,13 +286,23 @@ export const UnifiedPlanningManagement = () => {
                   Glissez-déposez pour réorganiser • Les horaires se recalculent automatiquement
                 </CardDescription>
               </div>
-              <Button 
-                onClick={handleCreateItem}
-                className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Ajouter Étape/Tâche
-              </Button>
+              <div className="flex items-center gap-3">
+                <Button 
+                  onClick={() => setIsAISuggestionsOpen(true)}
+                  className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Ajouter Étape/Tâche - Suggestions
+                </Button>
+                <Button 
+                  onClick={handleCreateItem}
+                  variant="outline"
+                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Ajout Manuel
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -320,6 +351,12 @@ export const UnifiedPlanningManagement = () => {
         }}
         onSubmit={handleSubmitItem}
         item={editingItem}
+      />
+
+      <TimelineAISuggestions
+        isOpen={isAISuggestionsOpen}
+        onClose={() => setIsAISuggestionsOpen(false)}
+        onAddSuggestion={handleAddAISuggestion}
       />
     </div>
   );
