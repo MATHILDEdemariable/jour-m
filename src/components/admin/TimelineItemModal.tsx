@@ -70,7 +70,7 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
     e.preventDefault();
     onSubmit({
       ...formData,
-      assigned_person_id: formData.assigned_person_id || null,
+      assigned_person_id: formData.assigned_person_id === 'none' ? null : formData.assigned_person_id || null,
       assigned_role: formData.assigned_role || null,
       description: formData.description || null,
       notes: formData.notes || null
@@ -186,12 +186,15 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
             </div>
             <div>
               <Label htmlFor="assigned_person">Personne assignée</Label>
-              <Select value={formData.assigned_person_id} onValueChange={(value) => setFormData(prev => ({ ...prev, assigned_person_id: value }))}>
+              <Select 
+                value={formData.assigned_person_id || 'none'} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, assigned_person_id: value === 'none' ? '' : value }))}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner une personne" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Aucune assignation</SelectItem>
+                  <SelectItem value="none">Aucune assignation</SelectItem>
                   {people.map(person => (
                     <SelectItem key={person.id} value={person.id}>
                       {person.name} {person.role && `(${person.role})`}
