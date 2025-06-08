@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, Download, Search, Filter, Clock4, Sparkles, Plus, Users } from 'lucide-react';
+import { Calendar, Clock, Download, Search, Filter, Clock4, Sparkles, Plus, Users, Star } from 'lucide-react';
 import { useTimelineItems, TimelineItem } from '@/hooks/useTimelineItems';
 import { useEvents } from '@/hooks/useEvents';
 import { usePeople } from '@/hooks/usePeople';
@@ -87,9 +88,9 @@ export const UnifiedPlanningManagement = () => {
         // First item keeps its original time
         const endTime = calculateEndTime(currentTime, item.duration);
         return {
-          ...item,
-          time: currentTime,
-          calculatedEndTime: endTime
+          startTime: currentTime,
+          endTime: endTime,
+          itemId: item.id
         };
       } else {
         // Subsequent items start when previous item ends
@@ -97,9 +98,9 @@ export const UnifiedPlanningManagement = () => {
         const endTime = calculateEndTime(startTime, item.duration);
         currentTime = startTime;
         return {
-          ...item,
-          time: startTime,
-          calculatedEndTime: endTime
+          startTime: startTime,
+          endTime: endTime,
+          itemId: item.id
         };
       }
     });
@@ -201,11 +202,11 @@ export const UnifiedPlanningManagement = () => {
 
   const getPreviewTimesForItem = (item: TimelineItem, index: number) => {
     if (!previewItems) return null;
-    const previewItem = previewItems.find(p => p.id === item.id);
+    const previewItem = previewItems.find(p => p.itemId === item.id);
     if (!previewItem) return null;
     return {
-      startTime: previewItem.time,
-      endTime: previewItem.calculatedEndTime
+      startTime: previewItem.startTime,
+      endTime: previewItem.endTime
     };
   };
 
@@ -361,7 +362,7 @@ export const UnifiedPlanningManagement = () => {
                   onClick={() => setIsAISuggestionsOpen(true)}
                   className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
                 >
-                  <Sparkles className="w-4 h-4 mr-2" />
+                  <Star className="w-4 h-4 mr-2" />
                   Ajouter Étape/Tâche - Suggestions
                 </Button>
                 <Button 
