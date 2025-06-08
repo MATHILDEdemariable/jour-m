@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,13 @@ import { TimelineAISuggestions } from './TimelineAISuggestions';
 import { DraggableTimelineItem } from './DraggableTimelineItem';
 import { useToast } from '@/hooks/use-toast';
 
+// Type for preview times during drag and drop
+interface PreviewTime {
+  startTime: string;
+  endTime: string;
+  itemId: string;
+}
+
 export const UnifiedPlanningManagement = () => {
   const [viewMode, setViewMode] = useState<'timeline' | 'calendar'>('timeline');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,7 +26,7 @@ export const UnifiedPlanningManagement = () => {
   const [editingItem, setEditingItem] = useState<TimelineItem | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [draggedOverIndex, setDraggedOverIndex] = useState<number | null>(null);
-  const [previewItems, setPreviewItems] = useState<TimelineItem[] | null>(null);
+  const [previewItems, setPreviewItems] = useState<PreviewTime[] | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -75,7 +81,7 @@ export const UnifiedPlanningManagement = () => {
   };
 
   // Calculate preview times for drag and drop
-  const calculatePreviewTimes = (items: TimelineItem[], draggedIndex: number, dropIndex: number) => {
+  const calculatePreviewTimes = (items: TimelineItem[], draggedIndex: number, dropIndex: number): PreviewTime[] => {
     const newItems = [...items];
     const [draggedItem] = newItems.splice(draggedIndex, 1);
     newItems.splice(dropIndex, 0, draggedItem);
