@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
-import { TaskManagement } from '@/components/admin/TaskManagement';
-import { PlanningManagement } from '@/components/admin/PlanningManagement';
+import { UnifiedPlanningManagement } from '@/components/admin/UnifiedPlanningManagement';
 import { PeopleManagement } from '@/components/admin/PeopleManagement';
 import { VendorManagement } from '@/components/admin/VendorManagement';
 import { DocumentManagement } from '@/components/admin/DocumentManagement';
@@ -72,18 +71,14 @@ export const AdminPortal = () => {
           {/* Navigation Tabs */}
           <div className="bg-white border-b">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-7 h-auto p-1">
+              <TabsList className="grid w-full grid-cols-6 h-auto p-1">
                 <TabsTrigger value="dashboard" className="flex flex-col py-3">
                   <span className="text-xs">📊</span>
                   <span className="text-xs">{t('dashboard')}</span>
                 </TabsTrigger>
-                <TabsTrigger value="tasks" className="flex flex-col py-3">
-                  <span className="text-xs">📋</span>
-                  <span className="text-xs">{t('tasks')}</span>
-                </TabsTrigger>
                 <TabsTrigger value="planning" className="flex flex-col py-3">
                   <span className="text-xs">⏰</span>
-                  <span className="text-xs">{t('planning')}</span>
+                  <span className="text-xs">Planning & Tâches</span>
                 </TabsTrigger>
                 <TabsTrigger value="people" className="flex flex-col py-3">
                   <span className="text-xs">👥</span>
@@ -107,11 +102,8 @@ export const AdminPortal = () => {
                 <TabsContent value="dashboard">
                   <AdminDashboard />
                 </TabsContent>
-                <TabsContent value="tasks">
-                  <TaskManagement />
-                </TabsContent>
                 <TabsContent value="planning">
-                  <PlanningManagement />
+                  <UnifiedPlanningManagement />
                 </TabsContent>
                 <TabsContent value="people">
                   <PeopleManagement />

@@ -11,6 +11,7 @@ export interface EventDocument {
   file_size: number | null;
   mime_type: string | null;
   source: string;
+  assigned_to: string[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -67,7 +68,8 @@ export const useEventDocuments = (eventId: string | null) => {
             file_path: filePath,
             file_size: file.size,
             mime_type: file.type,
-            source: 'manual'
+            source: 'manual',
+            assigned_to: []
           })
           .select()
           .single();
@@ -100,6 +102,35 @@ export const useEventDocuments = (eventId: string | null) => {
       console.error('Error during batch upload:', error);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const updateDocumentAssignment = async (documentId: string, assignedTo: string[]) => {
+    try {
+      const { data, error } = await supabase
+        .from('event_documents')
+        .update({ assigned_to: assignedTo })
+        .eq('id', documentId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setDocuments(prev => prev.map(doc => 
+        doc.id === documentId ? { ...doc, assigned_to: assignedTo } : doc
+      ));
+      
+      toast({
+        title: 'Succès',
+        description: 'Assignation mise à jour',
+      });
+    } catch (error) {
+      console.error('Error updating document assignment:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de mettre à jour l\'assignation',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -153,6 +184,7 @@ export const useEventDocuments = (eventId: string | null) => {
     documents,
     uploading,
     uploadDocuments,
+    updateDocumentAssignment,
     deleteDocument,
     getDocumentUrl,
     loadDocuments

@@ -133,6 +133,7 @@ export type Database = {
       }
       event_documents: {
         Row: {
+          assigned_to: string[] | null
           created_at: string | null
           event_id: string
           file_path: string
@@ -144,6 +145,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          assigned_to?: string[] | null
           created_at?: string | null
           event_id: string
           file_path: string
@@ -155,6 +157,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          assigned_to?: string[] | null
           created_at?: string | null
           event_id?: string
           file_path?: string
@@ -533,6 +536,75 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timeline_items: {
+        Row: {
+          assigned_person_id: string | null
+          assigned_role: string | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          duration: number
+          event_id: string
+          id: string
+          notes: string | null
+          order_index: number
+          priority: string | null
+          status: string | null
+          time: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_person_id?: string | null
+          assigned_role?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration?: number
+          event_id: string
+          id?: string
+          notes?: string | null
+          order_index?: number
+          priority?: string | null
+          status?: string | null
+          time?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_person_id?: string | null
+          assigned_role?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration?: number
+          event_id?: string
+          id?: string
+          notes?: string | null
+          order_index?: number
+          priority?: string | null
+          status?: string | null
+          time?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timeline_items_assigned_person_id_fkey"
+            columns: ["assigned_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timeline_items_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
         ]

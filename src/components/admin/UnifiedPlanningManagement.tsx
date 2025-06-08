@@ -1,0 +1,326 @@
+
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Clock, Download, Search, Filter, Clock4, Sparkles, Plus, Users } from 'lucide-react';
+import { useTimelineItems, TimelineItem } from '@/hooks/useTimelineItems';
+import { useEvents } from '@/hooks/useEvents';
+import { usePeople } from '@/hooks/usePeople';
+import { TimelineItemModal } from './TimelineItemModal';
+import { DraggableTimelineItem } from './DraggableTimelineItem';
+import { useToast } from '@/hooks/use-toast';
+
+export const UnifiedPlanningManagement = () => {
+  const [viewMode, setViewMode] = useState<'timeline' | 'calendar'>('timeline');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<TimelineItem | null>(null);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  
+  const { 
+    timelineItems, 
+    addTimelineItem,
+    deleteTimelineItem,
+    updateTimelineItem, 
+    reorderItems,
+    calculateEndTime,
+    getTotalDuration,
+    getEndTime,
+    loading
+  } = useTimelineItems();
+  
+  const { currentEvent } = useEvents();
+  const { people } = usePeople();
+  const { toast } = useToast();
+
+  const categoryColors = {
+    "Préparation": "bg-blue-100 text-blue-800 border-blue-200",
+    "Logistique": "bg-purple-100 text-purple-800 border-purple-200",
+    "Cérémonie": "bg-pink-100 text-pink-800 border-pink-200",
+    "Photos": "bg-green-100 text-green-800 border-green-200",
+    "Réception": "bg-orange-100 text-orange-800 border-orange-200"
+  };
+
+  const statusColors = {
+    "scheduled": "bg-gray-100 text-gray-800",
+    "in_progress": "bg-blue-100 text-blue-800", 
+    "completed": "bg-green-100 text-green-800",
+    "delayed": "bg-red-100 text-red-800"
+  };
+
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return hours > 0 ? `${hours}h${mins > 0 ? mins : ''}` : `${mins}min`;
+  };
+
+  const formatTotalDuration = (totalMinutes: number) => {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${hours}h${minutes > 0 ? minutes : ''}`;
+  };
+
+  const getPersonName = (personId: string | null) => {
+    if (!personId) return null;
+    const person = people.find(p => p.id === personId);
+    return person?.name || null;
+  };
+
+  const handleEditItem = (item: TimelineItem) => {
+    setEditingItem(item);
+    setIsModalOpen(true);
+  };
+
+  const handleCreateItem = () => {
+    setEditingItem(null);
+    setIsModalOpen(true);
+  };
+
+  const handleSubmitItem = async (data: Partial<TimelineItem>) => {
+    try {
+      if (editingItem) {
+        await updateTimelineItem(editingItem.id, data);
+      } else {
+        await addTimelineItem({
+          ...data,
+          duration: data.duration || 60,
+          category: data.category || 'Préparation',
+          status: 'scheduled',
+          time: data.time || '08:00',
+          order_index: timelineItems.length,
+          priority: data.priority || 'medium'
+        } as Omit<TimelineItem, 'id' | 'event_id' | 'created_at' | 'updated_at'>);
+      }
+      setIsModalOpen(false);
+      setEditingItem(null);
+    } catch (error) {
+      console.error('Error saving timeline item:', error);
+    }
+  };
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex !== null && draggedIndex !== dropIndex) {
+      reorderItems(draggedIndex, dropIndex);
+    }
+    setDraggedIndex(null);
+  };
+
+  const filteredItems = timelineItems.filter(item => {
+    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesCategory = filterCategory === 'all' || item.category === filterCategory;
+    const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+
+  const categories = ['all', ...Array.from(new Set(timelineItems.map(item => item.category)))];
+  const statuses = ['all', 'scheduled', 'in_progress', 'completed', 'delayed'];
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'scheduled': return '📅 Planifié';
+      case 'in_progress': return '🔄 En cours';
+      case 'completed': return '✅ Terminé';
+      case 'delayed': return '⚠️ Retardé';
+      default: return status;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-stone-900">Planning & Tâches Unifié</h2>
+          <p className="text-stone-600">Timeline interactive avec tâches et horaires calculés automatiquement</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex bg-stone-100 rounded-lg p-1">
+            <Button
+              variant={viewMode === 'timeline' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('timeline')}
+              className={viewMode === 'timeline' ? 'bg-purple-600 text-white' : 'text-stone-600'}
+            >
+              Timeline
+            </Button>
+            <Button
+              variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('calendar')}
+              className={viewMode === 'calendar' ? 'bg-purple-600 text-white' : 'text-stone-600'}
+            >
+              Calendrier
+            </Button>
+          </div>
+          <Button variant="outline" className="border-stone-300 text-stone-700 hover:bg-stone-50">
+            <Download className="w-4 h-4 mr-2" />
+            Exporter
+          </Button>
+        </div>
+      </div>
+
+      {/* Event Summary dynamique */}
+      <Card className="border-stone-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-stone-800">
+            <Calendar className="w-5 h-5 text-purple-600" />
+            Événement: {currentEvent?.name || 'Événement'}
+          </CardTitle>
+          <CardDescription className="text-stone-600">
+            {currentEvent?.event_type} • {currentEvent?.event_date && new Date(currentEvent.event_date).toLocaleDateString('fr-FR')} • {currentEvent?.location}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="text-2xl font-bold text-purple-700">{timelineItems.length}</div>
+              <div className="text-sm text-stone-600">Étapes totales</div>
+            </div>
+            <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="text-2xl font-bold text-blue-700">{formatTotalDuration(getTotalDuration())}</div>
+              <div className="text-sm text-stone-600">Durée totale</div>
+            </div>
+            <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+              <div className="text-2xl font-bold text-green-700">
+                {timelineItems.length > 0 ? `08:00 - ${getEndTime()}` : '08:00 - 08:00'}
+              </div>
+              <div className="text-sm text-stone-600">Horaires prévisionnels</div>
+            </div>
+            <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
+              <div className="text-2xl font-bold text-orange-700">
+                {timelineItems.filter(item => item.status === 'completed').length}
+              </div>
+              <div className="text-sm text-stone-600">Tâches terminées</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Filtres et recherche */}
+      <Card className="border-stone-200">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-stone-400 w-4 h-4" />
+              <Input
+                placeholder="Rechercher une étape ou tâche..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 border-stone-300 focus:border-purple-500"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Filter className="text-stone-500 w-4 h-4" />
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="px-3 py-2 border border-stone-300 rounded-md focus:border-purple-500 focus:outline-none bg-white text-stone-700"
+              >
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>
+                    {cat === 'all' ? 'Toutes catégories' : cat}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-3 py-2 border border-stone-300 rounded-md focus:border-purple-500 focus:outline-none bg-white text-stone-700"
+              >
+                {statuses.map(status => (
+                  <option key={status} value={status}>
+                    {status === 'all' ? 'Tous statuts' : getStatusLabel(status)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Timeline View */}
+      {viewMode === 'timeline' && (
+        <Card className="border-stone-200">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-stone-800 flex items-center gap-2">
+                  <Clock4 className="w-5 h-5 text-purple-600" />
+                  Planning & Tâches - Horaires Dynamiques
+                </CardTitle>
+                <CardDescription className="text-stone-600">
+                  Glissez-déposez pour réorganiser • Les horaires se recalculent automatiquement
+                </CardDescription>
+              </div>
+              <Button 
+                onClick={handleCreateItem}
+                className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Ajouter Étape/Tâche
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="text-center py-12 text-stone-500">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                <p>Chargement...</p>
+              </div>
+            ) : filteredItems.length === 0 ? (
+              <div className="text-center py-12 text-stone-500">
+                <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>Aucune étape trouvée. Ajoutez une nouvelle étape ou modifiez vos filtres.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredItems.map((item, index) => (
+                  <DraggableTimelineItem
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    onEdit={handleEditItem}
+                    onDelete={deleteTimelineItem}
+                    categoryColors={categoryColors}
+                    statusColors={statusColors}
+                    formatDuration={formatDuration}
+                    calculateEndTime={calculateEndTime}
+                    getPersonName={getPersonName}
+                    getStatusLabel={getStatusLabel}
+                    isDragging={draggedIndex === index}
+                    onDragStart={handleDragStart}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                  />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <TimelineItemModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingItem(null);
+        }}
+        onSubmit={handleSubmitItem}
+        item={editingItem}
+      />
+    </div>
+  );
+};
