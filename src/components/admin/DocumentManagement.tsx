@@ -296,7 +296,7 @@ export const DocumentManagement = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        const link = document.createElement('a');
+                        const link = window.document.createElement('a');
                         link.href = getDocumentUrl(document.file_path);
                         link.download = document.name;
                         link.click();

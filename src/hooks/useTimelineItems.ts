@@ -22,6 +22,34 @@ export interface TimelineItem {
   updated_at: string;
 }
 
+// Type helper pour mapper les données Supabase vers notre interface
+type SupabaseTimelineItem = {
+  id: string;
+  event_id: string;
+  title: string;
+  description: string | null;
+  time: string;
+  duration: number;
+  category: string | null;
+  status: string | null;
+  priority: string | null;
+  assigned_person_id: string | null;
+  assigned_role: string | null;
+  order_index: number;
+  notes: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
+const mapSupabaseToTimelineItem = (item: SupabaseTimelineItem): TimelineItem => ({
+  ...item,
+  category: item.category || 'Préparation',
+  status: (item.status as TimelineItem['status']) || 'scheduled',
+  priority: (item.priority as TimelineItem['priority']) || 'medium',
+  created_at: item.created_at || new Date().toISOString(),
+  updated_at: item.updated_at || new Date().toISOString(),
+});
+
 export const useTimelineItems = () => {
   const { toast } = useToast();
   const { currentEventId } = useCurrentEvent();
@@ -40,7 +68,9 @@ export const useTimelineItems = () => {
         .order('order_index', { ascending: true });
 
       if (error) throw error;
-      setTimelineItems(data || []);
+      
+      const mappedData = data ? data.map(mapSupabaseToTimelineItem) : [];
+      setTimelineItems(mappedData);
     } catch (error) {
       console.error('Error loading timeline items:', error);
       toast({
@@ -68,7 +98,8 @@ export const useTimelineItems = () => {
 
       if (error) throw error;
       
-      setTimelineItems(prev => [...prev, data]);
+      const mappedData = mapSupabaseToTimelineItem(data);
+      setTimelineItems(prev => [...prev, mappedData]);
       toast({
         title: 'Succès',
         description: 'Élément ajouté à la timeline',
@@ -94,8 +125,9 @@ export const useTimelineItems = () => {
 
       if (error) throw error;
       
+      const mappedData = mapSupabaseToTimelineItem(data);
       setTimelineItems(prev => prev.map(item => 
-        item.id === id ? { ...item, ...data } : item
+        item.id === id ? { ...item, ...mappedData } : item
       ));
       
       toast({
