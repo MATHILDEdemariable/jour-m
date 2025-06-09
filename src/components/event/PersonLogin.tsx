@@ -20,23 +20,23 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
   const { people, vendors, loading, refreshData } = useSharedEventData();
   const { currentEventId } = useCurrentEvent();
 
-  // Debug logs détaillés pour diagnostiquer la synchronisation
-  console.log('=== PersonLogin Debug - Synchronisation des données ===');
+  // Debug logs pour diagnostiquer la synchronisation
+  console.log('=== PersonLogin Debug - Post Migration ===');
   console.log('Current Event ID:', currentEventId);
   console.log('Loading state:', loading);
-  console.log('Raw people data from useSharedEventData:', people);
-  console.log('Raw vendors data from useSharedEventData:', vendors);
+  console.log('Raw people data:', people);
+  console.log('Raw vendors data:', vendors);
 
   // Filtrage avec logs détaillés
   const confirmedPeople = people.filter(p => {
     const isConfirmed = p.confirmation_status === 'confirmed';
-    console.log(`Person ${p.name} - status: ${p.confirmation_status}, included: ${isConfirmed}`);
+    console.log(`Person ${p.name} - event_id: ${p.event_id}, status: ${p.confirmation_status}, included: ${isConfirmed}`);
     return isConfirmed;
   });
 
   const confirmedVendors = vendors.filter(v => {
     const isSigned = v.contract_status === 'signed';
-    console.log(`Vendor ${v.name} - status: ${v.contract_status}, included: ${isSigned}`);
+    console.log(`Vendor ${v.name} - event_id: ${v.event_id}, status: ${v.contract_status}, included: ${isSigned}`);
     return isSigned;
   });
 
@@ -70,6 +70,7 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
 
   const currentList = selectedUserType === 'person' ? confirmedPeople : confirmedVendors;
   const hasData = confirmedPeople.length > 0 || confirmedVendors.length > 0;
+  const hasAnyData = people.length > 0 || vendors.length > 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center p-4">
@@ -134,21 +135,30 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
               className="text-purple-600 border-purple-200 hover:bg-purple-50"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              {loading ? 'Chargement...' : 'Actualiser'}
+              {loading ? 'Synchronisation...' : 'Actualiser'}
             </Button>
           </div>
 
-          {/* État de chargement ou erreur */}
+          {/* État de chargement ou données */}
           {loading ? (
             <div className="text-center py-4">
               <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-purple-600" />
               <p className="text-purple-600">Synchronisation avec l'Admin Portal...</p>
             </div>
+          ) : !hasAnyData ? (
+            <div className="text-center py-4 bg-red-50 rounded-lg border border-red-200">
+              <AlertCircle className="w-6 h-6 mx-auto mb-2 text-red-600" />
+              <p className="text-red-700 font-medium">Aucune donnée trouvée</p>
+              <p className="text-red-600 text-sm">Vérifiez votre connexion et les données dans l'Admin Portal</p>
+            </div>
           ) : !hasData ? (
             <div className="text-center py-4 bg-orange-50 rounded-lg border border-orange-200">
               <AlertCircle className="w-6 h-6 mx-auto mb-2 text-orange-600" />
               <p className="text-orange-700 font-medium">Aucun participant confirmé</p>
-              <p className="text-orange-600 text-sm">Vérifiez que des personnes sont confirmées dans l'Admin Portal</p>
+              <p className="text-orange-600 text-sm">
+                {people.length > 0 && `${people.length} personnes en attente de confirmation`}
+                {vendors.length > 0 && ` • ${vendors.length} prestataires en cours`}
+              </p>
             </div>
           ) : (
             <>
@@ -201,10 +211,16 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
             <div className="text-center">
               <div className="text-lg font-bold text-purple-600">{confirmedPeople.length}</div>
               <div className="text-xs text-gray-600">Membres confirmés</div>
+              {people.length > confirmedPeople.length && (
+                <div className="text-xs text-orange-600">+{people.length - confirmedPeople.length} en attente</div>
+              )}
             </div>
             <div className="text-center">
               <div className="text-lg font-bold text-pink-600">{confirmedVendors.length}</div>
               <div className="text-xs text-gray-600">Prestataires signés</div>
+              {vendors.length > confirmedVendors.length && (
+                <div className="text-xs text-orange-600">+{vendors.length - confirmedVendors.length} en cours</div>
+              )}
             </div>
           </div>
 
@@ -218,6 +234,8 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
                 <div>Confirmed People: {confirmedPeople.length}</div>
                 <div>Total Vendors: {vendors.length}</div>
                 <div>Signed Vendors: {confirmedVendors.length}</div>
+                <div>People with event_id: {people.filter(p => p.event_id === currentEventId).length}</div>
+                <div>Vendors with event_id: {vendors.filter(v => v.event_id === currentEventId).length}</div>
               </div>
             </details>
           )}
