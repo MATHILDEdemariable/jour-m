@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Settings } from 'lucide-react';
+import { Calendar, Settings, Clock } from 'lucide-react';
 import { useSharedEventData } from '@/hooks/useSharedEventData';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,12 +25,32 @@ const ROLE_LABELS = {
 };
 
 export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole }) => {
-  const { planningItems, loading } = useSharedEventData();
+  const { timelineItems, loading } = useSharedEventData();
   const navigate = useNavigate();
 
   const filteredItems = viewMode === 'personal' 
-    ? planningItems.filter(item => item.assignedTo.includes(userRole))
-    : planningItems;
+    ? timelineItems.filter(item => 
+        item.assigned_person_id || item.assigned_role === userRole
+      )
+    : timelineItems;
+
+  const calculateEndTime = (startTime: string, duration: number): string => {
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const totalMinutes = hours * 60 + minutes + duration;
+    const endHours = Math.floor(totalMinutes / 60);
+    const endMins = totalMinutes % 60;
+    return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
+  };
+
+  const formatTime = (timeString: string) => {
+    return timeString.substring(0, 5);
+  };
+
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return hours > 0 ? `${hours}h${mins > 0 ? mins : ''}` : `${mins}min`;
+  };
 
   if (loading) {
     return (
@@ -47,7 +67,7 @@ export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole }) => {
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">
-          {viewMode === 'personal' ? 'Mon Planning' : 'Planning Complet'}
+          {viewMode === 'personal' ? 'Mon Planning' : 'Planning de l\'événement'}
         </h2>
         <Badge variant="secondary" className="text-xs">
           {filteredItems.length} étapes
@@ -76,48 +96,50 @@ export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole }) => {
       ) : (
         <div className="space-y-3">
           {filteredItems.map((item) => {
-            const isMyTask = item.assignedTo.includes(userRole);
-            const endTime = calculateEndTime(item.time, item.duration);
+            const startTime = formatTime(item.time);
+            const endTime = formatTime(calculateEndTime(item.time, item.duration));
             
             return (
               <Card 
                 key={item.id} 
-                className={`border-l-4 ${isMyTask ? 'border-l-purple-500' : 'border-l-gray-300'} transition-all hover:shadow-md bg-white/90 backdrop-blur-sm border border-gray-200 shadow-sm`}
+                className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-sm hover:shadow-md transition-all"
               >
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-bold text-purple-600">{item.time}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {item.time} - {endTime}
-                      </Badge>
-                    </div>
-                    <Badge variant="outline" className="text-xs border-purple-200 text-purple-700">
-                      {Math.floor(item.duration / 60)}h{item.duration % 60 > 0 ? item.duration % 60 : ''}
-                    </Badge>
-                  </div>
-                  <CardTitle className="text-base">{item.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <p className="text-sm text-gray-600 mb-3">{item.description}</p>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500">Assigné à:</span>
-                      <div className="flex gap-1">
-                        {item.assignedTo.slice(0, 3).map(role => (
-                          <Badge key={role} variant="outline" className="text-xs">
-                            {ROLE_LABELS[role as keyof typeof ROLE_LABELS] || role.replace('-', ' ')}
+                    <div className="flex items-center gap-3">
+                      <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg p-3 text-white">
+                        <Clock className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-lg font-bold text-purple-600">{startTime}</span>
+                          <Badge variant="outline" className="text-xs border-purple-200 text-purple-700">
+                            {startTime} - {endTime}
                           </Badge>
-                        ))}
-                        {item.assignedTo.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{item.assignedTo.length - 3}
-                          </Badge>
-                        )}
+                        </div>
+                        <CardTitle className="text-base">{item.title}</CardTitle>
                       </div>
                     </div>
+                    <Badge variant="outline" className="text-xs border-purple-200 text-purple-700">
+                      {formatDuration(item.duration)}
+                    </Badge>
                   </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  {item.description && (
+                    <p className="text-sm text-gray-600 mb-3">{item.description}</p>
+                  )}
+                  
+                  {item.assigned_person_id && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500">Assigné à:</span>
+                        <Badge variant="outline" className="text-xs">
+                          Personne assignée
+                        </Badge>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );
@@ -126,12 +148,4 @@ export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole }) => {
       )}
     </div>
   );
-};
-
-const calculateEndTime = (startTime: string, duration: number): string => {
-  const [hours, minutes] = startTime.split(':').map(Number);
-  const totalMinutes = hours * 60 + minutes + duration;
-  const endHours = Math.floor(totalMinutes / 60);
-  const endMins = totalMinutes % 60;
-  return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
 };
