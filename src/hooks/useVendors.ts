@@ -14,6 +14,7 @@ export interface Vendor {
   website: string | null;
   notes: string | null;
   contract_status: string | null;
+  event_id: string | null;
   created_at: string;
   updated_at: string;
 }
