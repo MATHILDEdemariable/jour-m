@@ -13,6 +13,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { AdminLoginForm } from '@/components/admin/AdminLoginForm';
+import { EventPortalSelectionModal } from '@/components/event/EventPortalSelectionModal';
 import { Footer } from '@/components/Footer';
 
 const Home: React.FC = () => {
@@ -20,6 +21,7 @@ const Home: React.FC = () => {
   const { toast } = useToast();
   const { isAuthenticated, login, logout } = useAdminAuth();
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [showEventPortalSelection, setShowEventPortalSelection] = useState(false);
 
   const handleLogin = async (password: string) => {
     const success = await login(password);
@@ -55,6 +57,10 @@ const Home: React.FC = () => {
     }
   };
 
+  const handleEventPortalAccess = () => {
+    setShowEventPortalSelection(true);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-sage-50 to-yellow-50 flex flex-col">
       {/* Hero Section */}
@@ -70,7 +76,7 @@ const Home: React.FC = () => {
           {/* Boutons d'action */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
             <Button
-              onClick={() => navigate('/event-portal')}
+              onClick={handleEventPortalAccess}
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center gap-2"
               size="lg"
             >
@@ -118,6 +124,12 @@ const Home: React.FC = () => {
           <AdminLoginForm onSubmit={handleLogin} />
         </DialogContent>
       </Dialog>
+
+      {/* Event Portal Selection Modal */}
+      <EventPortalSelectionModal
+        open={showEventPortalSelection}
+        onOpenChange={setShowEventPortalSelection}
+      />
     </div>
   );
 };

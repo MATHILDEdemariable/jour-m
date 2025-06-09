@@ -1,6 +1,5 @@
-
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, RefreshCw, Settings, LogOut } from 'lucide-react';
 import { useSharedEventData } from '@/hooks/useSharedEventData';
@@ -11,6 +10,8 @@ import { ContactsTab } from '@/components/event/ContactsTab';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useCurrentEvent } from '@/contexts/CurrentEventContext';
+import { usePeople } from '@/hooks/usePeople';
+import { useVendors } from '@/hooks/useVendors';
 
 interface LoggedUser {
   id: string;
@@ -20,9 +21,12 @@ interface LoggedUser {
 
 const EventPortal = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const { loading, refreshData, getDaysUntilEvent } = useSharedEventData();
   const { currentEventId } = useCurrentEvent();
+  const { people, loadPeople } = usePeople();
+  const { vendors, loadVendors } = useVendors();
   const [loggedInUser, setLoggedInUser] = useState<LoggedUser | null>(null);
   const [activeTab, setActiveTab] = useState('planning');
   const [viewMode, setViewMode] = useState<'personal' | 'global'>('personal');
@@ -30,21 +34,50 @@ const EventPortal = () => {
   const daysUntilEvent = getDaysUntilEvent();
 
   useEffect(() => {
-    // Rafraîchir les données au montage et vérifier si un utilisateur est déjà connecté
     console.log('EventPortal - Initializing with event ID:', currentEventId);
     refreshData();
+    loadPeople();
+    loadVendors();
+  }, [currentEventId]);
+
+  useEffect(() => {
+    // Check URL parameters for automatic login after data is loaded
+    const userType = searchParams.get('user_type') as 'person' | 'vendor' | null;
+    const userId = searchParams.get('user_id');
     
-    // Vérifier le localStorage pour une session existante
-    const savedUser = localStorage.getItem('eventPortalUser');
-    if (savedUser) {
-      try {
-        setLoggedInUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.error('Error parsing saved user:', error);
-        localStorage.removeItem('eventPortalUser');
+    if (userType && userId && (people.length > 0 || vendors.length > 0)) {
+      let userData: { id: string; name: string; type: 'person' | 'vendor' } | null = null;
+      
+      if (userType === 'person') {
+        const person = people.find(p => p.id === userId);
+        if (person) {
+          userData = { id: person.id, name: person.name, type: 'person' };
+        }
+      } else if (userType === 'vendor') {
+        const vendor = vendors.find(v => v.id === userId);
+        if (vendor) {
+          userData = { id: vendor.id, name: vendor.name, type: 'vendor' };
+        }
+      }
+      
+      if (userData) {
+        setLoggedInUser(userData);
+        localStorage.setItem('eventPortalUser', JSON.stringify(userData));
+        console.log('Auto-logged in user from URL params:', userData);
+      }
+    } else if (!userType && !userId) {
+      // Check localStorage for existing session if no URL params
+      const savedUser = localStorage.getItem('eventPortalUser');
+      if (savedUser) {
+        try {
+          setLoggedInUser(JSON.parse(savedUser));
+        } catch (error) {
+          console.error('Error parsing saved user:', error);
+          localStorage.removeItem('eventPortalUser');
+        }
       }
     }
-  }, [currentEventId]);
+  }, [searchParams, people, vendors]);
 
   // Force refresh when switching tabs to ensure synchronization
   useEffect(() => {
@@ -55,16 +88,17 @@ const EventPortal = () => {
   const handleLogin = (userId: string, userName: string, userType: 'person' | 'vendor') => {
     const user = { id: userId, name: userName, type: userType };
     setLoggedInUser(user);
-    // Sauvegarder dans le localStorage pour persister la session
     localStorage.setItem('eventPortalUser', JSON.stringify(user));
     console.log('User logged in:', user);
-    // Refresh data after login
     refreshData();
   };
 
   const handleLogout = () => {
     setLoggedInUser(null);
     localStorage.removeItem('eventPortalUser');
+    
+    // Clear URL parameters and redirect to home
+    navigate('/', { replace: true });
     console.log('User logged out');
   };
 
