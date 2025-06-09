@@ -6,14 +6,24 @@ import { ArrowLeft, RefreshCw, Settings, LogOut } from 'lucide-react';
 import { useSharedEventData } from '@/hooks/useSharedEventData';
 import { PersonLogin } from '@/components/event/PersonLogin';
 import { PersonalDashboard } from '@/components/event/PersonalDashboard';
-import { PersonalPlanningTimeline } from '@/components/event/PersonalPlanningTimeline';
-import { PersonalTasksList } from '@/components/event/PersonalTasksList';
+import { UnifiedPersonalPlanning } from '@/components/event/UnifiedPersonalPlanning';
 import { PersonalDocuments } from '@/components/event/PersonalDocuments';
+import { ContactsTab } from '@/components/event/ContactsTab';
+import { BottomNavigation } from '@/components/BottomNavigation';
+import { useIsMobile } from '@/hooks/use-mobile';
+
+interface LoggedUser {
+  id: string;
+  name: string;
+  type: 'person' | 'vendor';
+}
 
 const EventPortal = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { loading, refreshData, getDaysUntilEvent } = useSharedEventData();
-  const [loggedInPerson, setLoggedInPerson] = useState<{ id: string; name: string } | null>(null);
+  const [loggedInUser, setLoggedInUser] = useState<LoggedUser | null>(null);
+  const [activeTab, setActiveTab] = useState('planning');
   
   const daysUntilEvent = getDaysUntilEvent();
 
@@ -22,10 +32,10 @@ const EventPortal = () => {
     refreshData();
     
     // Vérifier le localStorage pour une session existante
-    const savedPerson = localStorage.getItem('eventPortalUser');
-    if (savedPerson) {
+    const savedUser = localStorage.getItem('eventPortalUser');
+    if (savedUser) {
       try {
-        setLoggedInPerson(JSON.parse(savedPerson));
+        setLoggedInUser(JSON.parse(savedUser));
       } catch (error) {
         console.error('Error parsing saved user:', error);
         localStorage.removeItem('eventPortalUser');
@@ -33,22 +43,51 @@ const EventPortal = () => {
     }
   }, []);
 
-  const handleLogin = (personId: string, personName: string) => {
-    const person = { id: personId, name: personName };
-    setLoggedInPerson(person);
+  const handleLogin = (userId: string, userName: string, userType: 'person' | 'vendor') => {
+    const user = { id: userId, name: userName, type: userType };
+    setLoggedInUser(user);
     // Sauvegarder dans le localStorage pour persister la session
-    localStorage.setItem('eventPortalUser', JSON.stringify(person));
+    localStorage.setItem('eventPortalUser', JSON.stringify(user));
   };
 
   const handleLogout = () => {
-    setLoggedInPerson(null);
+    setLoggedInUser(null);
     localStorage.removeItem('eventPortalUser');
   };
 
   // Si pas encore connecté, afficher l'écran de connexion
-  if (!loggedInPerson) {
+  if (!loggedInUser) {
     return <PersonLogin onLogin={handleLogin} />;
   }
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'planning':
+        return (
+          <UnifiedPersonalPlanning 
+            userId={loggedInUser.id} 
+            userName={loggedInUser.name}
+            userType={loggedInUser.type}
+          />
+        );
+      case 'contacts':
+        return (
+          <ContactsTab 
+            userId={loggedInUser.id}
+            userType={loggedInUser.type}
+          />
+        );
+      case 'documents':
+        return (
+          <PersonalDocuments 
+            personId={loggedInUser.id} 
+            personName={loggedInUser.name} 
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
@@ -66,8 +105,8 @@ const EventPortal = () => {
                 Retour à l'accueil
               </Button>
               <div className="h-6 w-px bg-purple-200" />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Event Portal - {loggedInPerson.name}
+              <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Event Portal - {loggedInUser.name}
               </h1>
             </div>
             
@@ -83,7 +122,7 @@ const EventPortal = () => {
                 className="border-purple-200 text-purple-700 hover:bg-purple-50"
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Actualiser
+                {!isMobile && 'Actualiser'}
               </Button>
               <Button
                 variant="outline"
@@ -92,22 +131,24 @@ const EventPortal = () => {
                 className="border-red-200 text-red-700 hover:bg-red-50"
               >
                 <LogOut className="w-4 h-4 mr-2" />
-                Déconnexion
+                {!isMobile && 'Déconnexion'}
               </Button>
-              <Button
-                onClick={() => navigate('/admin')}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Admin
-              </Button>
+              {!isMobile && (
+                <Button
+                  onClick={() => navigate('/admin')}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Admin
+                </Button>
+              )}
             </div>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-8 pb-20 lg:pb-8">
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -116,26 +157,53 @@ const EventPortal = () => {
             </div>
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* Personal Dashboard */}
-            <PersonalDashboard personId={loggedInPerson.id} personName={loggedInPerson.name} />
+            <PersonalDashboard 
+              personId={loggedInUser.id} 
+              personName={loggedInUser.name} 
+            />
             
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Left Column */}
-              <div className="space-y-6">
-                <PersonalPlanningTimeline personId={loggedInPerson.id} personName={loggedInPerson.name} />
-                <PersonalDocuments personId={loggedInPerson.id} personName={loggedInPerson.name} />
+            {/* Desktop Tabs */}
+            {!isMobile && (
+              <div className="flex gap-2 border-b border-gray-200">
+                <Button
+                  variant={activeTab === 'planning' ? 'default' : 'ghost'}
+                  onClick={() => setActiveTab('planning')}
+                  className={activeTab === 'planning' ? 'bg-gradient-to-r from-purple-600 to-pink-600' : ''}
+                >
+                  📅 Mon Planning
+                </Button>
+                <Button
+                  variant={activeTab === 'contacts' ? 'default' : 'ghost'}
+                  onClick={() => setActiveTab('contacts')}
+                  className={activeTab === 'contacts' ? 'bg-gradient-to-r from-purple-600 to-pink-600' : ''}
+                >
+                  👥 Contacts
+                </Button>
+                <Button
+                  variant={activeTab === 'documents' ? 'default' : 'ghost'}
+                  onClick={() => setActiveTab('documents')}
+                  className={activeTab === 'documents' ? 'bg-gradient-to-r from-purple-600 to-pink-600' : ''}
+                >
+                  📁 Mes Fichiers
+                </Button>
               </div>
-              
-              {/* Right Column */}
-              <div className="space-y-6">
-                <PersonalTasksList personId={loggedInPerson.id} personName={loggedInPerson.name} />
-              </div>
-            </div>
+            )}
+            
+            {/* Tab Content */}
+            {renderTabContent()}
           </div>
         )}
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      {isMobile && (
+        <BottomNavigation 
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+      )}
     </div>
   );
 };
