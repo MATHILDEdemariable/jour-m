@@ -27,13 +27,13 @@ export const useSharedEventData = () => {
   console.log('Timeline items from useTimelineItems:', timelineItems);
   console.log('Loading state:', loading);
 
-  // Strict filtering par event_id pour toutes les données
+  // Strict filtering par event_id pour toutes les données - SANS FILTRE DE STATUT
   const eventFilteredTasks = tasks.filter(task => task.event_id === currentEventId);
   const eventFilteredPeople = people.filter(person => person.event_id === currentEventId);
   const eventFilteredVendors = vendors.filter(vendor => vendor.event_id === currentEventId);
   const eventFilteredPlanningItems = planningItems.filter(item => item.event_id === currentEventId);
 
-  console.log('useSharedEventData - Event filtered data:');
+  console.log('useSharedEventData - Event filtered data (no status filters):');
   console.log('Filtered tasks:', eventFilteredTasks);
   console.log('Filtered people:', eventFilteredPeople);
   console.log('Filtered vendors:', eventFilteredVendors);
@@ -50,21 +50,22 @@ export const useSharedEventData = () => {
     return eventFilteredPlanningItems.slice(0, 3); // Prochaines 3 étapes
   };
 
+  // Suppression des filtres de statut dans les résumés
   const getTeamSummary = () => {
-    const confirmed = eventFilteredPeople.filter(p => p.confirmation_status === 'confirmed').length;
-    const pending = eventFilteredPeople.filter(p => p.confirmation_status === 'pending').length;
     const total = eventFilteredPeople.length;
+    const confirmed = eventFilteredPeople.filter(p => p.confirmation_status === 'confirmed').length;
+    const pending = total - confirmed;
     
-    console.log('Team summary:', { confirmed, pending, total });
+    console.log('Team summary (no status filtering for access):', { total, confirmed, pending });
     return { confirmed, pending, total };
   };
 
   const getVendorsSummary = () => {
-    const confirmed = eventFilteredVendors.filter(v => v.contract_status === 'signed').length;
-    const pending = eventFilteredVendors.filter(v => v.contract_status === 'quote').length;
     const total = eventFilteredVendors.length;
+    const confirmed = eventFilteredVendors.filter(v => v.contract_status === 'signed').length;
+    const pending = total - confirmed;
     
-    console.log('Vendors summary:', { confirmed, pending, total });
+    console.log('Vendors summary (no status filtering for access):', { total, confirmed, pending });
     return { confirmed, pending, total };
   };
 
@@ -142,12 +143,12 @@ export const useSharedEventData = () => {
   };
 
   return {
-    // Données filtrées par event_id - pour garantir la cohérence avec l'Admin Portal
+    // Données filtrées par event_id UNIQUEMENT - accès pour tous les participants
     tasks: eventFilteredTasks,
     planningItems: eventFilteredPlanningItems,
     timelineItems: timelineItems.filter(item => item.event_id === currentEventId),
-    people: eventFilteredPeople,
-    vendors: eventFilteredVendors,
+    people: eventFilteredPeople, // TOUS les participants de l'événement
+    vendors: eventFilteredVendors, // TOUS les prestataires de l'événement
     loading,
     
     // Actions

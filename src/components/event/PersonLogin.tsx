@@ -21,40 +21,24 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
   const { currentEventId } = useCurrentEvent();
 
   // Debug logs pour diagnostiquer la synchronisation
-  console.log('=== PersonLogin Debug - Post Migration ===');
+  console.log('=== PersonLogin Debug - Accès Simplifié ===');
   console.log('Current Event ID:', currentEventId);
   console.log('Loading state:', loading);
-  console.log('Raw people data:', people);
-  console.log('Raw vendors data:', vendors);
-
-  // Filtrage avec logs détaillés
-  const confirmedPeople = people.filter(p => {
-    const isConfirmed = p.confirmation_status === 'confirmed';
-    console.log(`Person ${p.name} - event_id: ${p.event_id}, status: ${p.confirmation_status}, included: ${isConfirmed}`);
-    return isConfirmed;
-  });
-
-  const confirmedVendors = vendors.filter(v => {
-    const isSigned = v.contract_status === 'signed';
-    console.log(`Vendor ${v.name} - event_id: ${v.event_id}, status: ${v.contract_status}, included: ${isSigned}`);
-    return isSigned;
-  });
-
-  console.log('Filtered confirmed people:', confirmedPeople);
-  console.log('Filtered confirmed vendors:', confirmedVendors);
+  console.log('All people for this event:', people);
+  console.log('All vendors for this event:', vendors);
   console.log('=== End PersonLogin Debug ===');
 
   const handleLogin = () => {
     if (!selectedUserId) return;
 
     if (selectedUserType === 'person') {
-      const person = confirmedPeople.find(p => p.id === selectedUserId);
+      const person = people.find(p => p.id === selectedUserId);
       if (person) {
         console.log('Logging in person:', person);
         onLogin(person.id, person.name, 'person');
       }
     } else {
-      const vendor = confirmedVendors.find(v => v.id === selectedUserId);
+      const vendor = vendors.find(v => v.id === selectedUserId);
       if (vendor) {
         console.log('Logging in vendor:', vendor);
         onLogin(vendor.id, vendor.name, 'vendor');
@@ -68,9 +52,8 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
     setSelectedUserId(''); // Reset selection after refresh
   };
 
-  const currentList = selectedUserType === 'person' ? confirmedPeople : confirmedVendors;
-  const hasData = confirmedPeople.length > 0 || confirmedVendors.length > 0;
-  const hasAnyData = people.length > 0 || vendors.length > 0;
+  const currentList = selectedUserType === 'person' ? people : vendors;
+  const hasData = people.length > 0 || vendors.length > 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center p-4">
@@ -145,20 +128,11 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
               <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-purple-600" />
               <p className="text-purple-600">Synchronisation avec l'Admin Portal...</p>
             </div>
-          ) : !hasAnyData ? (
+          ) : !hasData ? (
             <div className="text-center py-4 bg-red-50 rounded-lg border border-red-200">
               <AlertCircle className="w-6 h-6 mx-auto mb-2 text-red-600" />
-              <p className="text-red-700 font-medium">Aucune donnée trouvée</p>
-              <p className="text-red-600 text-sm">Vérifiez votre connexion et les données dans l'Admin Portal</p>
-            </div>
-          ) : !hasData ? (
-            <div className="text-center py-4 bg-orange-50 rounded-lg border border-orange-200">
-              <AlertCircle className="w-6 h-6 mx-auto mb-2 text-orange-600" />
-              <p className="text-orange-700 font-medium">Aucun participant confirmé</p>
-              <p className="text-orange-600 text-sm">
-                {people.length > 0 && `${people.length} personnes en attente de confirmation`}
-                {vendors.length > 0 && ` • ${vendors.length} prestataires en cours`}
-              </p>
+              <p className="text-red-700 font-medium">Aucun participant trouvé</p>
+              <p className="text-red-600 text-sm">Ajoutez des participants dans l'Admin Portal</p>
             </div>
           ) : (
             <>
@@ -174,7 +148,7 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
                   <SelectContent className="bg-white border border-gray-200 shadow-lg z-50 max-h-60 overflow-y-auto">
                     {currentList.length === 0 ? (
                       <div className="p-4 text-center text-gray-500">
-                        Aucun {selectedUserType === 'person' ? 'membre confirmé' : 'prestataire signé'} trouvé
+                        Aucun {selectedUserType === 'person' ? 'membre' : 'prestataire'} trouvé
                       </div>
                     ) : (
                       currentList.map((user) => (
@@ -206,21 +180,15 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
             </>
           )}
 
-          {/* Stats Preview */}
+          {/* Stats Preview - Simplifié */}
           <div className="grid grid-cols-2 gap-3 mt-6 p-4 bg-gray-50 rounded-lg">
             <div className="text-center">
-              <div className="text-lg font-bold text-purple-600">{confirmedPeople.length}</div>
-              <div className="text-xs text-gray-600">Membres confirmés</div>
-              {people.length > confirmedPeople.length && (
-                <div className="text-xs text-orange-600">+{people.length - confirmedPeople.length} en attente</div>
-              )}
+              <div className="text-lg font-bold text-purple-600">{people.length}</div>
+              <div className="text-xs text-gray-600">Membres</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold text-pink-600">{confirmedVendors.length}</div>
-              <div className="text-xs text-gray-600">Prestataires signés</div>
-              {vendors.length > confirmedVendors.length && (
-                <div className="text-xs text-orange-600">+{vendors.length - confirmedVendors.length} en cours</div>
-              )}
+              <div className="text-lg font-bold text-pink-600">{vendors.length}</div>
+              <div className="text-xs text-gray-600">Prestataires</div>
             </div>
           </div>
 
@@ -231,9 +199,7 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
               <div className="mt-2 space-y-1">
                 <div>Event ID: {currentEventId}</div>
                 <div>Total People: {people.length}</div>
-                <div>Confirmed People: {confirmedPeople.length}</div>
                 <div>Total Vendors: {vendors.length}</div>
-                <div>Signed Vendors: {confirmedVendors.length}</div>
                 <div>People with event_id: {people.filter(p => p.event_id === currentEventId).length}</div>
                 <div>Vendors with event_id: {vendors.filter(v => v.event_id === currentEventId).length}</div>
               </div>
