@@ -39,9 +39,17 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
   viewMode,
   onViewModeChange
 }) => {
-  const { tasks, people } = useSharedEventData();
+  const { tasks, people, loading } = useSharedEventData();
   const { timelineItems } = useTimelineItems();
   const toggleTaskStatus = useToggleTaskStatus();
+
+  // Debugging: Log real data to verify consistency
+  console.log('Event Portal - Debugging data consistency:');
+  console.log('Tasks from useSharedEventData:', tasks);
+  console.log('Timeline items from useTimelineItems:', timelineItems);
+  console.log('Current user ID:', userId);
+  console.log('Current user type:', userType);
+  console.log('View mode:', viewMode);
 
   // Filtrer selon le mode de vue
   const filteredTimelineItems = viewMode === 'personal' 
@@ -64,13 +72,17 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
       })
     : tasks;
 
+  // Debug filtered data
+  console.log('Filtered timeline items:', filteredTimelineItems);
+  console.log('Filtered tasks:', filteredTasks);
+
   // Helper pour obtenir le nom de la personne assignée
   const getAssignedPersonName = (personId: string) => {
     const person = people.find(p => p.id === personId);
     return person ? person.name : 'Non assigné';
   };
 
-  // Combiner timeline et tâches en un tableau unifié
+  // Combiner timeline et tâches en un tableau unifié - UNIQUEMENT avec les vraies données de l'API
   const unifiedItems: UnifiedPlanningItem[] = [
     ...filteredTimelineItems.map(item => ({
       id: item.id,
@@ -98,6 +110,9 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
       assignedName: task.assigned_person_id ? getAssignedPersonName(task.assigned_person_id) : undefined
     }))
   ];
+
+  // Debug unified items
+  console.log('Unified planning items (final):', unifiedItems);
 
   // Trier : timeline par heure, puis tâches par priorité
   const sortedItems = unifiedItems.sort((a, b) => {
@@ -133,6 +148,22 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
     const endMins = endMinutes % 60;
     return `${time.substring(0, 5)} - ${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
   };
+
+  // Affichage du loading pendant le chargement des données
+  if (loading) {
+    return (
+      <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+        <CardContent className="p-8">
+          <div className="flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Chargement des données...</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
@@ -181,6 +212,9 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
                 ? 'Aucune tâche ou étape ne vous est assignée pour le moment'
                 : 'Aucune tâche ou étape trouvée'
               }
+            </p>
+            <p className="text-xs mt-2 text-gray-400">
+              Données chargées depuis l'API - {tasks.length} tâches, {timelineItems.length} étapes timeline
             </p>
           </div>
         ) : (

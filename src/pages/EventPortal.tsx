@@ -48,11 +48,18 @@ const EventPortal = () => {
     setLoggedInUser(user);
     // Sauvegarder dans le localStorage pour persister la session
     localStorage.setItem('eventPortalUser', JSON.stringify(user));
+    console.log('User logged in:', user);
   };
 
   const handleLogout = () => {
     setLoggedInUser(null);
     localStorage.removeItem('eventPortalUser');
+    console.log('User logged out');
+  };
+
+  const handleRefreshData = () => {
+    console.log('Manual data refresh triggered');
+    refreshData();
   };
 
   // Si pas encore connecté, afficher l'écran de connexion
@@ -119,7 +126,7 @@ const EventPortal = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={refreshData}
+                onClick={handleRefreshData}
                 disabled={loading}
                 className="border-purple-200 text-purple-700 hover:bg-purple-50"
               >
@@ -155,7 +162,7 @@ const EventPortal = () => {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-purple-600" />
-              <p className="text-purple-600">Chargement des données personnelles...</p>
+              <p className="text-purple-600">Synchronisation avec l'Admin Portal...</p>
             </div>
           </div>
         ) : (

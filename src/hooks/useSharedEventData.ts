@@ -16,6 +16,14 @@ export const useSharedEventData = () => {
 
   const { timelineItems } = useTimelineItems();
 
+  // Debug: Log pour vérifier la cohérence des données
+  console.log('useSharedEventData - Data check:');
+  console.log('Tasks from EventDataContext:', tasks);
+  console.log('People from EventDataContext:', people);
+  console.log('Vendors from EventDataContext:', vendors);
+  console.log('Timeline items from useTimelineItems:', timelineItems);
+  console.log('Loading state:', loading);
+
   // Fonctions utilitaires pour les données partagées
   const getCriticalTasks = () => {
     return tasks.filter(task => 
@@ -28,10 +36,11 @@ export const useSharedEventData = () => {
   };
 
   const getTeamSummary = () => {
-    const confirmed = people.filter(p => p.status === 'confirmed').length;
-    const pending = people.filter(p => p.status === 'pending').length;
+    const confirmed = people.filter(p => p.confirmation_status === 'confirmed').length;
+    const pending = people.filter(p => p.confirmation_status === 'pending').length;
     const total = people.length;
     
+    console.log('Team summary:', { confirmed, pending, total });
     return { confirmed, pending, total };
   };
 
@@ -40,6 +49,7 @@ export const useSharedEventData = () => {
     const pending = vendors.filter(v => v.contract_status === 'quote').length;
     const total = vendors.length;
     
+    console.log('Vendors summary:', { confirmed, pending, total });
     return { confirmed, pending, total };
   };
 
@@ -49,13 +59,16 @@ export const useSharedEventData = () => {
     const criticalSteps = timelineItems.filter(item => item.priority === 'high' && item.status !== 'completed').length;
     const delayedSteps = timelineItems.filter(item => item.status === 'delayed').length;
     
-    return {
+    const stats = {
       totalSteps,
       completedSteps,
       criticalSteps,
       delayedSteps,
       progressPercentage: totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
     };
+    
+    console.log('Timeline stats:', stats);
+    return stats;
   };
 
   const getDocumentStats = () => {
@@ -101,13 +114,16 @@ export const useSharedEventData = () => {
       });
     });
 
-    return activities
+    const finalActivities = activities
       .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
       .slice(0, 5);
+    
+    console.log('Recent activities:', finalActivities);
+    return finalActivities;
   };
 
   return {
-    // Données brutes
+    // Données brutes - EXACTEMENT les mêmes que l'Admin Portal
     tasks,
     planningItems,
     timelineItems,
