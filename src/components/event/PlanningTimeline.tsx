@@ -2,11 +2,14 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Users, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Clock, Users, Calendar, Settings } from 'lucide-react';
 import { useSharedEventData } from '@/hooks/useSharedEventData';
+import { useNavigate } from 'react-router-dom';
 
 export const PlanningTimeline = () => {
   const { getUpcomingPlanningItems } = useSharedEventData();
+  const navigate = useNavigate();
   const upcomingItems = getUpcomingPlanningItems();
 
   const formatDuration = (minutes: number) => {
@@ -24,7 +27,7 @@ export const PlanningTimeline = () => {
   };
 
   return (
-    <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+    <Card className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg text-gray-900">
           <Calendar className="w-5 h-5 text-purple-500" />
@@ -35,7 +38,15 @@ export const PlanningTimeline = () => {
         {upcomingItems.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p>Aucune étape planifiée</p>
+            <p className="mb-4">Aucune étape planifiée</p>
+            <Button
+              onClick={() => navigate('/admin')}
+              variant="outline"
+              className="border-purple-200 text-purple-700 hover:bg-purple-50"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Créer un planning dans l'Admin Portal
+            </Button>
           </div>
         ) : (
           <div className="space-y-4">
@@ -43,7 +54,7 @@ export const PlanningTimeline = () => {
               const endTime = calculateEndTime(item.time, item.duration);
               
               return (
-                <div key={item.id} className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div key={item.id} className="flex items-start gap-4 p-4 bg-white rounded-lg border border-gray-200">
                   {/* Timeline indicator */}
                   <div className="flex flex-col items-center">
                     <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm">

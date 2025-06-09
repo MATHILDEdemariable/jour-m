@@ -2,9 +2,11 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Users, Calendar, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Clock, Users, Calendar, CheckCircle, Settings } from 'lucide-react';
 import { useSharedEventData } from '@/hooks/useSharedEventData';
 import { useTimelineItems } from '@/hooks/useTimelineItems';
+import { useNavigate } from 'react-router-dom';
 
 interface PersonalPlanningTimelineProps {
   personId: string;
@@ -17,6 +19,7 @@ export const PersonalPlanningTimeline: React.FC<PersonalPlanningTimelineProps> =
 }) => {
   const { people } = useSharedEventData();
   const { timelineItems, calculateEndTime } = useTimelineItems();
+  const navigate = useNavigate();
 
   // Filtrer les items de timeline assignés à cette personne
   const personalTimelineItems = timelineItems.filter(item => 
@@ -56,7 +59,7 @@ export const PersonalPlanningTimeline: React.FC<PersonalPlanningTimelineProps> =
   const totalCount = personalTimelineItems.length;
 
   return (
-    <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+    <Card className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-sm">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
@@ -75,7 +78,15 @@ export const PersonalPlanningTimeline: React.FC<PersonalPlanningTimelineProps> =
         {personalTimelineItems.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p>Aucune étape ne vous est assignée pour le moment</p>
+            <p className="mb-4">Aucune étape ne vous est assignée pour le moment</p>
+            <Button
+              onClick={() => navigate('/admin')}
+              variant="outline"
+              className="border-purple-200 text-purple-700 hover:bg-purple-50"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Créer un planning dans l'Admin Portal
+            </Button>
           </div>
         ) : (
           <div className="space-y-4">
@@ -87,7 +98,7 @@ export const PersonalPlanningTimeline: React.FC<PersonalPlanningTimelineProps> =
                 <div 
                   key={item.id} 
                   className={`flex items-start gap-4 p-4 rounded-lg border transition-all hover:shadow-md ${
-                    item.status === 'completed' ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                    item.status === 'completed' ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'
                   }`}
                 >
                   {/* Timeline indicator */}

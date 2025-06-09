@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { UnifiedPlanningManagement } from '@/components/admin/UnifiedPlanningManagement';
 import { PeopleManagement } from '@/components/admin/PeopleManagement';
 import { VendorManagement } from '@/components/admin/VendorManagement';
@@ -20,7 +19,7 @@ import { useEventData } from '@/contexts/EventDataContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 export const AdminPortal = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('planning');
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { t } = useTranslation();
@@ -30,8 +29,6 @@ export const AdminPortal = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'dashboard':
-        return <AdminDashboard />;
       case 'planning':
         return <UnifiedPlanningManagement />;
       case 'people':
@@ -43,7 +40,7 @@ export const AdminPortal = () => {
       case 'config':
         return <EventConfiguration />;
       default:
-        return <AdminDashboard />;
+        return <UnifiedPlanningManagement />;
     }
   };
 
@@ -96,11 +93,7 @@ export const AdminPortal = () => {
           {!isMobile && (
             <div className="bg-white border-b">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-6 h-auto p-1">
-                  <TabsTrigger value="dashboard" className="flex flex-col py-3">
-                    <span className="text-xs">📊</span>
-                    <span className="text-xs">{t('dashboard')}</span>
-                  </TabsTrigger>
+                <TabsList className="grid w-full grid-cols-5 h-auto p-1">
                   <TabsTrigger value="planning" className="flex flex-col py-3">
                     <span className="text-xs">⏰</span>
                     <span className="text-xs">Planning & Tâches</span>

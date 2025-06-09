@@ -17,71 +17,11 @@ export interface PlanningItem {
 export const usePlanningItems = () => {
   const { toast } = useToast();
   
-  const [planningItems, setPlanningItems] = useState<PlanningItem[]>([
-    {
-      id: 1,
-      time: "08:00",
-      duration: 120,
-      title: "Préparation mariée",
-      description: "Coiffure, maquillage, habillage",
-      category: "Préparation",
-      status: "scheduled",
-      assignedTo: ["bride", "maid-of-honor"]
-    },
-    {
-      id: 2,
-      time: "10:00",
-      duration: 60,
-      title: "Préparation marié",
-      description: "Habillage et préparatifs",
-      category: "Préparation", 
-      status: "scheduled",
-      assignedTo: ["groom", "best-man"]
-    },
-    {
-      id: 3,
-      time: "11:30",
-      duration: 90,
-      title: "Décoration salle",
-      description: "Installation des décorations et vérifications",
-      category: "Logistique",
-      status: "scheduled",
-      assignedTo: ["wedding-planner", "photographer"]
-    },
-    {
-      id: 4,
-      time: "14:00",
-      duration: 30,
-      title: "Cérémonie civile",
-      description: "Échange des vœux en mairie",
-      category: "Cérémonie",
-      status: "scheduled",
-      assignedTo: ["bride", "groom"]
-    },
-    {
-      id: 5,
-      time: "16:00",
-      duration: 60,
-      title: "Séance photos",
-      description: "Photos de couple et de famille",
-      category: "Photos",
-      status: "scheduled",
-      assignedTo: ["photographer"]
-    },
-    {
-      id: 6,
-      time: "19:00",
-      duration: 180,
-      title: "Réception",
-      description: "Cocktail, dîner et soirée dansante",
-      category: "Réception",
-      status: "scheduled",
-      assignedTo: ["caterer", "photographer"]
-    }
-  ]);
+  // Retourner un array vide par défaut - les données viendront uniquement de l'Admin Portal
+  const [planningItems, setPlanningItems] = useState<PlanningItem[]>([]);
 
   const addPlanningItem = (newItem: Omit<PlanningItem, 'id'>) => {
-    const id = Math.max(...planningItems.map(item => item.id)) + 1;
+    const id = Math.max(...planningItems.map(item => item.id), 0) + 1;
     
     setPlanningItems(prev => {
       const newItems = [...prev, { ...newItem, id }];
@@ -112,7 +52,6 @@ export const usePlanningItems = () => {
         item.id === id ? { ...item, ...updates } : item
       );
       
-      // Si l'heure de début a été modifiée, recalculer les étapes suivantes
       if (updates.time) {
         return recalculateTimelineFromItem(updated, id);
       }
@@ -126,103 +65,65 @@ export const usePlanningItems = () => {
     });
   };
 
-  const reorderItems = (sourceIndex: number, destinationIndex: number) => {
+  const reorderItems = (fromIndex: number, toIndex: number) => {
     setPlanningItems(prev => {
       const items = [...prev];
-      const [removed] = items.splice(sourceIndex, 1);
-      items.splice(destinationIndex, 0, removed);
-      
+      const [removed] = items.splice(fromIndex, 1);
+      items.splice(toIndex, 0, removed);
       return recalculateTimeline(items);
-    });
-    
-    toast({
-      title: 'Planning réorganisé',
-      description: 'L\'ordre a été modifié et les horaires recalculés',
     });
   };
 
+  // Helper functions
   const recalculateTimeline = (items: PlanningItem[]): PlanningItem[] => {
-    if (items.length === 0) return items;
-
-    const sorted = [...items].sort((a, b) => {
-      if (a.id === b.id) return 0;
-      const indexA = items.findIndex(item => item.id === a.id);
-      const indexB = items.findIndex(item => item.id === b.id);
-      return indexA - indexB;
-    });
-
-    let currentTime = timeToMinutes("08:00"); // Heure de début par défaut
+    let currentTime = 8 * 60; // Start at 8:00 AM (in minutes)
     
-    return sorted.map((item, index) => {
-      const newTime = minutesToTime(currentTime);
+    return items.map(item => {
+      const time = `${Math.floor(currentTime / 60).toString().padStart(2, '0')}:${(currentTime % 60).toString().padStart(2, '0')}`;
       currentTime += item.duration;
       
       return {
         ...item,
-        time: newTime
+        time
       };
     });
   };
 
-  // Nouveau : Recalcul intelligent à partir d'un élément spécifique
-  const recalculateTimelineFromItem = (items: PlanningItem[], changedItemId: number): PlanningItem[] => {
-    if (items.length === 0) return items;
-
-    const sorted = [...items].sort((a, b) => {
-      if (a.id === b.id) return 0;
-      const indexA = items.findIndex(item => item.id === a.id);
-      const indexB = items.findIndex(item => item.id === b.id);
-      return indexA - indexB;
-    });
-
-    const changedItemIndex = sorted.findIndex(item => item.id === changedItemId);
+  const recalculateTimelineFromItem = (items: PlanningItem[], fromId: number): PlanningItem[] => {
+    const fromIndex = items.findIndex(item => item.id === fromId);
+    if (fromIndex === -1) return items;
     
-    // Recalculer seulement les éléments suivants
-    let currentTime = timeToMinutes(sorted[changedItemIndex].time);
+    const fromItem = items[fromIndex];
+    const [hours, minutes] = fromItem.time.split(':').map(Number);
+    let currentTime = hours * 60 + minutes + fromItem.duration;
     
-    return sorted.map((item, index) => {
-      if (index < changedItemIndex) {
-        // Garder les éléments précédents inchangés
-        return item;
-      } else if (index === changedItemIndex) {
-        // L'élément modifié garde son heure
-        currentTime = timeToMinutes(item.time) + item.duration;
-        return item;
-      } else {
-        // Recalculer les éléments suivants
-        const newTime = minutesToTime(currentTime);
-        currentTime += item.duration;
-        
-        return {
-          ...item,
-          time: newTime
-        };
-      }
+    return items.map((item, index) => {
+      if (index <= fromIndex) return item;
+      
+      const time = `${Math.floor(currentTime / 60).toString().padStart(2, '0')}:${(currentTime % 60).toString().padStart(2, '0')}`;
+      currentTime += item.duration;
+      
+      return {
+        ...item,
+        time
+      };
     });
-  };
-
-  const timeToMinutes = (time: string): number => {
-    const [hours, minutes] = time.split(':').map(Number);
-    return hours * 60 + minutes;
-  };
-
-  const minutesToTime = (minutes: number): string => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
   };
 
   const calculateEndTime = (startTime: string, duration: number): string => {
-    const startMinutes = timeToMinutes(startTime);
-    return minutesToTime(startMinutes + duration);
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const totalMinutes = hours * 60 + minutes + duration;
+    const endHours = Math.floor(totalMinutes / 60);
+    const endMins = totalMinutes % 60;
+    return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
   };
 
-  const getTotalDuration = () => {
+  const getTotalDuration = (): number => {
     return planningItems.reduce((total, item) => total + item.duration, 0);
   };
 
-  const getEndTime = () => {
-    if (planningItems.length === 0) return "08:00";
+  const getEndTime = (): string => {
+    if (planningItems.length === 0) return '08:00';
     const lastItem = planningItems[planningItems.length - 1];
     return calculateEndTime(lastItem.time, lastItem.duration);
   };
@@ -233,7 +134,6 @@ export const usePlanningItems = () => {
     deletePlanningItem,
     updatePlanningItem,
     reorderItems,
-    recalculateTimeline,
     calculateEndTime,
     getTotalDuration,
     getEndTime

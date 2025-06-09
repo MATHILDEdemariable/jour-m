@@ -2,11 +2,14 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Clock, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, Clock, User, Settings } from 'lucide-react';
 import { useSharedEventData } from '@/hooks/useSharedEventData';
+import { useNavigate } from 'react-router-dom';
 
 export const CriticalTasksList = () => {
   const { getCriticalTasks } = useSharedEventData();
+  const navigate = useNavigate();
   const criticalTasks = getCriticalTasks();
 
   const priorityColors = {
@@ -23,7 +26,7 @@ export const CriticalTasksList = () => {
   };
 
   return (
-    <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+    <Card className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg text-gray-900">
           <AlertTriangle className="w-5 h-5 text-red-500" />
@@ -34,12 +37,20 @@ export const CriticalTasksList = () => {
         {criticalTasks.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p>Aucune tâche critique en attente</p>
+            <p className="mb-4">Aucune tâche critique planifiée</p>
+            <Button
+              onClick={() => navigate('/admin')}
+              variant="outline"
+              className="border-purple-200 text-purple-700 hover:bg-purple-50"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Créer des tâches dans l'Admin Portal
+            </Button>
           </div>
         ) : (
           <div className="space-y-4">
             {criticalTasks.map((task) => (
-              <div key={task.id} className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div key={task.id} className="flex items-start gap-3 p-4 bg-white rounded-lg border border-gray-200">
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-900 mb-1">{task.title}</h4>
                   <p className="text-sm text-gray-600 mb-3">{task.description}</p>
