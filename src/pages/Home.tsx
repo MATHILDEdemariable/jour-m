@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Calendar, Eye, Settings } from 'lucide-react';
+import { Eye, Settings } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -69,15 +69,6 @@ const Home: React.FC = () => {
 
           {/* Boutons d'action */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
-            <Button
-              onClick={() => navigate('/event')}
-              className="bg-white text-purple-600 border-2 border-purple-200 hover:bg-purple-50 hover:border-purple-300 flex items-center gap-2"
-              size="lg"
-            >
-              <Calendar className="w-5 h-5" />
-              Timeline Invités
-            </Button>
-            
             <Button
               onClick={() => navigate('/event-portal')}
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center gap-2"

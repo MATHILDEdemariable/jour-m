@@ -18,8 +18,17 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
   const { people, loading: peopleLoading } = useSharedEventData();
   const { vendors, loading: vendorsLoading } = useVendors();
 
-  const confirmedPeople = people.filter(p => p.status === 'confirmed');
+  // Debug logs pour vérifier la synchronisation
+  console.log('PersonLogin - Debug data:');
+  console.log('People from shared data:', people);
+  console.log('Vendors from hook:', vendors);
+
+  const confirmedPeople = people.filter(p => p.confirmation_status === 'confirmed');
   const confirmedVendors = vendors.filter(v => v.contract_status === 'signed');
+
+  console.log('PersonLogin - Filtered data:');
+  console.log('Confirmed people:', confirmedPeople);
+  console.log('Confirmed vendors:', confirmedVendors);
 
   const handleLogin = () => {
     if (!selectedUserId) return;
@@ -84,23 +93,29 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
               {selectedUserType === 'person' ? 'Sélectionnez votre nom' : 'Sélectionnez votre prestataire'}
             </label>
             <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-              <SelectTrigger className="border-purple-200 focus:border-purple-500">
+              <SelectTrigger className="border-purple-200 focus:border-purple-500 bg-white">
                 <SelectValue placeholder={`Choisir ${selectedUserType === 'person' ? 'une personne' : 'un prestataire'}...`} />
               </SelectTrigger>
-              <SelectContent>
-                {currentList.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{user.name}</span>
-                      <span className="text-xs text-gray-500">
-                        {selectedUserType === 'person' 
-                          ? (user as any).role || 'Membre de l\'équipe'
-                          : (user as any).service_type || 'Prestataire'
-                        }
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
+              <SelectContent className="bg-white border border-gray-200 shadow-lg z-50 max-h-60 overflow-y-auto">
+                {currentList.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500">
+                    {loading ? 'Chargement...' : `Aucun ${selectedUserType === 'person' ? 'membre confirmé' : 'prestataire signé'} trouvé`}
+                  </div>
+                ) : (
+                  currentList.map((user) => (
+                    <SelectItem key={user.id} value={user.id} className="cursor-pointer hover:bg-purple-50">
+                      <div className="flex flex-col w-full">
+                        <span className="font-medium text-gray-900">{user.name}</span>
+                        <span className="text-xs text-gray-500">
+                          {selectedUserType === 'person' 
+                            ? (user as any).role || 'Membre de l\'équipe'
+                            : (user as any).service_type || 'Prestataire'
+                          }
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
