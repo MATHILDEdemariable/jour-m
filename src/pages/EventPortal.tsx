@@ -10,6 +10,7 @@ import { PersonalDocuments } from '@/components/event/PersonalDocuments';
 import { ContactsTab } from '@/components/event/ContactsTab';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useCurrentEvent } from '@/contexts/CurrentEventContext';
 
 interface LoggedUser {
   id: string;
@@ -21,6 +22,7 @@ const EventPortal = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { loading, refreshData, getDaysUntilEvent } = useSharedEventData();
+  const { currentEventId } = useCurrentEvent();
   const [loggedInUser, setLoggedInUser] = useState<LoggedUser | null>(null);
   const [activeTab, setActiveTab] = useState('planning');
   const [viewMode, setViewMode] = useState<'personal' | 'global'>('personal');
@@ -29,6 +31,7 @@ const EventPortal = () => {
 
   useEffect(() => {
     // Rafraîchir les données au montage et vérifier si un utilisateur est déjà connecté
+    console.log('EventPortal - Initializing with event ID:', currentEventId);
     refreshData();
     
     // Vérifier le localStorage pour une session existante
@@ -41,7 +44,13 @@ const EventPortal = () => {
         localStorage.removeItem('eventPortalUser');
       }
     }
-  }, []);
+  }, [currentEventId]);
+
+  // Force refresh when switching tabs to ensure synchronization
+  useEffect(() => {
+    refreshData();
+    console.log('EventPortal - Tab changed to:', activeTab, '- refreshing data');
+  }, [activeTab]);
 
   const handleLogin = (userId: string, userName: string, userType: 'person' | 'vendor') => {
     const user = { id: userId, name: userName, type: userType };
@@ -49,6 +58,8 @@ const EventPortal = () => {
     // Sauvegarder dans le localStorage pour persister la session
     localStorage.setItem('eventPortalUser', JSON.stringify(user));
     console.log('User logged in:', user);
+    // Refresh data after login
+    refreshData();
   };
 
   const handleLogout = () => {
@@ -58,7 +69,7 @@ const EventPortal = () => {
   };
 
   const handleRefreshData = () => {
-    console.log('Manual data refresh triggered');
+    console.log('Manual data refresh triggered for event ID:', currentEventId);
     refreshData();
   };
 
@@ -102,25 +113,25 @@ const EventPortal = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-purple-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex items-center justify-between h-14 lg:h-16">
+            <div className="flex items-center gap-2 lg:gap-4 overflow-hidden">
               <Button
                 variant="ghost"
                 onClick={() => navigate('/')}
-                className="text-purple-700 hover:text-purple-900"
+                className="text-purple-700 hover:text-purple-900 px-2 lg:px-3"
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Retour à l'accueil
+                <ArrowLeft className="w-4 h-4 mr-1 lg:mr-2" />
+                <span className="hidden sm:inline">Retour</span>
               </Button>
-              <div className="h-6 w-px bg-purple-200" />
-              <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <div className="hidden lg:block h-6 w-px bg-purple-200" />
+              <h1 className="text-base lg:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent truncate">
                 Event Portal - {loggedInUser.name}
               </h1>
             </div>
             
-            <div className="flex items-center gap-3">
-              <div className="text-sm text-purple-600 font-medium">
+            <div className="flex items-center gap-1 lg:gap-3">
+              <div className="text-xs lg:text-sm text-purple-600 font-medium whitespace-nowrap">
                 J-{daysUntilEvent} jours
               </div>
               <Button
@@ -128,18 +139,20 @@ const EventPortal = () => {
                 size="sm"
                 onClick={handleRefreshData}
                 disabled={loading}
-                className="border-purple-200 text-purple-700 hover:bg-purple-50"
+                className="border-purple-200 text-purple-700 hover:bg-purple-50 h-7 w-7 lg:h-8 lg:w-auto lg:px-3 p-0"
+                title="Actualiser"
               >
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 ${!isMobile && 'mr-2'} ${loading ? 'animate-spin' : ''}`} />
                 {!isMobile && 'Actualiser'}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleLogout}
-                className="border-red-200 text-red-700 hover:bg-red-50"
+                className="border-red-200 text-red-700 hover:bg-red-50 h-7 w-7 lg:h-8 lg:w-auto lg:px-3 p-0"
+                title="Déconnexion"
               >
-                <LogOut className="w-4 h-4 mr-2" />
+                <LogOut className="w-4 h-4 lg:mr-2" />
                 {!isMobile && 'Déconnexion'}
               </Button>
               {!isMobile && (
@@ -157,7 +170,7 @@ const EventPortal = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-8 pb-20 lg:pb-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 lg:py-8 pb-20 lg:pb-8">
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">

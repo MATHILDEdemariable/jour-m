@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 
 interface ViewToggleProps {
   viewMode: 'personal' | 'global';
@@ -10,22 +9,22 @@ interface ViewToggleProps {
 
 export const ViewToggle: React.FC<ViewToggleProps> = ({ viewMode, onViewChange }) => {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1">
       <Button
         variant={viewMode === 'personal' ? 'default' : 'outline'}
         size="sm"
         onClick={() => onViewChange('personal')}
-        className="text-xs"
+        className="text-xs py-1 h-7 lg:h-8"
       >
-        My Tasks
+        Mes Tâches
       </Button>
       <Button
         variant={viewMode === 'global' ? 'default' : 'outline'}
         size="sm"
         onClick={() => onViewChange('global')}
-        className="text-xs"
+        className="text-xs py-1 h-7 lg:h-8"
       >
-        All Tasks
+        Toutes
       </Button>
     </div>
   );
