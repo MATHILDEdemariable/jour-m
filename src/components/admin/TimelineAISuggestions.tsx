@@ -4,8 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, Clock, Plus, Wand2 } from 'lucide-react';
+import { Sparkles, Clock, Plus, Wand2, Loader2 } from 'lucide-react';
 import { TimelineItem } from '@/hooks/useTimelineItems';
+import { useToast } from '@/hooks/use-toast';
 
 interface TimelineAISuggestionsProps {
   isOpen: boolean;
@@ -134,6 +135,9 @@ export const TimelineAISuggestions: React.FC<TimelineAISuggestionsProps> = ({
   onAddSuggestion
 }) => {
   const [selectedSuggestions, setSelectedSuggestions] = useState<Set<number>>(new Set());
+  const [allSuggestions, setAllSuggestions] = useState(suggestedTimelineItems);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const { toast } = useToast();
 
   const handleToggleSuggestion = (index: number) => {
     const newSelected = new Set(selectedSuggestions);
@@ -147,10 +151,92 @@ export const TimelineAISuggestions: React.FC<TimelineAISuggestionsProps> = ({
 
   const handleAddSelected = () => {
     selectedSuggestions.forEach(index => {
-      onAddSuggestion(suggestedTimelineItems[index]);
+      onAddSuggestion(allSuggestions[index]);
     });
     setSelectedSuggestions(new Set());
     onClose();
+  };
+
+  const generateAISuggestions = async () => {
+    setIsGenerating(true);
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer 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`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'Tu es un expert wedding planner et événementiel. Tu suggères des étapes du déroulé d\'une journée de mariage à la fois pour les mariés, invités et les professionnels qui organisent - le nom de cette étape ainsi que sa durée estimative et son assignation doit être suggérée.'
+            },
+            {
+              role: 'user',
+              content: 'Génère 5 nouvelles étapes créatives et détaillées pour un mariage qui ne sont pas déjà communes. Réponds uniquement avec un JSON array contenant des objets avec les propriétés: title (string), description (string), duration (number en minutes), category (string parmi: Préparation, Logistique, Cérémonie, Photos, Réception), priority (string: high, medium, low), assigned_role (string ou null), notes (string). Sois créatif et propose des étapes originales et professionnelles.'
+            }
+          ],
+          temperature: 0.8,
+          max_tokens: 1500,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la génération des suggestions');
+      }
+
+      const data = await response.json();
+      const content = data.choices[0].message.content;
+      
+      // Parse the JSON response
+      let newSuggestions;
+      try {
+        newSuggestions = JSON.parse(content);
+      } catch (parseError) {
+        // If JSON parsing fails, try to extract JSON from the response
+        const jsonMatch = content.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          newSuggestions = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error('Format de réponse invalide');
+        }
+      }
+
+      // Transform AI suggestions to match our format
+      const transformedSuggestions = newSuggestions.map((suggestion: any, index: number) => ({
+        title: suggestion.title,
+        description: suggestion.description,
+        duration: suggestion.duration,
+        category: suggestion.category,
+        priority: suggestion.priority as "high" | "medium" | "low",
+        status: "scheduled" as const,
+        time: "08:00", // Default time, will be recalculated
+        order_index: allSuggestions.length + index,
+        assigned_person_id: null,
+        assigned_role: suggestion.assigned_role,
+        notes: suggestion.notes
+      }));
+
+      // Add new suggestions to existing ones
+      setAllSuggestions(prev => [...prev, ...transformedSuggestions]);
+      
+      toast({
+        title: 'Suggestions générées !',
+        description: `${transformedSuggestions.length} nouvelles étapes ajoutées par l'IA`,
+      });
+
+    } catch (error) {
+      console.error('Erreur lors de la génération IA:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de générer de nouvelles suggestions. Vérifiez votre connexion.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const formatDuration = (minutes: number) => {
@@ -163,10 +249,30 @@ export const TimelineAISuggestions: React.FC<TimelineAISuggestionsProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-600" />
-            Suggestions IA - Étapes du Jour J
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+              Suggestions IA - Étapes du Jour J
+            </DialogTitle>
+            <Button
+              onClick={generateAISuggestions}
+              disabled={isGenerating}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+              size="sm"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Génération...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Générer avec IA
+                </>
+              )}
+            </Button>
+          </div>
         </DialogHeader>
         
         <div className="space-y-4">
@@ -177,19 +283,20 @@ export const TimelineAISuggestions: React.FC<TimelineAISuggestionsProps> = ({
             </div>
             <p className="text-xs text-purple-600">
               Sélectionnez les étapes que vous souhaitez ajouter à votre planning. 
-              Les horaires se calculeront automatiquement selon l'ordre.
+              Les horaires se calculeront automatiquement selon l'ordre. 
+              Cliquez sur "Générer avec IA" pour obtenir de nouvelles suggestions personnalisées.
             </p>
           </div>
 
           <div className="grid gap-3">
-            {suggestedTimelineItems.map((item, index) => (
+            {allSuggestions.map((item, index) => (
               <Card 
                 key={index}
                 className={`cursor-pointer transition-all border-2 ${
                   selectedSuggestions.has(index) 
                     ? 'border-purple-300 bg-purple-50 shadow-md' 
                     : 'border-stone-200 hover:border-purple-200 hover:shadow-sm'
-                }`}
+                } ${index >= suggestedTimelineItems.length ? 'border-l-4 border-l-green-500' : ''}`}
                 onClick={() => handleToggleSuggestion(index)}
               >
                 <CardContent className="p-4">
@@ -207,6 +314,11 @@ export const TimelineAISuggestions: React.FC<TimelineAISuggestionsProps> = ({
                         {item.priority === 'high' && (
                           <Badge variant="destructive" className="text-xs">
                             🔴 Urgent
+                          </Badge>
+                        )}
+                        {index >= suggestedTimelineItems.length && (
+                          <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">
+                            ✨ IA
                           </Badge>
                         )}
                       </div>
