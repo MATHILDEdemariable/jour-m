@@ -7,11 +7,14 @@ import { Clock, CheckSquare, Calendar } from 'lucide-react';
 import { useSharedEventData } from '@/hooks/useSharedEventData';
 import { useTimelineItems } from '@/hooks/useTimelineItems';
 import { useToggleTaskStatus } from '@/hooks/useTasks';
+import { ViewToggle } from '@/components/ViewToggle';
 
 interface UnifiedPersonalPlanningProps {
   userId: string;
   userName: string;
   userType: 'person' | 'vendor';
+  viewMode: 'personal' | 'global';
+  onViewModeChange: (mode: 'personal' | 'global') => void;
 }
 
 interface UnifiedPlanningItem {
@@ -25,37 +28,51 @@ interface UnifiedPlanningItem {
   status?: string;
   completed?: boolean;
   category?: string;
+  assignedTo?: string;
+  assignedName?: string;
 }
 
 export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = ({ 
   userId, 
   userName, 
-  userType 
+  userType,
+  viewMode,
+  onViewModeChange
 }) => {
-  const { tasks } = useSharedEventData();
+  const { tasks, people } = useSharedEventData();
   const { timelineItems } = useTimelineItems();
   const toggleTaskStatus = useToggleTaskStatus();
 
-  // Filtrer les éléments selon le type d'utilisateur
-  const personalTimelineItems = timelineItems.filter(item => {
-    if (userType === 'person') {
-      return item.assigned_person_id === userId;
-    } else {
-      return item.assigned_role === userId; // Pour les vendors, on utilise assigned_role
-    }
-  });
+  // Filtrer selon le mode de vue
+  const filteredTimelineItems = viewMode === 'personal' 
+    ? timelineItems.filter(item => {
+        if (userType === 'person') {
+          return item.assigned_person_id === userId;
+        } else {
+          return item.assigned_role === userId;
+        }
+      })
+    : timelineItems;
 
-  const personalTasks = tasks.filter(task => {
-    if (userType === 'person') {
-      return task.assigned_person_id === userId;
-    } else {
-      return task.assigned_vendor_id === userId;
-    }
-  });
+  const filteredTasks = viewMode === 'personal'
+    ? tasks.filter(task => {
+        if (userType === 'person') {
+          return task.assigned_person_id === userId;
+        } else {
+          return task.assigned_vendor_id === userId;
+        }
+      })
+    : tasks;
+
+  // Helper pour obtenir le nom de la personne assignée
+  const getAssignedPersonName = (personId: string) => {
+    const person = people.find(p => p.id === personId);
+    return person ? person.name : 'Non assigné';
+  };
 
   // Combiner timeline et tâches en un tableau unifié
   const unifiedItems: UnifiedPlanningItem[] = [
-    ...personalTimelineItems.map(item => ({
+    ...filteredTimelineItems.map(item => ({
       id: item.id,
       type: 'timeline' as const,
       title: item.title,
@@ -64,9 +81,11 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
       duration: item.duration,
       status: item.status,
       category: item.category,
-      priority: item.priority
+      priority: item.priority,
+      assignedTo: item.assigned_person_id,
+      assignedName: item.assigned_person_id ? getAssignedPersonName(item.assigned_person_id) : undefined
     })),
-    ...personalTasks.map(task => ({
+    ...filteredTasks.map(task => ({
       id: task.id,
       type: 'task' as const,
       title: task.title,
@@ -74,7 +93,9 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
       priority: task.priority,
       status: task.status,
       completed: task.status === 'completed',
-      duration: task.duration_minutes
+      duration: task.duration_minutes,
+      assignedTo: task.assigned_person_id,
+      assignedName: task.assigned_person_id ? getAssignedPersonName(task.assigned_person_id) : undefined
     }))
   ];
 
@@ -120,13 +141,21 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
           <div>
             <CardTitle className="flex items-center gap-2 text-lg text-gray-900">
               <Calendar className="w-5 h-5 text-purple-500" />
-              Mon Planning & Mes Tâches
+              {viewMode === 'personal' ? 'Mon Planning & Mes Tâches' : 'Planning Global'}
             </CardTitle>
-            <p className="text-sm text-gray-600">Votre planning personnalisé et vos tâches assignées</p>
+            <p className="text-sm text-gray-600">
+              {viewMode === 'personal' 
+                ? 'Votre planning personnalisé et vos tâches assignées'
+                : 'Vue d\'ensemble de tout le planning et toutes les tâches'
+              }
+            </p>
           </div>
-          <Badge variant="outline" className="border-purple-200 text-purple-700">
-            {completedCount}/{sortedItems.length} terminé{completedCount !== 1 ? 's' : ''}
-          </Badge>
+          <div className="flex items-center gap-3">
+            <ViewToggle viewMode={viewMode} onViewChange={onViewModeChange} />
+            <Badge variant="outline" className="border-purple-200 text-purple-700">
+              {completedCount}/{sortedItems.length} terminé{completedCount !== 1 ? 's' : ''}
+            </Badge>
+          </div>
         </div>
 
         {/* Progress Bar */}
@@ -147,7 +176,12 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
         {sortedItems.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p>Aucune tâche ou étape ne vous est assignée pour le moment</p>
+            <p>
+              {viewMode === 'personal' 
+                ? 'Aucune tâche ou étape ne vous est assignée pour le moment'
+                : 'Aucune tâche ou étape trouvée'
+              }
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -217,6 +251,12 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
                     )}
                     {item.category && (
                       <span>• {item.category}</span>
+                    )}
+                    {viewMode === 'global' && item.assignedName && (
+                      <span>• Assigné à: {item.assignedName}</span>
+                    )}
+                    {viewMode === 'global' && !item.assignedName && (
+                      <span>• Non assigné</span>
                     )}
                   </div>
                 </div>

@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, RefreshCw, Settings, LogOut } from 'lucide-react';
 import { useSharedEventData } from '@/hooks/useSharedEventData';
 import { PersonLogin } from '@/components/event/PersonLogin';
-import { PersonalDashboard } from '@/components/event/PersonalDashboard';
 import { UnifiedPersonalPlanning } from '@/components/event/UnifiedPersonalPlanning';
 import { PersonalDocuments } from '@/components/event/PersonalDocuments';
 import { ContactsTab } from '@/components/event/ContactsTab';
@@ -24,6 +23,7 @@ const EventPortal = () => {
   const { loading, refreshData, getDaysUntilEvent } = useSharedEventData();
   const [loggedInUser, setLoggedInUser] = useState<LoggedUser | null>(null);
   const [activeTab, setActiveTab] = useState('planning');
+  const [viewMode, setViewMode] = useState<'personal' | 'global'>('personal');
   
   const daysUntilEvent = getDaysUntilEvent();
 
@@ -68,6 +68,8 @@ const EventPortal = () => {
             userId={loggedInUser.id} 
             userName={loggedInUser.name}
             userType={loggedInUser.type}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
           />
         );
       case 'contacts':
@@ -158,12 +160,6 @@ const EventPortal = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Personal Dashboard */}
-            <PersonalDashboard 
-              personId={loggedInUser.id} 
-              personName={loggedInUser.name} 
-            />
-            
             {/* Desktop Tabs */}
             {!isMobile && (
               <div className="flex gap-2 border-b border-gray-200">
@@ -172,7 +168,7 @@ const EventPortal = () => {
                   onClick={() => setActiveTab('planning')}
                   className={activeTab === 'planning' ? 'bg-gradient-to-r from-purple-600 to-pink-600' : ''}
                 >
-                  📅 Mon Planning
+                  📅 Planning
                 </Button>
                 <Button
                   variant={activeTab === 'contacts' ? 'default' : 'ghost'}
