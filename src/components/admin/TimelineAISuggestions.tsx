@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Sparkles, Clock, Plus, Wand2, Loader2 } from 'lucide-react';
 import { TimelineItem } from '@/hooks/useTimelineItems';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TimelineAISuggestionsProps {
   isOpen: boolean;
@@ -160,49 +160,21 @@ export const TimelineAISuggestions: React.FC<TimelineAISuggestionsProps> = ({
   const generateAISuggestions = async () => {
     setIsGenerating(true);
     try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer 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`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: 'Tu es un expert wedding planner et événementiel. Tu suggères des étapes du déroulé d\'une journée de mariage à la fois pour les mariés, invités et les professionnels qui organisent - le nom de cette étape ainsi que sa durée estimative et son assignation doit être suggérée.'
-            },
-            {
-              role: 'user',
-              content: 'Génère 5 nouvelles étapes créatives et détaillées pour un mariage qui ne sont pas déjà communes. Réponds uniquement avec un JSON array contenant des objets avec les propriétés: title (string), description (string), duration (number en minutes), category (string parmi: Préparation, Logistique, Cérémonie, Photos, Réception), priority (string: high, medium, low), assigned_role (string ou null), notes (string). Sois créatif et propose des étapes originales et professionnelles.'
-            }
-          ],
-          temperature: 0.8,
-          max_tokens: 1500,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Erreur lors de la génération des suggestions');
-      }
-
-      const data = await response.json();
-      const content = data.choices[0].message.content;
+      console.log('Calling Supabase Edge Function for AI suggestions...');
       
-      // Parse the JSON response
-      let newSuggestions;
-      try {
-        newSuggestions = JSON.parse(content);
-      } catch (parseError) {
-        // If JSON parsing fails, try to extract JSON from the response
-        const jsonMatch = content.match(/\[[\s\S]*\]/);
-        if (jsonMatch) {
-          newSuggestions = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error('Format de réponse invalide');
-        }
+      const { data, error } = await supabase.functions.invoke('generate-timeline-suggestions');
+
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Erreur lors de l\'appel à la fonction');
       }
+
+      if (!data || !data.suggestions) {
+        throw new Error('Aucune suggestion reçue de l\'IA');
+      }
+
+      const newSuggestions = data.suggestions;
+      console.log('Received AI suggestions:', newSuggestions);
 
       // Transform AI suggestions to match our format
       const transformedSuggestions = newSuggestions.map((suggestion: any, index: number) => ({
@@ -231,7 +203,7 @@ export const TimelineAISuggestions: React.FC<TimelineAISuggestionsProps> = ({
       console.error('Erreur lors de la génération IA:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de générer de nouvelles suggestions. Vérifiez votre connexion.',
+        description: error.message || 'Impossible de générer de nouvelles suggestions.',
         variant: 'destructive',
       });
     } finally {
