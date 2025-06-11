@@ -417,6 +417,7 @@ export type Database = {
       tasks: {
         Row: {
           assigned_person_id: string | null
+          assigned_person_ids: string[] | null
           assigned_role: string | null
           assigned_vendor_id: string | null
           category_id: string | null
@@ -437,6 +438,7 @@ export type Database = {
         }
         Insert: {
           assigned_person_id?: string | null
+          assigned_person_ids?: string[] | null
           assigned_role?: string | null
           assigned_vendor_id?: string | null
           category_id?: string | null
@@ -457,6 +459,7 @@ export type Database = {
         }
         Update: {
           assigned_person_id?: string | null
+          assigned_person_ids?: string[] | null
           assigned_role?: string | null
           assigned_vendor_id?: string | null
           category_id?: string | null
@@ -543,6 +546,7 @@ export type Database = {
       timeline_items: {
         Row: {
           assigned_person_id: string | null
+          assigned_person_ids: string[] | null
           assigned_role: string | null
           category: string | null
           created_at: string | null
@@ -560,6 +564,7 @@ export type Database = {
         }
         Insert: {
           assigned_person_id?: string | null
+          assigned_person_ids?: string[] | null
           assigned_role?: string | null
           category?: string | null
           created_at?: string | null
@@ -577,6 +582,7 @@ export type Database = {
         }
         Update: {
           assigned_person_id?: string | null
+          assigned_person_ids?: string[] | null
           assigned_role?: string | null
           category?: string | null
           created_at?: string | null

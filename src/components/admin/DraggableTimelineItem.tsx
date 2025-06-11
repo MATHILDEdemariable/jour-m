@@ -16,7 +16,7 @@ interface DraggableTimelineItemProps {
   statusColors: Record<string, string>;
   formatDuration: (minutes: number) => string;
   calculateEndTime: (startTime: string, duration: number) => string;
-  getPersonName: (personId: string | null) => string | null;
+  getPersonNames: (personIds: string[]) => string[];
   getStatusLabel: (status: string) => string;
   isDragging: boolean;
   draggedOverIndex: number | null;
@@ -48,7 +48,7 @@ export const DraggableTimelineItem: React.FC<DraggableTimelineItemProps> = ({
   statusColors,
   formatDuration,
   calculateEndTime,
-  getPersonName,
+  getPersonNames,
   getStatusLabel,
   isDragging,
   draggedOverIndex,
@@ -65,7 +65,25 @@ export const DraggableTimelineItem: React.FC<DraggableTimelineItemProps> = ({
 
   const displayStartTime = previewTimes ? formatTime(previewTimes.startTime) : formatTime(item.time);
   const displayEndTime = previewTimes ? formatTime(previewTimes.endTime) : formatTime(calculateEndTime(item.time, item.duration));
-  const personName = getPersonName(item.assigned_person_id);
+  
+  // Gérer l'affichage des personnes assignées
+  const assignedPersonNames = getPersonNames(item.assigned_person_ids || []);
+  
+  const getAssignedPersonsDisplay = () => {
+    if (assignedPersonNames.length === 0) {
+      // Fallback sur l'ancien système si aucune personne dans le nouveau
+      if (item.assigned_role) {
+        return roleLabels[item.assigned_role as keyof typeof roleLabels] || item.assigned_role.replace('-', ' ');
+      }
+      return "Non assigné";
+    }
+    
+    if (assignedPersonNames.length <= 2) {
+      return assignedPersonNames.join(", ");
+    }
+    
+    return `${assignedPersonNames.slice(0, 2).join(", ")} et ${assignedPersonNames.length - 2} autre${assignedPersonNames.length - 2 > 1 ? 's' : ''}`;
+  };
 
   return (
     <>
@@ -173,20 +191,23 @@ export const DraggableTimelineItem: React.FC<DraggableTimelineItemProps> = ({
                     <Clock className="w-3 h-3" />
                     {formatDuration(item.duration)}
                   </div>
-                  {personName && (
-                    <div className="flex items-center gap-1">
-                      <Users className="w-3 h-3" />
-                      <span>{personName}</span>
-                    </div>
-                  )}
-                  {item.assigned_role && !personName && (
-                    <div className="flex items-center gap-1">
-                      <Users className="w-3 h-3" />
-                      <span>{roleLabels[item.assigned_role as keyof typeof roleLabels] || item.assigned_role.replace('-', ' ')}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1">
+                    <Users className="w-3 h-3" />
+                    <span>{getAssignedPersonsDisplay()}</span>
+                  </div>
                 </div>
               </div>
+
+              {/* Affichage détaillé des personnes assignées */}
+              {assignedPersonNames.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {assignedPersonNames.map((name, idx) => (
+                    <Badge key={idx} variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                      {name}
+                    </Badge>
+                  ))}
+                </div>
+              )}
 
               {/* Notes */}
               {item.notes && (

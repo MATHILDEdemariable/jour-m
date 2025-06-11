@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 interface TimelineProps {
   viewMode: 'personal' | 'global';
   userRole: string;
+  userId?: string; // Nouvel prop pour l'ID utilisateur
 }
 
 const ROLE_LABELS = {
@@ -24,14 +25,31 @@ const ROLE_LABELS = {
   family: "Famille"
 };
 
-export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole }) => {
-  const { timelineItems, loading } = useSharedEventData();
+export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole, userId }) => {
+  const { timelineItems, people, loading } = useSharedEventData();
   const navigate = useNavigate();
 
+  // Fonction pour obtenir l'ID utilisateur basé sur le rôle si userId n'est pas fourni
+  const getCurrentUserId = () => {
+    if (userId) return userId;
+    
+    // Fallback: chercher une personne avec le rôle correspondant
+    const matchingPerson = people.find(person => person.role === userRole);
+    return matchingPerson?.id || null;
+  };
+
   const filteredItems = viewMode === 'personal' 
-    ? timelineItems.filter(item => 
-        item.assigned_person_id || item.assigned_role === userRole
-      )
+    ? timelineItems.filter(item => {
+        const currentUserId = getCurrentUserId();
+        
+        // Nouvelle logique : vérifier si l'utilisateur est dans la liste des personnes assignées
+        if (item.assigned_person_ids && item.assigned_person_ids.length > 0 && currentUserId) {
+          return item.assigned_person_ids.includes(currentUserId);
+        }
+        
+        // Fallback sur l'ancien système pour compatibilité
+        return item.assigned_person_id === currentUserId || item.assigned_role === userRole;
+      })
     : timelineItems;
 
   const calculateEndTime = (startTime: string, duration: number): string => {
@@ -50,6 +68,24 @@ export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole }) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return hours > 0 ? `${hours}h${mins > 0 ? mins : ''}` : `${mins}min`;
+  };
+
+  // Fonction pour obtenir les noms des personnes assignées
+  const getAssignedPersonsDisplay = (item: any) => {
+    if (item.assigned_person_ids && item.assigned_person_ids.length > 0) {
+      const assignedPeople = people.filter(person => 
+        item.assigned_person_ids.includes(person.id)
+      );
+      
+      if (assignedPeople.length === 0) return "Personnes assignées";
+      if (assignedPeople.length === 1) return assignedPeople[0].name;
+      if (assignedPeople.length <= 2) {
+        return assignedPeople.map(p => p.name).join(", ");
+      }
+      return `${assignedPeople.slice(0, 2).map(p => p.name).join(", ")} et ${assignedPeople.length - 2} autre${assignedPeople.length - 2 > 1 ? 's' : ''}`;
+    }
+    
+    return "Non assigné";
   };
 
   if (loading) {
@@ -130,16 +166,14 @@ export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole }) => {
                     <p className="text-sm text-gray-600 mb-3">{item.description}</p>
                   )}
                   
-                  {item.assigned_person_id && (
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500">Assigné à:</span>
-                        <Badge variant="outline" className="text-xs">
-                          Personne assignée
-                        </Badge>
-                      </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500">Assigné à:</span>
+                      <Badge variant="outline" className="text-xs">
+                        {getAssignedPersonsDisplay(item)}
+                      </Badge>
                     </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
             );

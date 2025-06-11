@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TimelineItem } from '@/hooks/useTimelineItems';
-import { usePeople } from '@/hooks/usePeople';
+import { PersonMultiSelect } from './PersonMultiSelect';
 
 interface TimelineItemModalProps {
   isOpen: boolean;
@@ -16,25 +16,12 @@ interface TimelineItemModalProps {
   item?: TimelineItem | null;
 }
 
-const roleLabels = {
-  bride: "Mariée",
-  groom: "Marié",
-  "best-man": "Témoin", 
-  "maid-of-honor": "Demoiselle d'honneur",
-  "wedding-planner": "Wedding Planner",
-  photographer: "Photographe",
-  caterer: "Traiteur",
-  guest: "Invité",
-  family: "Famille"
-};
-
 export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
   item
 }) => {
-  const { people } = usePeople();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -43,7 +30,7 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
     category: 'Préparation',
     priority: 'medium' as 'high' | 'medium' | 'low',
     status: 'scheduled' as 'scheduled' | 'in_progress' | 'completed' | 'delayed',
-    assigned_person_id: '',
+    assigned_person_ids: [] as string[],
     notes: ''
   });
 
@@ -57,7 +44,7 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
         category: item.category,
         priority: item.priority,
         status: item.status,
-        assigned_person_id: item.assigned_person_id || '',
+        assigned_person_ids: item.assigned_person_ids || [],
         notes: item.notes || ''
       });
     } else {
@@ -69,7 +56,7 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
         category: 'Préparation',
         priority: 'medium',
         status: 'scheduled',
-        assigned_person_id: '',
+        assigned_person_ids: [],
         notes: ''
       });
     }
@@ -79,7 +66,6 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
     e.preventDefault();
     onSubmit({
       ...formData,
-      assigned_person_id: formData.assigned_person_id === 'none' ? null : formData.assigned_person_id || null,
       description: formData.description || null,
       notes: formData.notes || null
     });
@@ -178,7 +164,7 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <Label htmlFor="status">Statut</Label>
               <Select value={formData.status} onValueChange={(value: 'scheduled' | 'in_progress' | 'completed' | 'delayed') => setFormData(prev => ({ ...prev, status: value }))}>
@@ -192,26 +178,14 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label htmlFor="assigned_person">Personne assignée</Label>
-              <Select 
-                value={formData.assigned_person_id || 'none'} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, assigned_person_id: value === 'none' ? '' : value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner une personne" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                  <SelectItem value="none">Aucune assignation</SelectItem>
-                  {people.map(person => (
-                    <SelectItem key={person.id} value={person.id}>
-                      {person.name} {person.role && `(${roleLabels[person.role as keyof typeof roleLabels] || person.role})`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
+
+          {/* Nouvelle section pour la multi-sélection de personnes */}
+          <PersonMultiSelect
+            selectedPersonIds={formData.assigned_person_ids}
+            onSelectionChange={(personIds) => setFormData(prev => ({ ...prev, assigned_person_ids: personIds }))}
+            label="Personnes assignées"
+          />
 
           <div>
             <Label htmlFor="notes">Notes</Label>

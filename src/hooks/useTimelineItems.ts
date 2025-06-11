@@ -13,7 +13,8 @@ export interface TimelineItem {
   category: string;
   status: 'scheduled' | 'in_progress' | 'completed' | 'delayed';
   priority: 'high' | 'medium' | 'low';
-  assigned_person_id: string | null;
+  assigned_person_id: string | null; // Garder pour compatibilité descendante
+  assigned_person_ids: string[]; // Nouvelle propriété pour multi-assignation
   assigned_role: string | null;
   order_index: number;
   notes: string | null;
@@ -33,6 +34,7 @@ type SupabaseTimelineItem = {
   status: string | null;
   priority: string | null;
   assigned_person_id: string | null;
+  assigned_person_ids: string[] | null;
   assigned_role: string | null;
   order_index: number;
   notes: string | null;
@@ -45,6 +47,7 @@ const mapSupabaseToTimelineItem = (item: SupabaseTimelineItem): TimelineItem => 
   category: item.category || 'Préparation',
   status: (item.status as TimelineItem['status']) || 'scheduled',
   priority: (item.priority as TimelineItem['priority']) || 'medium',
+  assigned_person_ids: item.assigned_person_ids || [],
   created_at: item.created_at || new Date().toISOString(),
   updated_at: item.updated_at || new Date().toISOString(),
 });
@@ -91,6 +94,7 @@ export const useTimelineItems = () => {
         .insert({
           ...item,
           event_id: currentEventId,
+          assigned_person_ids: item.assigned_person_ids || [],
         })
         .select()
         .single();
@@ -115,9 +119,16 @@ export const useTimelineItems = () => {
 
   const updateTimelineItem = async (id: string, updates: Partial<TimelineItem>) => {
     try {
+      const updateData: any = { ...updates };
+      
+      // S'assurer que assigned_person_ids est toujours un tableau
+      if (updates.assigned_person_ids !== undefined) {
+        updateData.assigned_person_ids = updates.assigned_person_ids;
+      }
+
       const { data, error } = await supabase
         .from('timeline_items')
-        .update(updates)
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();
