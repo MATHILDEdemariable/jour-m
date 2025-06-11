@@ -11,6 +11,7 @@ import { TimelineItemModal } from './TimelineItemModal';
 import { TimelineAISuggestions } from './TimelineAISuggestions';
 import { DraggableTimelineItem } from './DraggableTimelineItem';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Type for preview times during drag and drop
 interface PreviewTime {
@@ -30,6 +31,8 @@ export const UnifiedPlanningManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  
+  const isMobile = useIsMobile();
   
   const { 
     timelineItems, 
@@ -244,94 +247,102 @@ export const UnifiedPlanningManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 md:space-y-6 p-2 md:p-4">
+      {/* Header responsive */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-stone-900">Planning & Tâches Unifié</h2>
-          <p className="text-stone-600">Timeline interactive avec tâches et horaires calculés automatiquement</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-stone-900">Planning & Tâches Unifié</h2>
+          <p className="text-sm md:text-base text-stone-600">Timeline interactive avec tâches et horaires calculés automatiquement</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
           <div className="flex bg-stone-100 rounded-lg p-1">
             <Button
               variant={viewMode === 'timeline' ? 'default' : 'ghost'}
-              size="sm"
+              size={isMobile ? "sm" : "sm"}
               onClick={() => setViewMode('timeline')}
-              className={viewMode === 'timeline' ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'text-stone-600'}
+              className={`flex-1 md:flex-none text-xs md:text-sm ${viewMode === 'timeline' ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'text-stone-600'}`}
             >
               Timeline
             </Button>
             <Button
               variant={viewMode === 'calendar' ? 'default' : 'ghost'}
-              size="sm"
+              size={isMobile ? "sm" : "sm"}
               onClick={() => setViewMode('calendar')}
-              className={viewMode === 'calendar' ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'text-stone-600'}
+              className={`flex-1 md:flex-none text-xs md:text-sm ${viewMode === 'calendar' ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'text-stone-600'}`}
             >
               Calendrier
             </Button>
           </div>
-          <Button variant="outline" className="border-stone-300 text-stone-700 hover:bg-stone-50">
+          <Button 
+            variant="outline" 
+            size={isMobile ? "sm" : "default"}
+            className="border-stone-300 text-stone-700 hover:bg-stone-50 w-full md:w-auto"
+          >
             <Download className="w-4 h-4 mr-2" />
-            Exporter
+            {isMobile ? 'Export' : 'Exporter'}
           </Button>
         </div>
       </div>
 
-      {/* Event Summary dynamique */}
+      {/* Event Summary responsive */}
       <Card className="border-stone-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-stone-800">
-            <Calendar className="w-5 h-5 text-purple-600" />
-            Événement: {currentEvent?.name || 'Événement'}
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-stone-800 text-lg md:text-xl">
+            <Calendar className="w-4 h-4 md:w-5 md:h-5 text-purple-600" />
+            <span className="truncate">Événement: {currentEvent?.name || 'Événement'}</span>
           </CardTitle>
-          <CardDescription className="text-stone-600">
+          <CardDescription className="text-stone-600 text-sm">
             {currentEvent?.event_type} • {currentEvent?.event_date && new Date(currentEvent.event_date).toLocaleDateString('fr-FR')} • {currentEvent?.location}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
-              <div className="text-2xl font-bold text-purple-700">{timelineItems.length}</div>
-              <div className="text-sm text-stone-600">Étapes totales</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+            <div className="text-center p-3 md:p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="text-xl md:text-2xl font-bold text-purple-700">{timelineItems.length}</div>
+              <div className="text-xs md:text-sm text-stone-600">Étapes totales</div>
             </div>
-            <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="text-2xl font-bold text-blue-700">{formatTotalDuration(getTotalDuration())}</div>
-              <div className="text-sm text-stone-600">Durée totale</div>
+            <div className="text-center p-3 md:p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="text-xl md:text-2xl font-bold text-blue-700">{formatTotalDuration(getTotalDuration())}</div>
+              <div className="text-xs md:text-sm text-stone-600">Durée totale</div>
             </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-              <div className="text-2xl font-bold text-green-700">
+            <div className="text-center p-3 md:p-4 bg-green-50 rounded-lg border border-green-200">
+              <div className="text-lg md:text-2xl font-bold text-green-700">
                 {timelineItems.length > 0 ? `08:00 - ${getEndTime()}` : '08:00 - 08:00'}
               </div>
-              <div className="text-sm text-stone-600">Horaires prévisionnels</div>
+              <div className="text-xs md:text-sm text-stone-600">Horaires prévisionnels</div>
             </div>
-            <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
-              <div className="text-2xl font-bold text-orange-700">
+            <div className="text-center p-3 md:p-4 bg-orange-50 rounded-lg border border-orange-200">
+              <div className="text-xl md:text-2xl font-bold text-orange-700">
                 {timelineItems.filter(item => item.status === 'completed').length}
               </div>
-              <div className="text-sm text-stone-600">Tâches terminées</div>
+              <div className="text-xs md:text-sm text-stone-600">Tâches terminées</div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Filtres et recherche */}
+      {/* Filtres et recherche responsive */}
       <Card className="border-stone-200">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-4">
+        <CardContent className="pt-4 md:pt-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-stone-400 w-4 h-4" />
               <Input
                 placeholder="Rechercher une étape ou tâche..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 border-stone-300 focus:border-purple-500"
+                className="pl-10 border-stone-300 focus:border-purple-500 text-sm md:text-base"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <Filter className="text-stone-500 w-4 h-4" />
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-2">
+              <div className="flex items-center gap-2">
+                <Filter className="text-stone-500 w-4 h-4" />
+                <span className="text-sm text-stone-600 md:hidden">Filtres:</span>
+              </div>
               <select
                 value={filterCategory}
                 onChange={(e) => setFilterCategory(e.target.value)}
-                className="px-3 py-2 border border-stone-300 rounded-md focus:border-purple-500 focus:outline-none bg-white text-stone-700"
+                className="px-3 py-2 border border-stone-300 rounded-md focus:border-purple-500 focus:outline-none bg-white text-stone-700 text-sm w-full md:w-auto"
               >
                 {categories.map(cat => (
                   <option key={cat} value={cat}>
@@ -342,7 +353,7 @@ export const UnifiedPlanningManagement = () => {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 border border-stone-300 rounded-md focus:border-purple-500 focus:outline-none bg-white text-stone-700"
+                className="px-3 py-2 border border-stone-300 rounded-md focus:border-purple-500 focus:outline-none bg-white text-stone-700 text-sm w-full md:w-auto"
               >
                 {statuses.map(status => (
                   <option key={status} value={status}>
@@ -355,52 +366,54 @@ export const UnifiedPlanningManagement = () => {
         </CardContent>
       </Card>
 
-      {/* Timeline View */}
+      {/* Timeline View responsive */}
       {viewMode === 'timeline' && (
         <Card className="border-stone-200">
-          <CardHeader>
-            <div className="flex items-center justify-between">
+          <CardHeader className="pb-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <CardTitle className="text-stone-800 flex items-center gap-2">
-                  <Clock4 className="w-5 h-5 text-purple-600" />
+                <CardTitle className="text-stone-800 flex items-center gap-2 text-lg md:text-xl">
+                  <Clock4 className="w-4 h-4 md:w-5 md:h-5 text-purple-600" />
                   Planning & Tâches - Horaires Dynamiques
                 </CardTitle>
-                <CardDescription className="text-stone-600">
-                  Glissez-déposez pour réorganiser • Les horaires se recalculent automatiquement
+                <CardDescription className="text-stone-600 text-sm">
+                  {isMobile ? 'Touchez pour réorganiser' : 'Glissez-déposez pour réorganiser'} • Les horaires se recalculent automatiquement
                 </CardDescription>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
                 <Button 
                   onClick={() => setIsAISuggestionsOpen(true)}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
+                  size={isMobile ? "sm" : "default"}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg w-full md:w-auto"
                 >
                   <Star className="w-4 h-4 mr-2" />
-                  Ajouter Étape/Tâche - Suggestions
+                  {isMobile ? 'IA Suggestions' : 'Ajouter Étape/Tâche - Suggestions'}
                 </Button>
                 <Button 
                   onClick={handleCreateItem}
                   variant="outline"
-                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                  size={isMobile ? "sm" : "default"}
+                  className="border-purple-300 text-purple-700 hover:bg-purple-50 w-full md:w-auto"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Ajout Manuel
+                  {isMobile ? 'Manuel' : 'Ajout Manuel'}
                 </Button>
               </div>
             </div>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-center py-12 text-stone-500">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                <p>Chargement...</p>
+              <div className="text-center py-8 md:py-12 text-stone-500">
+                <div className="animate-spin rounded-full h-6 w-6 md:h-8 md:w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                <p className="text-sm md:text-base">Chargement...</p>
               </div>
             ) : filteredItems.length === 0 ? (
-              <div className="text-center py-12 text-stone-500">
-                <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Aucune étape trouvée. Ajoutez une nouvelle étape ou modifiez vos filtres.</p>
+              <div className="text-center py-8 md:py-12 text-stone-500">
+                <Clock className="w-8 h-8 md:w-12 md:h-12 mx-auto mb-4 opacity-50" />
+                <p className="text-sm md:text-base">Aucune étape trouvée. Ajoutez une nouvelle étape ou modifiez vos filtres.</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 {filteredItems.map((item, index) => (
                   <DraggableTimelineItem
                     key={item.id}
