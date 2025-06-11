@@ -80,6 +80,12 @@ export const UnifiedPlanningManagement = () => {
     return person?.name || null;
   };
 
+  const getPersonNames = (personIds: string[]): string[] => {
+    return personIds
+      .map(id => people.find(p => p.id === id)?.name)
+      .filter(Boolean) as string[];
+  };
+
   // Calculate preview times for drag and drop
   const calculatePreviewTimes = (items: TimelineItem[], draggedIndex: number, dropIndex: number): PreviewTime[] => {
     const newItems = [...items];
@@ -406,7 +412,7 @@ export const UnifiedPlanningManagement = () => {
                     statusColors={statusColors}
                     formatDuration={formatDuration}
                     calculateEndTime={calculateEndTime}
-                    getPersonName={getPersonName}
+                    getPersonNames={getPersonNames}
                     getStatusLabel={getStatusLabel}
                     isDragging={draggedIndex === index}
                     draggedOverIndex={draggedOverIndex}
@@ -441,3 +447,5 @@ export const UnifiedPlanningManagement = () => {
     </div>
   );
 };
+
+}

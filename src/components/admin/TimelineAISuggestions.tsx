@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ const suggestedTimelineItems = [
     time: "08:00",
     order_index: 0,
     assigned_person_id: null,
+    assigned_person_ids: [] as string[],
     assigned_role: "wedding-planner",
     notes: "Prévoir 2h pour être prêt à temps"
   },
@@ -38,6 +40,7 @@ const suggestedTimelineItems = [
     time: "09:00",
     order_index: 1,
     assigned_person_id: null,
+    assigned_person_ids: [] as string[],
     assigned_role: "photographer",
     notes: "Capturer les moments d'émotion"
   },
@@ -51,6 +54,7 @@ const suggestedTimelineItems = [
     time: "14:00",
     order_index: 2,
     assigned_person_id: null,
+    assigned_person_ids: [] as string[],
     assigned_role: "wedding-planner",
     notes: "Organiser l'accueil et la signature du livre d'or"
   },
@@ -64,6 +68,7 @@ const suggestedTimelineItems = [
     time: "14:30",
     order_index: 3,
     assigned_person_id: null,
+    assigned_person_ids: [] as string[],
     assigned_role: null,
     notes: "Moment principal de la journée"
   },
@@ -77,6 +82,7 @@ const suggestedTimelineItems = [
     time: "15:30",
     order_index: 4,
     assigned_person_id: null,
+    assigned_person_ids: [] as string[],
     assigned_role: "photographer",
     notes: "Profiter de la lumière naturelle"
   },
@@ -90,6 +96,7 @@ const suggestedTimelineItems = [
     time: "17:00",
     order_index: 5,
     assigned_person_id: null,
+    assigned_person_ids: [] as string[],
     assigned_role: "wedding-planner",
     notes: "Organiser les groupes pour les photos"
   },
@@ -103,7 +110,8 @@ const suggestedTimelineItems = [
     time: "19:00",
     order_index: 6,
     assigned_person_id: null,
-    assigned_role: "traiteur",
+    assigned_person_ids: [] as string[],
+    assigned_role: "caterer",
     notes: "Service en 3 temps avec discours"
   },
   {
@@ -116,6 +124,7 @@ const suggestedTimelineItems = [
     time: "22:00",
     order_index: 7,
     assigned_person_id: null,
+    assigned_person_ids: [] as string[],
     assigned_role: "dj",
     notes: "Moment symbolique à ne pas manquer"
   }
@@ -187,6 +196,7 @@ export const TimelineAISuggestions: React.FC<TimelineAISuggestionsProps> = ({
         time: "08:00", // Default time, will be recalculated
         order_index: allSuggestions.length + index,
         assigned_person_id: null,
+        assigned_person_ids: [] as string[],
         assigned_role: suggestion.assigned_role,
         notes: suggestion.notes
       }));
