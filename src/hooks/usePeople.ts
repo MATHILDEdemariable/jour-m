@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useCurrentEvent } from '@/contexts/CurrentEventContext';
 
 export interface Person {
   id: string;
@@ -18,6 +19,7 @@ export interface Person {
 
 export const usePeople = () => {
   const { toast } = useToast();
+  const { currentEventId } = useCurrentEvent();
   const [people, setPeople] = useState<Person[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -25,6 +27,8 @@ export const usePeople = () => {
   const loadPeople = async () => {
     setLoading(true);
     try {
+      console.log('usePeople - Loading people for event ID:', currentEventId);
+      
       const { data, error } = await supabase
         .from('people')
         .select('*')
@@ -46,6 +50,7 @@ export const usePeople = () => {
         updated_at: person.updated_at,
       }));
       
+      console.log('usePeople - Loaded people:', mappedPeople);
       setPeople(mappedPeople);
     } catch (error) {
       console.error('Error loading people:', error);
@@ -59,22 +64,63 @@ export const usePeople = () => {
     }
   };
 
+  // Auto-reload when currentEventId changes
+  useEffect(() => {
+    if (currentEventId) {
+      console.log('usePeople - Event ID changed, reloading people for:', currentEventId);
+      loadPeople();
+    }
+  }, [currentEventId]);
+
   // Load people on component mount
   useEffect(() => {
     loadPeople();
   }, []);
 
+  // Setup realtime subscription for live updates
+  useEffect(() => {
+    console.log('usePeople - Setting up realtime subscription');
+    
+    const subscription = supabase
+      .channel('people_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'people' 
+        }, 
+        (payload) => {
+          console.log('usePeople - Realtime update received:', payload);
+          loadPeople(); // Reload data when changes occur
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('usePeople - Cleaning up realtime subscription');
+      subscription.unsubscribe();
+    };
+  }, []);
+
   const addPerson = async (newPerson: Omit<Person, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      // TOUJOURS assigner l'event_id actuel
+      const personWithEventId = {
+        ...newPerson,
+        event_id: currentEventId || newPerson.event_id
+      };
+
+      console.log('usePeople - Adding person with event_id:', personWithEventId);
+
       // Map our interface to database fields
       const dbPerson = {
-        name: newPerson.name,
-        role: newPerson.role,
-        email: newPerson.email,
-        phone: newPerson.phone,
-        availability_notes: newPerson.availability,
-        confirmation_status: newPerson.status,
-        event_id: newPerson.event_id,
+        name: personWithEventId.name,
+        role: personWithEventId.role,
+        email: personWithEventId.email,
+        phone: personWithEventId.phone,
+        availability_notes: personWithEventId.availability,
+        confirmation_status: personWithEventId.status,
+        event_id: personWithEventId.event_id,
       };
 
       const { data, error } = await supabase

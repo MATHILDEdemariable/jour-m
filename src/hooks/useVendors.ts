@@ -1,7 +1,7 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useCurrentEvent } from '@/contexts/CurrentEventContext';
 
 export interface Vendor {
   id: string;
@@ -33,6 +33,7 @@ export interface VendorDocument {
 
 export const useVendors = () => {
   const { toast } = useToast();
+  const { currentEventId } = useCurrentEvent();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [documents, setDocuments] = useState<VendorDocument[]>([]);
   const [loading, setLoading] = useState(false);
@@ -40,12 +41,16 @@ export const useVendors = () => {
   const loadVendors = async () => {
     setLoading(true);
     try {
+      console.log('useVendors - Loading vendors for event ID:', currentEventId);
+      
       const { data, error } = await supabase
         .from('vendors')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      console.log('useVendors - Loaded vendors:', data);
       setVendors(data || []);
     } catch (error) {
       console.error('Error loading vendors:', error);
@@ -58,6 +63,39 @@ export const useVendors = () => {
       setLoading(false);
     }
   };
+
+  // Auto-reload when currentEventId changes
+  useEffect(() => {
+    if (currentEventId) {
+      console.log('useVendors - Event ID changed, reloading vendors for:', currentEventId);
+      loadVendors();
+    }
+  }, [currentEventId]);
+
+  // Setup realtime subscription for live updates
+  useEffect(() => {
+    console.log('useVendors - Setting up realtime subscription');
+    
+    const subscription = supabase
+      .channel('vendors_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'vendors' 
+        }, 
+        (payload) => {
+          console.log('useVendors - Realtime update received:', payload);
+          loadVendors(); // Reload data when changes occur
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('useVendors - Cleaning up realtime subscription');
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const loadDocuments = async (vendorId: string) => {
     try {
@@ -81,9 +119,17 @@ export const useVendors = () => {
 
   const addVendor = async (newVendor: Omit<Vendor, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      // TOUJOURS assigner l'event_id actuel
+      const vendorWithEventId = {
+        ...newVendor,
+        event_id: currentEventId || newVendor.event_id
+      };
+
+      console.log('useVendors - Adding vendor with event_id:', vendorWithEventId);
+
       const { data, error } = await supabase
         .from('vendors')
-        .insert(newVendor)
+        .insert(vendorWithEventId)
         .select()
         .single();
 

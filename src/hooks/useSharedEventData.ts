@@ -18,38 +18,41 @@ export const useSharedEventData = () => {
   const { timelineItems, loadTimelineItems } = useTimelineItems();
   const { currentEventId } = useCurrentEvent();
 
-  // Debug: Log pour vérifier la cohérence des données
-  console.log('useSharedEventData - Data check:');
+  // Debug: Log pour vérifier la cohérence des données avec plus de détails
+  console.log('=== useSharedEventData - SYNCHRONIZATION CHECK ===');
   console.log('Current event ID:', currentEventId);
-  console.log('Tasks from EventDataContext:', tasks);
-  console.log('People from EventDataContext:', people);
-  console.log('Vendors from EventDataContext:', vendors);
-  console.log('Timeline items from useTimelineItems:', timelineItems);
+  console.log('All people loaded:', people.length);
+  console.log('All vendors loaded:', vendors.length);
+  console.log('People details:', people.map(p => ({ id: p.id, name: p.name, event_id: p.event_id })));
+  console.log('Vendors details:', vendors.map(v => ({ id: v.id, name: v.name, event_id: v.event_id })));
   console.log('Loading state:', loading);
+  console.log('=== END SYNCHRONIZATION CHECK ===');
 
-  // Strict filtering par event_id pour toutes les données - SANS FILTRE DE STATUT
+  // Strict filtering par event_id pour toutes les données
   const eventFilteredTasks = tasks.filter(task => task.event_id === currentEventId);
   const eventFilteredPeople = people.filter(person => person.event_id === currentEventId);
   const eventFilteredVendors = vendors.filter(vendor => vendor.event_id === currentEventId);
   const eventFilteredPlanningItems = planningItems.filter(item => item.event_id === currentEventId);
 
-  console.log('useSharedEventData - Event filtered data (no status filters):');
-  console.log('Filtered tasks:', eventFilteredTasks);
-  console.log('Filtered people:', eventFilteredPeople);
-  console.log('Filtered vendors:', eventFilteredVendors);
-  console.log('Filtered planning items:', eventFilteredPlanningItems);
+  console.log('=== FILTERED DATA RESULTS ===');
+  console.log('Filtered tasks count:', eventFilteredTasks.length);
+  console.log('Filtered people count:', eventFilteredPeople.length);
+  console.log('Filtered vendors count:', eventFilteredVendors.length);
+  console.log('Filtered planning items count:', eventFilteredPlanningItems.length);
+  console.log('=== END FILTERED DATA ===');
 
-  // Refresh complet avec timeline items
+  // Enhanced refresh avec logs détaillés
   const enhancedRefreshData = async () => {
-    console.log('Enhanced refresh data triggered');
+    console.log('=== ENHANCED REFRESH STARTED ===');
+    console.log('Refreshing data for event ID:', currentEventId);
     try {
       await Promise.all([
         refreshData(),
         loadTimelineItems()
       ]);
-      console.log('Enhanced refresh completed');
+      console.log('=== ENHANCED REFRESH COMPLETED SUCCESSFULLY ===');
     } catch (error) {
-      console.error('Error in enhanced refresh:', error);
+      console.error('=== ENHANCED REFRESH ERROR ===', error);
     }
   };
 
@@ -57,20 +60,19 @@ export const useSharedEventData = () => {
   const getCriticalTasks = () => {
     return eventFilteredTasks.filter(task => 
       task.priority === 'high' && task.status !== 'completed'
-    ).slice(0, 5); // Top 5 tâches critiques
+    ).slice(0, 5);
   };
 
   const getUpcomingPlanningItems = () => {
-    return eventFilteredPlanningItems.slice(0, 3); // Prochaines 3 étapes
+    return eventFilteredPlanningItems.slice(0, 3);
   };
 
-  // Suppression des filtres de statut dans les résumés
   const getTeamSummary = () => {
     const total = eventFilteredPeople.length;
     const confirmed = eventFilteredPeople.filter(p => p.confirmation_status === 'confirmed').length;
     const pending = total - confirmed;
     
-    console.log('Team summary (no status filtering for access):', { total, confirmed, pending });
+    console.log('Team summary calculated:', { total, confirmed, pending });
     return { confirmed, pending, total };
   };
 
@@ -79,12 +81,11 @@ export const useSharedEventData = () => {
     const confirmed = eventFilteredVendors.filter(v => v.contract_status === 'signed').length;
     const pending = total - confirmed;
     
-    console.log('Vendors summary (no status filtering for access):', { total, confirmed, pending });
+    console.log('Vendors summary calculated:', { total, confirmed, pending });
     return { confirmed, pending, total };
   };
 
   const getTimelineStats = () => {
-    // Limiter aux éléments de l'événement actuel
     const filteredTimelineItems = timelineItems.filter(item => item.event_id === currentEventId);
     
     const totalSteps = filteredTimelineItems.length;
@@ -100,13 +101,11 @@ export const useSharedEventData = () => {
       progressPercentage: totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
     };
     
-    console.log('Timeline stats:', stats);
+    console.log('Timeline stats calculated:', stats);
     return stats;
   };
 
   const getDocumentStats = () => {
-    // Pour l'instant, on simule les stats des documents
-    // Plus tard, cela sera connecté aux vrais documents
     return {
       totalDocuments: 18,
       pendingDocuments: 3,
@@ -117,7 +116,6 @@ export const useSharedEventData = () => {
   const getRecentActivity = () => {
     const activities = [];
     
-    // Activités récentes des tâches terminées
     const recentCompletedTasks = eventFilteredTasks
       .filter(task => task.status === 'completed' && task.completed_at)
       .sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime())
@@ -132,7 +130,6 @@ export const useSharedEventData = () => {
       });
     });
 
-    // Activités récentes des timeline items - uniquement de l'événement actuel
     const filteredTimelineItems = timelineItems.filter(item => item.event_id === currentEventId);
     const recentTimelineItems = filteredTimelineItems
       .filter(item => item.status === 'completed')
@@ -152,20 +149,19 @@ export const useSharedEventData = () => {
       .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
       .slice(0, 5);
     
-    console.log('Recent activities:', finalActivities);
     return finalActivities;
   };
 
   return {
-    // Données filtrées par event_id UNIQUEMENT - accès pour tous les participants
+    // Données filtrées par event_id UNIQUEMENT
     tasks: eventFilteredTasks,
     planningItems: eventFilteredPlanningItems,
     timelineItems: timelineItems.filter(item => item.event_id === currentEventId),
-    people: eventFilteredPeople, // TOUS les participants de l'événement
-    vendors: eventFilteredVendors, // TOUS les prestataires de l'événement
+    people: eventFilteredPeople,
+    vendors: eventFilteredVendors,
     loading,
     
-    // Actions - utiliser la version enrichie pour les timeline items
+    // Actions - utiliser la version enrichie
     refreshData: enhancedRefreshData,
     
     // Statistiques et calculs
