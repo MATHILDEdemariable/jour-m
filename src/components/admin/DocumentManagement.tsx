@@ -1,15 +1,16 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Upload, FileText, Eye, Download, Trash2, Link2, Users, Search, Filter, ExternalLink, RefreshCw } from 'lucide-react';
+import { Upload, FileText, Eye, Download, Trash2, Link2, Users, Search, Filter, ExternalLink } from 'lucide-react';
 import { useEventDocuments } from '@/hooks/useEventDocuments';
 import { useEvents } from '@/hooks/useEvents';
 import { usePeople } from '@/hooks/usePeople';
 import { DocumentAssignmentModal } from './DocumentAssignmentModal';
-import { convertGoogleDriveUrl, convertToNavigableGoogleDriveUrl, isValidGoogleDriveUrl } from '@/utils/googleDriveUtils';
+import { isValidGoogleDriveUrl } from '@/utils/googleDriveUtils';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -28,7 +29,6 @@ export const DocumentManagement = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [googleDriveUrl, setGoogleDriveUrl] = useState(currentEvent?.google_drive_url || '');
-  const [iframeLoading, setIframeLoading] = useState(true);
   const [assignmentModal, setAssignmentModal] = useState<{
     isOpen: boolean;
     documentId: string;
@@ -63,6 +63,10 @@ export const DocumentManagement = () => {
     }
     
     await updateEventGoogleDriveUrl(currentEvent.id, googleDriveUrl);
+    toast({
+      title: 'Google Drive connecté',
+      description: 'Le lien Google Drive a été mis à jour avec succès',
+    });
   };
 
   const handleAssignDocument = (documentId: string, documentName: string, currentAssignment: string[]) => {
@@ -82,19 +86,6 @@ export const DocumentManagement = () => {
   const getPersonName = (personId: string) => {
     const person = people.find(p => p.id === personId);
     return person?.name || 'Personne inconnue';
-  };
-
-  const handleIframeLoad = () => {
-    setIframeLoading(false);
-  };
-
-  const refreshIframe = () => {
-    setIframeLoading(true);
-    // Force iframe refresh by updating src
-    const iframe = document.getElementById('google-drive-iframe') as HTMLIFrameElement;
-    if (iframe && currentEvent?.google_drive_url) {
-      iframe.src = convertToNavigableGoogleDriveUrl(currentEvent.google_drive_url);
-    }
   };
 
   const filteredDocuments = documents.filter(doc => {
@@ -123,104 +114,78 @@ export const DocumentManagement = () => {
         </div>
       </div>
 
-      {/* Google Drive Integration - Amélioration mobile */}
+      {/* Google Drive Integration - Version simplifiée */}
       <Card className="border-stone-200">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-stone-800 text-lg md:text-xl">
             <Link2 className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
-            Intégration Google Drive
+            Lien Google Drive
           </CardTitle>
           <CardDescription className="text-sm">
-            Connectez un dossier Google Drive pour centraliser tous vos documents
+            Connectez un dossier Google Drive pour partager le lien avec votre équipe
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col gap-2 md:flex-row md:gap-2">
-            <Input
-              placeholder="URL du dossier Google Drive..."
-              value={googleDriveUrl}
-              onChange={(e) => setGoogleDriveUrl(e.target.value)}
-              className="flex-1 text-sm md:text-base"
-            />
-            <Button 
-              onClick={handleGoogleDriveSubmit}
-              className="bg-blue-600 hover:bg-blue-700 w-full md:w-auto"
-              size={isMobile ? "sm" : "default"}
-            >
-              {isMobile ? 'Connecter' : 'Connecter'}
-            </Button>
-          </div>
-          {currentEvent?.google_drive_url && (
-            <div className="mt-4">
+          <div className="space-y-4">
+            <div className="flex flex-col gap-2 md:flex-row md:gap-2">
+              <Input
+                placeholder="URL du dossier Google Drive..."
+                value={googleDriveUrl}
+                onChange={(e) => setGoogleDriveUrl(e.target.value)}
+                className="flex-1 text-sm md:text-base"
+              />
+              <Button 
+                onClick={handleGoogleDriveSubmit}
+                className="bg-blue-600 hover:bg-blue-700 w-full md:w-auto"
+                size={isMobile ? "sm" : "default"}
+              >
+                {currentEvent?.google_drive_url ? 'Mettre à jour' : 'Connecter'}
+              </Button>
+            </div>
+            
+            {currentEvent?.google_drive_url && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-medium text-blue-900 text-sm md:text-base">
-                    Google Drive - Navigation complète
-                  </h4>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={refreshIframe}
-                      className="border-blue-200 text-blue-700 hover:bg-blue-50"
-                    >
-                      <RefreshCw className="w-3 h-3 mr-1" />
-                      {isMobile ? '' : 'Actualiser'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(currentEvent.google_drive_url, '_blank')}
-                      className="border-blue-200 text-blue-700 hover:bg-blue-50"
-                    >
-                      <ExternalLink className="w-3 h-3 mr-1" />
-                      {isMobile ? '' : 'Ouvrir'}
-                    </Button>
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-blue-900 text-sm md:text-base mb-2">
+                      🌥️ Google Drive connecté
+                    </h4>
+                    <p className="text-sm text-blue-700 mb-3">
+                      Votre équipe peut accéder aux documents via le lien ci-dessous
+                    </p>
                   </div>
                 </div>
-                <div className="relative">
-                  {iframeLoading && (
-                    <div className="absolute inset-0 bg-blue-50 flex items-center justify-center rounded border border-blue-200">
-                      <div className="text-center">
-                        <div className="animate-spin rounded-full h-6 w-6 md:h-8 md:w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                        <p className="text-blue-700 text-sm">Chargement de Google Drive...</p>
-                      </div>
-                    </div>
-                  )}
-                  <iframe
-                    id="google-drive-iframe"
-                    src={convertToNavigableGoogleDriveUrl(currentEvent.google_drive_url)}
-                    width="100%"
-                    height={isMobile ? "400" : "500"}
-                    className="border border-blue-200 rounded"
-                    title="Google Drive - Navigation complète"
-                    onLoad={handleIframeLoad}
-                    allow="fullscreen"
-                    style={{ minHeight: isMobile ? '400px' : '500px' }}
-                  />
-                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(currentEvent.google_drive_url, '_blank')}
+                  className="border-blue-200 text-blue-700 hover:bg-blue-100 w-full md:w-auto"
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Ouvrir Google Drive
+                </Button>
                 <p className="text-xs text-blue-600 mt-2">
-                  💡 Vous pouvez naviguer, ouvrir et télécharger vos fichiers directement depuis cette interface
+                  💡 Ce lien sera aussi disponible pour votre équipe dans l'interface publique
                 </p>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </CardContent>
       </Card>
 
-      {/* Upload Documents - responsive */}
-      <Card className="border-stone-200">
+      {/* Upload Documents - Section bien visible */}
+      <Card className="border-emerald-200 bg-emerald-50/30">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-stone-800 text-lg md:text-xl">
-            <Upload className="w-4 h-4 md:w-5 md:h-5 text-emerald-600" />
-            Upload de Documents
+          <CardTitle className="flex items-center gap-2 text-emerald-900 text-lg md:text-xl">
+            <Upload className="w-5 h-5 md:w-6 md:h-6 text-emerald-600" />
+            📁 Upload de Documents
           </CardTitle>
-          <CardDescription className="text-sm">
-            Uploadez des documents directement sur la plateforme
+          <CardDescription className="text-sm text-emerald-800">
+            <strong>Uploadez des documents directement sur la plateforme</strong> - Ils seront accessibles à votre équipe
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="border-2 border-dashed border-stone-300 rounded-lg p-4 md:p-8 text-center">
+          <div className="border-2 border-dashed border-emerald-300 rounded-lg p-6 md:p-8 text-center bg-white/50">
             <input
               type="file"
               multiple
@@ -230,17 +195,29 @@ export const DocumentManagement = () => {
               disabled={uploading}
             />
             <label htmlFor="file-upload" className="cursor-pointer">
-              <Upload className="w-8 h-8 md:w-12 md:h-12 text-stone-400 mx-auto mb-4" />
-              <p className="text-stone-600 mb-2 text-sm md:text-base">
-                {uploading ? 'Upload en cours...' : 'Cliquez pour sélectionner des fichiers'}
+              <div className="mb-4">
+                <Upload className="w-12 h-12 md:w-16 md:h-16 text-emerald-500 mx-auto mb-2" />
+                <div className="w-8 h-1 bg-emerald-500 mx-auto rounded-full"></div>
+              </div>
+              <p className="text-emerald-800 mb-2 text-base md:text-lg font-medium">
+                {uploading ? '📤 Upload en cours...' : '📎 Cliquez pour sélectionner des fichiers'}
               </p>
-              <p className="text-xs text-stone-500">PDF, Images, Documents Office acceptés</p>
+              <p className="text-sm text-emerald-600">
+                PDF, Images, Documents Office acceptés • Plusieurs fichiers possible
+              </p>
             </label>
           </div>
+          {!currentEvent?.google_drive_url && (
+            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-800">
+                💡 <strong>Conseil :</strong> Vous pouvez aussi connecter un Google Drive ci-dessus pour partager des documents sans les uploader
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Search and Filters - responsive */}
+      {/* Search and Filters */}
       <Card className="border-stone-200">
         <CardContent className="pt-4 md:pt-6">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
@@ -271,7 +248,7 @@ export const DocumentManagement = () => {
         </CardContent>
       </Card>
 
-      {/* Documents List - responsive */}
+      {/* Documents List */}
       <Card className="border-stone-200">
         <CardHeader>
           <CardTitle className="text-stone-800 text-lg md:text-xl">Documents Uploadés</CardTitle>
