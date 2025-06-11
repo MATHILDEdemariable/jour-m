@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentEvent } from '@/contexts/CurrentEventContext';
@@ -38,6 +37,7 @@ export const useVendors = () => {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [documents, setDocuments] = useState<VendorDocument[]>([]);
   const [loading, setLoading] = useState(false);
+  const subscriptionRef = useRef<any>(null);
 
   const loadVendors = async () => {
     setLoading(true);
@@ -67,30 +67,47 @@ export const useVendors = () => {
 
   // Combined useEffect for loading and realtime subscription
   useEffect(() => {
+    // Cleanup previous subscription
+    if (subscriptionRef.current) {
+      console.log('useVendors - Cleaning up previous subscription');
+      subscriptionRef.current.unsubscribe();
+      subscriptionRef.current = null;
+    }
+
     // Load initial data
     loadVendors();
 
-    // Setup realtime subscription for live updates
-    console.log('useVendors - Setting up realtime subscription');
+    // Setup realtime subscription with unique channel name
+    const channelName = `vendors_changes_${currentEventId}_${Date.now()}`;
+    console.log('useVendors - Setting up realtime subscription:', channelName);
     
-    const subscription = supabase
-      .channel('vendors_changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'vendors' 
-        }, 
-        (payload) => {
-          console.log('useVendors - Realtime update received:', payload);
-          loadVendors(); // Reload data when changes occur
-        }
-      )
-      .subscribe();
+    try {
+      const subscription = supabase
+        .channel(channelName)
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'vendors' 
+          }, 
+          (payload) => {
+            console.log('useVendors - Realtime update received:', payload);
+            loadVendors(); // Reload data when changes occur
+          }
+        )
+        .subscribe();
+
+      subscriptionRef.current = subscription;
+    } catch (error) {
+      console.error('useVendors - Error setting up subscription:', error);
+    }
 
     return () => {
-      console.log('useVendors - Cleaning up realtime subscription');
-      subscription.unsubscribe();
+      if (subscriptionRef.current) {
+        console.log('useVendors - Cleaning up realtime subscription');
+        subscriptionRef.current.unsubscribe();
+        subscriptionRef.current = null;
+      }
     };
   }, [currentEventId]);
 

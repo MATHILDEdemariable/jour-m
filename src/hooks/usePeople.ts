@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentEvent } from '@/contexts/CurrentEventContext';
@@ -22,6 +21,7 @@ export const usePeople = () => {
   const { currentEventId } = useCurrentEvent();
   const [people, setPeople] = useState<Person[]>([]);
   const [loading, setLoading] = useState(false);
+  const subscriptionRef = useRef<any>(null);
 
   // Load people from Supabase
   const loadPeople = async () => {
@@ -66,30 +66,47 @@ export const usePeople = () => {
 
   // Combined useEffect for loading and realtime subscription
   useEffect(() => {
+    // Cleanup previous subscription
+    if (subscriptionRef.current) {
+      console.log('usePeople - Cleaning up previous subscription');
+      subscriptionRef.current.unsubscribe();
+      subscriptionRef.current = null;
+    }
+
     // Load initial data
     loadPeople();
 
-    // Setup realtime subscription for live updates
-    console.log('usePeople - Setting up realtime subscription');
+    // Setup realtime subscription with unique channel name
+    const channelName = `people_changes_${currentEventId}_${Date.now()}`;
+    console.log('usePeople - Setting up realtime subscription:', channelName);
     
-    const subscription = supabase
-      .channel('people_changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'people' 
-        }, 
-        (payload) => {
-          console.log('usePeople - Realtime update received:', payload);
-          loadPeople(); // Reload data when changes occur
-        }
-      )
-      .subscribe();
+    try {
+      const subscription = supabase
+        .channel(channelName)
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'people' 
+          }, 
+          (payload) => {
+            console.log('usePeople - Realtime update received:', payload);
+            loadPeople(); // Reload data when changes occur
+          }
+        )
+        .subscribe();
+
+      subscriptionRef.current = subscription;
+    } catch (error) {
+      console.error('usePeople - Error setting up subscription:', error);
+    }
 
     return () => {
-      console.log('usePeople - Cleaning up realtime subscription');
-      subscription.unsubscribe();
+      if (subscriptionRef.current) {
+        console.log('usePeople - Cleaning up realtime subscription');
+        subscriptionRef.current.unsubscribe();
+        subscriptionRef.current = null;
+      }
     };
   }, [currentEventId]);
 
