@@ -113,9 +113,9 @@ const Home: React.FC = () => {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img 
-              src="/lovable-uploads/cc0ac012-b601-4358-af13-fe715ec15146.png" 
+              src="/lovable-uploads/69f2f20b-c47f-4c2c-8609-7e9151e83a4f.png" 
               alt="Mariable Logo" 
-              className="h-8 w-auto brightness-0 invert"
+              className="h-12 w-12 object-contain"
             />
           </div>
           <div className="text-white text-sm">
