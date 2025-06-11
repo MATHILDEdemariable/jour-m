@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useCurrentEvent } from '@/contexts/CurrentEventContext';
 import { usePeople } from '@/hooks/usePeople';
 import { useVendors } from '@/hooks/useVendors';
+import { useToast } from '@/hooks/use-toast';
 
 interface LoggedUser {
   id: string;
@@ -25,19 +27,22 @@ const EventPortal = () => {
   const isMobile = useIsMobile();
   const { loading, refreshData, getDaysUntilEvent } = useSharedEventData();
   const { currentEventId } = useCurrentEvent();
-  const { people, loadPeople } = usePeople();
-  const { vendors, loadVendors } = useVendors();
+  const { people, loadPeople, loading: peopleLoading } = usePeople();
+  const { vendors, loadVendors, loading: vendorsLoading } = useVendors();
+  const { toast } = useToast();
   const [loggedInUser, setLoggedInUser] = useState<LoggedUser | null>(null);
   const [activeTab, setActiveTab] = useState('planning');
   const [viewMode, setViewMode] = useState<'personal' | 'global'>('personal');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const daysUntilEvent = getDaysUntilEvent();
 
+  // Force refresh de toutes les données au chargement
   useEffect(() => {
     console.log('EventPortal - Initializing with event ID:', currentEventId);
-    refreshData();
-    loadPeople();
-    loadVendors();
+    if (currentEventId) {
+      handleFullDataRefresh();
+    }
   }, [currentEventId]);
 
   useEffect(() => {
@@ -81,16 +86,54 @@ const EventPortal = () => {
 
   // Force refresh when switching tabs to ensure synchronization
   useEffect(() => {
-    refreshData();
     console.log('EventPortal - Tab changed to:', activeTab, '- refreshing data');
+    handleFullDataRefresh();
   }, [activeTab]);
+
+  // Fonction de refresh complète et forcée
+  const handleFullDataRefresh = async () => {
+    if (!currentEventId) return;
+    
+    setIsRefreshing(true);
+    console.log('=== FORCED FULL DATA REFRESH ===');
+    console.log('Event ID:', currentEventId);
+    
+    try {
+      // Force refresh de toutes les sources de données en parallèle
+      await Promise.all([
+        refreshData(),
+        loadPeople(),
+        loadVendors()
+      ]);
+      
+      console.log('All data refreshed successfully');
+      
+      // Afficher un toast de confirmation
+      toast({
+        title: 'Synchronisation terminée',
+        description: 'Toutes les données ont été actualisées',
+      });
+      
+    } catch (error) {
+      console.error('Error during data refresh:', error);
+      toast({
+        title: 'Erreur de synchronisation',
+        description: 'Impossible de synchroniser les données',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handleLogin = (userId: string, userName: string, userType: 'person' | 'vendor') => {
     const user = { id: userId, name: userName, type: userType };
     setLoggedInUser(user);
     localStorage.setItem('eventPortalUser', JSON.stringify(user));
     console.log('User logged in:', user);
-    refreshData();
+    
+    // Force refresh après connexion
+    handleFullDataRefresh();
   };
 
   const handleLogout = () => {
@@ -104,7 +147,7 @@ const EventPortal = () => {
 
   const handleRefreshData = () => {
     console.log('Manual data refresh triggered for event ID:', currentEventId);
-    refreshData();
+    handleFullDataRefresh();
   };
 
   // Si pas encore connecté, afficher l'écran de connexion
@@ -143,6 +186,8 @@ const EventPortal = () => {
     }
   };
 
+  const isDataLoading = loading || peopleLoading || vendorsLoading || isRefreshing;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
       {/* Header */}
@@ -172,12 +217,12 @@ const EventPortal = () => {
                 variant="outline"
                 size="sm"
                 onClick={handleRefreshData}
-                disabled={loading}
+                disabled={isDataLoading}
                 className="border-purple-200 text-purple-700 hover:bg-purple-50 h-7 w-7 lg:h-8 lg:w-auto lg:px-3 p-0"
-                title="Actualiser"
+                title="Synchronisation forcée"
               >
-                <RefreshCw className={`w-4 h-4 ${!isMobile && 'mr-2'} ${loading ? 'animate-spin' : ''}`} />
-                {!isMobile && 'Actualiser'}
+                <RefreshCw className={`w-4 h-4 ${!isMobile && 'mr-2'} ${isDataLoading ? 'animate-spin' : ''}`} />
+                {!isMobile && (isRefreshing ? 'Sync...' : 'Actualiser')}
               </Button>
               <Button
                 variant="outline"
@@ -205,11 +250,16 @@ const EventPortal = () => {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 lg:py-8 pb-20 lg:pb-8">
-        {loading ? (
+        {isDataLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-purple-600" />
-              <p className="text-purple-600">Synchronisation avec l'Admin Portal...</p>
+              <p className="text-purple-600">
+                {isRefreshing ? 'Synchronisation forcée en cours...' : 'Chargement des données...'}
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Synchronisation avec l'Admin Portal
+              </p>
             </div>
           </div>
         ) : (

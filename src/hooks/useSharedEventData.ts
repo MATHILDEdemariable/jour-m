@@ -15,7 +15,7 @@ export const useSharedEventData = () => {
     getDaysUntilEvent
   } = useEventData();
 
-  const { timelineItems } = useTimelineItems();
+  const { timelineItems, refetch: refetchTimelineItems } = useTimelineItems();
   const { currentEventId } = useCurrentEvent();
 
   // Debug: Log pour vérifier la cohérence des données
@@ -38,6 +38,20 @@ export const useSharedEventData = () => {
   console.log('Filtered people:', eventFilteredPeople);
   console.log('Filtered vendors:', eventFilteredVendors);
   console.log('Filtered planning items:', eventFilteredPlanningItems);
+
+  // Refresh complet avec timeline items
+  const enhancedRefreshData = async () => {
+    console.log('Enhanced refresh data triggered');
+    try {
+      await Promise.all([
+        refreshData(),
+        refetchTimelineItems()
+      ]);
+      console.log('Enhanced refresh completed');
+    } catch (error) {
+      console.error('Error in enhanced refresh:', error);
+    }
+  };
 
   // Fonctions utilitaires pour les données partagées
   const getCriticalTasks = () => {
@@ -151,8 +165,8 @@ export const useSharedEventData = () => {
     vendors: eventFilteredVendors, // TOUS les prestataires de l'événement
     loading,
     
-    // Actions
-    refreshData,
+    // Actions - utiliser la version enrichie pour les timeline items
+    refreshData: enhancedRefreshData,
     
     // Statistiques et calculs
     getProgressStats,

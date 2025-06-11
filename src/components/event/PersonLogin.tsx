@@ -31,6 +31,7 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
   const [selectedUserId, setSelectedUserId] = useState('');
   const { people, vendors, loading, refreshData } = useSharedEventData();
   const { currentEventId } = useCurrentEvent();
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
   // Debug logs pour diagnostiquer la synchronisation
   console.log('=== PersonLogin Debug - Jour-J ===');
@@ -39,6 +40,14 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
   console.log('All people for this event:', people);
   console.log('All vendors for this event:', vendors);
   console.log('=== End PersonLogin Debug ===');
+
+  // Force refresh au chargement initial
+  useEffect(() => {
+    if (currentEventId) {
+      console.log('PersonLogin - Initial load, forcing data refresh for event:', currentEventId);
+      handleRefresh();
+    }
+  }, [currentEventId]);
 
   const handleLogin = () => {
     if (!selectedUserId) return;
@@ -58,14 +67,21 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
     }
   };
 
-  const handleRefresh = () => {
-    console.log('Manual refresh triggered for event ID:', currentEventId);
-    refreshData();
-    setSelectedUserId(''); // Reset selection after refresh
+  const handleRefresh = async () => {
+    console.log('PersonLogin - Manual refresh triggered for event ID:', currentEventId);
+    setIsManualRefreshing(true);
+    try {
+      await refreshData();
+      setSelectedUserId(''); // Reset selection after refresh
+      console.log('PersonLogin - Refresh completed');
+    } finally {
+      setIsManualRefreshing(false);
+    }
   };
 
   const currentList = selectedUserType === 'person' ? people : vendors;
   const hasData = people.length > 0 || vendors.length > 0;
+  const isDataLoading = loading || isManualRefreshing;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center p-4">
@@ -120,31 +136,45 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
             </Button>
           </div>
 
-          {/* Bouton de rafraîchissement */}
+          {/* Bouton de rafraîchissement amélioré */}
           <div className="flex justify-center">
             <Button
               variant="outline"
               size="sm"
               onClick={handleRefresh}
-              disabled={loading}
+              disabled={isDataLoading}
               className="text-purple-600 border-purple-200 hover:bg-purple-50"
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              {loading ? 'Synchronisation...' : 'Actualiser'}
+              <RefreshCw className={`w-4 h-4 mr-2 ${isDataLoading ? 'animate-spin' : ''}`} />
+              {isManualRefreshing ? 'Synchronisation...' : isDataLoading ? 'Chargement...' : 'Synchroniser'}
             </Button>
           </div>
 
           {/* État de chargement ou données */}
-          {loading ? (
+          {isDataLoading ? (
             <div className="text-center py-4">
               <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-purple-600" />
-              <p className="text-purple-600">Synchronisation avec l'Admin Portal...</p>
+              <p className="text-purple-600">
+                {isManualRefreshing ? 'Synchronisation forcée...' : 'Synchronisation avec l\'Admin Portal...'}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Récupération des dernières données
+              </p>
             </div>
           ) : !hasData ? (
             <div className="text-center py-4 bg-red-50 rounded-lg border border-red-200">
               <AlertCircle className="w-6 h-6 mx-auto mb-2 text-red-600" />
               <p className="text-red-700 font-medium">Aucun participant trouvé</p>
               <p className="text-red-600 text-sm">Ajoutez des participants dans l'Admin Portal</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                className="mt-2 text-red-600 border-red-200"
+              >
+                <RefreshCw className="w-4 h-4 mr-1" />
+                Réessayer
+              </Button>
             </div>
           ) : (
             <>
@@ -192,7 +222,7 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
             </>
           )}
 
-          {/* Stats Preview - Simplifié */}
+          {/* Stats Preview - Mis à jour en temps réel */}
           <div className="grid grid-cols-2 gap-3 mt-6 p-4 bg-gray-50 rounded-lg">
             <div className="text-center">
               <div className="text-lg font-bold text-purple-600">{people.length}</div>
@@ -204,6 +234,15 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
             </div>
           </div>
 
+          {/* Status indicator */}
+          {hasData && (
+            <div className="text-center">
+              <Badge className="bg-green-100 text-green-800 text-xs">
+                Données synchronisées
+              </Badge>
+            </div>
+          )}
+
           {/* Debug info (visible seulement en développement) */}
           {process.env.NODE_ENV === 'development' && (
             <details className="text-xs text-gray-500 bg-gray-100 rounded p-2">
@@ -214,6 +253,7 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
                 <div>Total Vendors: {vendors.length}</div>
                 <div>People with event_id: {people.filter(p => p.event_id === currentEventId).length}</div>
                 <div>Vendors with event_id: {vendors.filter(v => v.event_id === currentEventId).length}</div>
+                <div>Last refresh: {new Date().toLocaleTimeString()}</div>
               </div>
             </details>
           )}
