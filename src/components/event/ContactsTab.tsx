@@ -12,6 +12,18 @@ interface ContactsTabProps {
   userType: 'person' | 'vendor';
 }
 
+const roleLabels = {
+  bride: "Mariée",
+  groom: "Marié",
+  "best-man": "Témoin", 
+  "maid-of-honor": "Demoiselle d'honneur",
+  "wedding-planner": "Wedding Planner",
+  photographer: "Photographe",
+  caterer: "Traiteur",
+  guest: "Invité",
+  family: "Famille"
+};
+
 export const ContactsTab: React.FC<ContactsTabProps> = ({ userId, userType }) => {
   const [activeSection, setActiveSection] = useState<'team' | 'vendors'>('team');
   const { people, vendors } = useSharedEventData();
@@ -118,7 +130,7 @@ export const ContactsTab: React.FC<ContactsTabProps> = ({ userId, userType }) =>
                           {getStatusBadge(person.confirmation_status || 'pending')}
                         </div>
                       </div>
-                      <p className="text-xs lg:text-sm text-gray-600 truncate">{person.role || 'Membre de l\'équipe'}</p>
+                      <p className="text-xs lg:text-sm text-gray-600 truncate">{roleLabels[person.role as keyof typeof roleLabels] || 'Membre de l\'équipe'}</p>
                     </div>
                     
                     {/* Contact Actions */}

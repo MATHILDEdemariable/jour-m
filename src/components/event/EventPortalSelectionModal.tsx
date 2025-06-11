@@ -78,10 +78,10 @@ export const EventPortalSelectionModal: React.FC<EventPortalSelectionModalProps>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="w-5 h-5 text-purple-600" />
-            Accès Event Portal
+            Accès Jour-J
           </DialogTitle>
           <DialogDescription>
-            Sélectionnez votre profil pour accéder à votre planning personnalisé
+            Sélectionnez votre profil pour accéder à votre planning personnalisé du jour J
           </DialogDescription>
         </DialogHeader>
 
@@ -200,7 +200,7 @@ export const EventPortalSelectionModal: React.FC<EventPortalSelectionModalProps>
                 className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
               >
                 <ArrowRight className="w-4 h-4 mr-2" />
-                Accéder à mon planning
+                Accéder à mon planning du jour J
               </Button>
             </div>
           )}

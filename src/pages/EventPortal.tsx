@@ -160,7 +160,7 @@ const EventPortal = () => {
               </Button>
               <div className="hidden lg:block h-6 w-px bg-purple-200" />
               <h1 className="text-base lg:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent truncate">
-                Event Portal - {loggedInUser.name}
+                Jour-J - {loggedInUser.name}
               </h1>
             </div>
             

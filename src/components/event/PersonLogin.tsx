@@ -13,6 +13,18 @@ interface PersonLoginProps {
   onLogin: (userId: string, userName: string, userType: 'person' | 'vendor') => void;
 }
 
+const roleLabels = {
+  bride: "Mariée",
+  groom: "Marié",
+  "best-man": "Témoin", 
+  "maid-of-honor": "Demoiselle d'honneur",
+  "wedding-planner": "Wedding Planner",
+  photographer: "Photographe",
+  caterer: "Traiteur",
+  guest: "Invité",
+  family: "Famille"
+};
+
 export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
   const navigate = useNavigate();
   const [selectedUserType, setSelectedUserType] = useState<'person' | 'vendor'>('person');
@@ -70,7 +82,7 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
       <Card className="w-full max-w-md bg-white/80 backdrop-blur-sm border-0 shadow-xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            Connexion Event Portal
+            Connexion Jour-J
           </CardTitle>
           <p className="text-gray-600">Sélectionnez votre profil pour accéder à votre planning personnel</p>
           
@@ -157,7 +169,7 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
                             <span className="font-medium text-gray-900">{user.name}</span>
                             <span className="text-xs text-gray-500">
                               {selectedUserType === 'person' 
-                                ? (user as any).role || 'Membre de l\'équipe'
+                                ? roleLabels[(user as any).role as keyof typeof roleLabels] || 'Membre de l\'équipe'
                                 : (user as any).service_type || 'Prestataire'
                               }
                             </span>
