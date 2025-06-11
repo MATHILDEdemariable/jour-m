@@ -247,7 +247,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
               <h3 className="font-medium truncate text-sm md:text-base">{document.name}</h3>
               <div className="flex gap-1">
                 {document.category && (
-                  <Badge className={categoryColor} variant="secondary" size="sm">
+                  <Badge className={categoryColor} variant="secondary">
                     {document.category}
                   </Badge>
                 )}
@@ -296,3 +296,5 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
 };
 
 export default DocumentHub;
+
+</edits_to_apply>
