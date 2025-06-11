@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -64,16 +65,12 @@ export const useVendors = () => {
     }
   };
 
-  // Auto-reload when currentEventId changes
+  // Combined useEffect for loading and realtime subscription
   useEffect(() => {
-    if (currentEventId) {
-      console.log('useVendors - Event ID changed, reloading vendors for:', currentEventId);
-      loadVendors();
-    }
-  }, [currentEventId]);
+    // Load initial data
+    loadVendors();
 
-  // Setup realtime subscription for live updates
-  useEffect(() => {
+    // Setup realtime subscription for live updates
     console.log('useVendors - Setting up realtime subscription');
     
     const subscription = supabase
@@ -95,7 +92,7 @@ export const useVendors = () => {
       console.log('useVendors - Cleaning up realtime subscription');
       subscription.unsubscribe();
     };
-  }, []);
+  }, [currentEventId]);
 
   const loadDocuments = async (vendorId: string) => {
     try {

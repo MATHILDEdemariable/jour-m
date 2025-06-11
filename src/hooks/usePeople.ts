@@ -64,21 +64,12 @@ export const usePeople = () => {
     }
   };
 
-  // Auto-reload when currentEventId changes
+  // Combined useEffect for loading and realtime subscription
   useEffect(() => {
-    if (currentEventId) {
-      console.log('usePeople - Event ID changed, reloading people for:', currentEventId);
-      loadPeople();
-    }
-  }, [currentEventId]);
-
-  // Load people on component mount
-  useEffect(() => {
+    // Load initial data
     loadPeople();
-  }, []);
 
-  // Setup realtime subscription for live updates
-  useEffect(() => {
+    // Setup realtime subscription for live updates
     console.log('usePeople - Setting up realtime subscription');
     
     const subscription = supabase
@@ -100,7 +91,7 @@ export const usePeople = () => {
       console.log('usePeople - Cleaning up realtime subscription');
       subscription.unsubscribe();
     };
-  }, []);
+  }, [currentEventId]);
 
   const addPerson = async (newPerson: Omit<Person, 'id' | 'created_at' | 'updated_at'>) => {
     try {
