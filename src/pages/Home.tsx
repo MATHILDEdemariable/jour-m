@@ -14,7 +14,6 @@ import { useToast } from "@/hooks/use-toast"
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { AdminLoginForm } from '@/components/admin/AdminLoginForm';
 import { EventPortalSelectionModal } from '@/components/event/EventPortalSelectionModal';
-import { Footer } from '@/components/Footer';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -67,10 +66,10 @@ const Home: React.FC = () => {
       <div className="flex-grow flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-5xl font-extrabold text-stone-800 mb-4 tracking-tight">
-            Organisez votre événement <span className="text-sage-600">sans stress</span>
+            Mariage de <span className="text-sage-600">Mathilde & Alain</span>
           </h1>
           <p className="text-stone-500 text-lg mb-8">
-            Planifiez chaque détail, de la liste des invités à la coordination des prestataires.
+            Une appli, une équipe, une journée parfaite – powered by <span className="text-purple-600 font-semibold">Mariable</span>.
           </p>
 
           {/* Boutons d'action */}
@@ -81,7 +80,7 @@ const Home: React.FC = () => {
               size="lg"
             >
               <Eye className="w-5 h-5" />
-              Event Portal
+              Jour-J
             </Button>
             
             <Button
@@ -91,7 +90,7 @@ const Home: React.FC = () => {
               size="lg"
             >
               <Settings className="w-5 h-5" />
-              {isAuthenticated ? 'Admin Portal' : 'Admin'}
+              Admin
             </Button>
           </div>
 
@@ -109,8 +108,21 @@ const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* Footer */}
-      <Footer />
+      {/* Custom Footer */}
+      <footer className="bg-gradient-to-r from-purple-600 to-pink-600 p-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img 
+              src="/lovable-uploads/cc0ac012-b601-4358-af13-fe715ec15146.png" 
+              alt="Mariable Logo" 
+              className="h-8 w-auto brightness-0 invert"
+            />
+          </div>
+          <div className="text-white text-sm">
+            © 2025 - Powered by <a href="https://mariable.fr" target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">mariable.fr</a>
+          </div>
+        </div>
+      </footer>
 
       {/* Admin Login Modal */}
       <Dialog open={showAdminLogin} onOpenChange={setShowAdminLogin}>
