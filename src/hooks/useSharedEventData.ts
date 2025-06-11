@@ -15,7 +15,7 @@ export const useSharedEventData = () => {
     getDaysUntilEvent
   } = useEventData();
 
-  const { timelineItems, refetch: refetchTimelineItems } = useTimelineItems();
+  const { timelineItems, loadTimelineItems } = useTimelineItems();
   const { currentEventId } = useCurrentEvent();
 
   // Debug: Log pour vérifier la cohérence des données
@@ -45,7 +45,7 @@ export const useSharedEventData = () => {
     try {
       await Promise.all([
         refreshData(),
-        refetchTimelineItems()
+        loadTimelineItems()
       ]);
       console.log('Enhanced refresh completed');
     } catch (error) {
