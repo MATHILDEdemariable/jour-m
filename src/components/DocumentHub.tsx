@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -296,5 +297,3 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
 };
 
 export default DocumentHub;
-
-</edits_to_apply>
