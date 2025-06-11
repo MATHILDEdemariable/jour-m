@@ -33,7 +33,7 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
   const { currentEventId } = useCurrentEvent();
 
   // Debug logs pour diagnostiquer la synchronisation
-  console.log('=== PersonLogin Debug - Accès Simplifié ===');
+  console.log('=== PersonLogin Debug - Jour-J ===');
   console.log('Current Event ID:', currentEventId);
   console.log('Loading state:', loading);
   console.log('All people for this event:', people);

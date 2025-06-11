@@ -130,7 +130,9 @@ export const ContactsTab: React.FC<ContactsTabProps> = ({ userId, userType }) =>
                           {getStatusBadge(person.confirmation_status || 'pending')}
                         </div>
                       </div>
-                      <p className="text-xs lg:text-sm text-gray-600 truncate">{roleLabels[person.role as keyof typeof roleLabels] || 'Membre de l\'équipe'}</p>
+                      <p className="text-xs lg:text-sm text-gray-600 truncate">
+                        {roleLabels[person.role as keyof typeof roleLabels] || 'Membre de l\'équipe'}
+                      </p>
                     </div>
                     
                     {/* Contact Actions */}

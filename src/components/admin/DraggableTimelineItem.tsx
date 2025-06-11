@@ -27,6 +27,18 @@ interface DraggableTimelineItemProps {
   onDragEnd: () => void;
 }
 
+const roleLabels = {
+  bride: "Mariée",
+  groom: "Marié",
+  "best-man": "Témoin", 
+  "maid-of-honor": "Demoiselle d'honneur",
+  "wedding-planner": "Wedding Planner",
+  photographer: "Photographe",
+  caterer: "Traiteur",
+  guest: "Invité",
+  family: "Famille"
+};
+
 export const DraggableTimelineItem: React.FC<DraggableTimelineItemProps> = ({
   item,
   index,
@@ -170,7 +182,7 @@ export const DraggableTimelineItem: React.FC<DraggableTimelineItemProps> = ({
                   {item.assigned_role && !personName && (
                     <div className="flex items-center gap-1">
                       <Users className="w-3 h-3" />
-                      <span>{item.assigned_role.replace('-', ' ')}</span>
+                      <span>{roleLabels[item.assigned_role as keyof typeof roleLabels] || item.assigned_role.replace('-', ' ')}</span>
                     </div>
                   )}
                 </div>

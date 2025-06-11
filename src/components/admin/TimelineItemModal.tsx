@@ -16,6 +16,18 @@ interface TimelineItemModalProps {
   item?: TimelineItem | null;
 }
 
+const roleLabels = {
+  bride: "Mariée",
+  groom: "Marié",
+  "best-man": "Témoin", 
+  "maid-of-honor": "Demoiselle d'honneur",
+  "wedding-planner": "Wedding Planner",
+  photographer: "Photographe",
+  caterer: "Traiteur",
+  guest: "Invité",
+  family: "Famille"
+};
+
 export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
   isOpen,
   onClose,
@@ -32,7 +44,6 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
     priority: 'medium' as 'high' | 'medium' | 'low',
     status: 'scheduled' as 'scheduled' | 'in_progress' | 'completed' | 'delayed',
     assigned_person_id: '',
-    assigned_role: '',
     notes: ''
   });
 
@@ -47,7 +58,6 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
         priority: item.priority,
         status: item.status,
         assigned_person_id: item.assigned_person_id || '',
-        assigned_role: item.assigned_role || '',
         notes: item.notes || ''
       });
     } else {
@@ -60,7 +70,6 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
         priority: 'medium',
         status: 'scheduled',
         assigned_person_id: '',
-        assigned_role: '',
         notes: ''
       });
     }
@@ -71,7 +80,6 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
     onSubmit({
       ...formData,
       assigned_person_id: formData.assigned_person_id === 'none' ? null : formData.assigned_person_id || null,
-      assigned_role: formData.assigned_role || null,
       description: formData.description || null,
       notes: formData.notes || null
     });
@@ -193,26 +201,16 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner une personne" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
                   <SelectItem value="none">Aucune assignation</SelectItem>
                   {people.map(person => (
                     <SelectItem key={person.id} value={person.id}>
-                      {person.name} {person.role && `(${person.role})`}
+                      {person.name} {person.role && `(${roleLabels[person.role as keyof typeof roleLabels] || person.role})`}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div>
-            <Label htmlFor="assigned_role">Rôle assigné (optionnel)</Label>
-            <Input
-              id="assigned_role"
-              value={formData.assigned_role}
-              onChange={(e) => setFormData(prev => ({ ...prev, assigned_role: e.target.value }))}
-              placeholder="Ex: wedding-planner, photographer..."
-            />
           </div>
 
           <div>
