@@ -2,14 +2,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { UnifiedPlanningManagement } from '@/components/admin/UnifiedPlanningManagement';
-import { PeopleManagement } from '@/components/admin/PeopleManagement';
-import { VendorManagement } from '@/components/admin/VendorManagement';
-import { DocumentManagement } from '@/components/admin/DocumentManagement';
-import { EventConfiguration } from '@/components/admin/EventConfiguration';
-import { AdminBottomNavigation } from '@/components/admin/AdminBottomNavigation';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, LogOut } from 'lucide-react';
+import { ArrowLeft, LogOut, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { AdminLoginModal } from '@/components/AdminLoginModal';
@@ -18,8 +12,20 @@ import { LanguageToggle } from '@/components/LanguageToggle';
 import { useEventData } from '@/contexts/EventDataContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 
+// Import des composants
+import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import { UnifiedPlanningManagement } from '@/components/admin/UnifiedPlanningManagement';
+import { PeopleManagement } from '@/components/admin/PeopleManagement';
+import { VendorManagement } from '@/components/admin/VendorManagement';
+import { DocumentManagement } from '@/components/admin/DocumentManagement';
+import { EventConfiguration } from '@/components/admin/EventConfiguration';
+import { AdminBottomNavigation } from '@/components/admin/AdminBottomNavigation';
+import { TutorialModal } from '@/components/admin/TutorialModal';
+import { TUTORIAL_CONTENT } from '@/components/admin/TutorialContent';
+
 export const AdminPortal = () => {
-  const [activeTab, setActiveTab] = useState('planning');
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [tutorialOpen, setTutorialOpen] = useState(false);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { t } = useTranslation();
@@ -27,8 +33,14 @@ export const AdminPortal = () => {
   const { showLoginModal, handleCloseLoginModal } = useAdminProtectedRoute();
   const { currentEvent } = useEventData();
 
+  const getCurrentTutorial = () => {
+    return TUTORIAL_CONTENT[activeTab as keyof typeof TUTORIAL_CONTENT] || TUTORIAL_CONTENT.dashboard;
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'dashboard':
+        return <AdminDashboard />;
       case 'planning':
         return <UnifiedPlanningManagement />;
       case 'people':
@@ -40,7 +52,7 @@ export const AdminPortal = () => {
       case 'config':
         return <EventConfiguration />;
       default:
-        return <UnifiedPlanningManagement />;
+        return <AdminDashboard />;
     }
   };
 
@@ -75,6 +87,15 @@ export const AdminPortal = () => {
                 </div>
               </div>
               <div className="flex items-center gap-1 lg:gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setTutorialOpen(true)}
+                  className="flex items-center gap-1 text-purple-600 border-purple-200 hover:bg-purple-50"
+                >
+                  <HelpCircle className="w-3 h-3" />
+                  {!isMobile && 'Aide'}
+                </Button>
                 {!isMobile && <LanguageToggle />}
                 <Button 
                   variant="outline" 
@@ -93,7 +114,11 @@ export const AdminPortal = () => {
           {!isMobile && (
             <div className="bg-white border-b">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-5 h-auto p-1">
+                <TabsList className="grid w-full grid-cols-6 h-auto p-1">
+                  <TabsTrigger value="dashboard" className="flex flex-col py-3">
+                    <span className="text-xs">📊</span>
+                    <span className="text-xs">Récapitulatif</span>
+                  </TabsTrigger>
                   <TabsTrigger value="planning" className="flex flex-col py-3">
                     <span className="text-xs">⏰</span>
                     <span className="text-xs">Planning & Tâches</span>
@@ -131,6 +156,15 @@ export const AdminPortal = () => {
               onTabChange={setActiveTab}
             />
           )}
+
+          {/* Tutorial Modal */}
+          <TutorialModal
+            isOpen={tutorialOpen}
+            onClose={() => setTutorialOpen(false)}
+            title={getCurrentTutorial().title}
+            description={getCurrentTutorial().description}
+            steps={getCurrentTutorial().steps}
+          />
         </>
       )}
     </div>

@@ -84,19 +84,13 @@ export const VendorManagement = () => {
     return labels[serviceType as keyof typeof labels] || serviceType || "Non défini";
   };
 
-  const stats = {
-    total: vendors.length,
-    confirmed: vendors.filter(v => v.contract_status === 'confirmed').length,
-    inProgress: vendors.filter(v => v.contract_status === 'in_progress').length,
-    quote: vendors.filter(v => v.contract_status === 'quote').length
-  };
-
   return (
     <div className="space-y-6">
+      {/* Header simplifié */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900">Gestion des Prestataires</h2>
-          <p className="text-gray-600">Gérez vos prestataires et leurs documents</p>
+          <h2 className="text-3xl font-bold text-gray-900">🏢 Gestion des Prestataires</h2>
+          <p className="text-gray-600">Gérez vos prestataires et suivez leurs contrats • {vendors.length} prestataire(s)</p>
         </div>
         <Button 
           onClick={() => setIsCreateModalOpen(true)}
@@ -105,34 +99,6 @@ export const VendorManagement = () => {
           <Plus className="w-4 h-4 mr-2" />
           Nouveau Prestataire
         </Button>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-purple-600">{stats.total}</div>
-            <div className="text-sm text-gray-600">Prestataires</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">{stats.confirmed}</div>
-            <div className="text-sm text-gray-600">Confirmés</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-yellow-600">{stats.inProgress}</div>
-            <div className="text-sm text-gray-600">En cours</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">{stats.quote}</div>
-            <div className="text-sm text-gray-600">Devis</div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Vendors List */}
@@ -146,7 +112,11 @@ export const VendorManagement = () => {
         ) : vendors.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center text-gray-500">
-              Aucun prestataire enregistré
+              <div className="text-center py-8">
+                <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <p className="text-gray-500 mb-4">Aucun prestataire enregistré</p>
+                <p className="text-sm text-gray-400">Commencez par ajouter vos prestataires pour organiser votre événement</p>
+              </div>
             </CardContent>
           </Card>
         ) : (

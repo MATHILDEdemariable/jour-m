@@ -106,12 +106,11 @@ export const DocumentManagement = () => {
   ];
 
   return (
-    <div className="space-y-4 md:space-y-6 p-2 md:p-4">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-stone-900">Gestion des Documents</h2>
-          <p className="text-sm md:text-base text-stone-600">Gérez les documents avec intégration Google Drive et assignation</p>
-        </div>
+    <div className="space-y-4 md:space-y-6">
+      {/* Header simplifié */}
+      <div>
+        <h2 className="text-2xl md:text-3xl font-bold text-stone-900">📁 Gestion des Documents</h2>
+        <p className="text-sm md:text-base text-stone-600">Centralisez vos documents et gérez les accès équipe</p>
       </div>
 
       {/* Google Drive Integration - Version simplifiée */}
