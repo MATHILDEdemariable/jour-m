@@ -33,8 +33,16 @@ export const Footer: React.FC = () => {
             title={clickCount > 0 ? `Clic ${clickCount}/3 pour la démo` : ''}
           />
         </div>
-        <div className="text-stone-500 text-sm">
-          © 2025 - Mariable
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/equipe')}
+            className="text-stone-600 hover:text-stone-800 text-sm underline transition-colors"
+          >
+            Accès Équipe
+          </button>
+          <div className="text-stone-500 text-sm">
+            © 2025 - Mariable
+          </div>
         </div>
       </div>
     </footer>

@@ -3,7 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings, Users, ArrowLeft, Play } from 'lucide-react';
+import { Settings, Users, ArrowLeft, Play, UserCheck } from 'lucide-react';
 
 export const Demo = () => {
   const navigate = useNavigate();
@@ -17,6 +17,10 @@ export const Demo = () => {
 
   const handleEventPortal = () => {
     navigate(`/event/${DEMO_EVENT_ID}`);
+  };
+
+  const handleTeamAccess = () => {
+    navigate(`/equipe?event=${DEMO_EVENT_ID}`);
   };
 
   return (
@@ -45,7 +49,7 @@ export const Demo = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Portail Admin */}
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader className="text-center">
@@ -63,14 +67,41 @@ export const Demo = () => {
                 <li>• Organisation de l'équipe</li>
                 <li>• Suivi des prestataires</li>
                 <li>• Gestion documentaire</li>
-                <li>• Configuration avancée</li>
               </ul>
               <Button 
                 onClick={handleAdminPortal}
                 className="w-full bg-gradient-to-r from-purple-600 to-pink-600"
               >
                 <Play className="w-4 h-4 mr-2" />
-                Accéder au portail Admin
+                Portail Admin
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Accès Équipe */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="text-center">
+              <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <UserCheck className="w-8 h-8 text-blue-600" />
+              </div>
+              <CardTitle className="text-xl">Accès Équipe</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-gray-600">
+                Interface simplifiée pour que les invités et prestataires accèdent facilement à leurs informations.
+              </p>
+              <ul className="text-sm text-gray-500 space-y-1">
+                <li>• Accès sans inscription</li>
+                <li>• Sélection simple</li>
+                <li>• Planning personnel</li>
+                <li>• Contact de l'équipe</li>
+              </ul>
+              <Button 
+                onClick={handleTeamAccess}
+                className="w-full bg-gradient-to-r from-blue-600 to-cyan-600"
+              >
+                <UserCheck className="w-4 h-4 mr-2" />
+                Accès Équipe
               </Button>
             </CardContent>
           </Card>
@@ -78,28 +109,27 @@ export const Demo = () => {
           {/* Portail Événement */}
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader className="text-center">
-              <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                <Users className="w-8 h-8 text-blue-600" />
+              <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <Users className="w-8 h-8 text-green-600" />
               </div>
-              <CardTitle className="text-xl">Portail Participant</CardTitle>
+              <CardTitle className="text-xl">Portail Direct</CardTitle>
             </CardHeader>
             <CardContent className="text-center space-y-4">
               <p className="text-gray-600">
-                Vue simplifiée pour les participants et les membres de l'équipe.
+                Accès direct au portail participant (pour test ou lien direct).
               </p>
               <ul className="text-sm text-gray-500 space-y-1">
-                <li>• Planning personnel</li>
-                <li>• Tâches assignées</li>
-                <li>• Documents partagés</li>
-                <li>• Contacts de l'équipe</li>
-                <li>• Interface intuitive</li>
+                <li>• Accès immédiat</li>
+                <li>• Vue complète</li>
+                <li>• Toutes fonctionnalités</li>
+                <li>• Mode test</li>
               </ul>
               <Button 
                 onClick={handleEventPortal}
-                className="w-full bg-gradient-to-r from-blue-600 to-cyan-600"
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600"
               >
                 <Play className="w-4 h-4 mr-2" />
-                Accéder au portail Participant
+                Portail Direct
               </Button>
             </CardContent>
           </Card>
