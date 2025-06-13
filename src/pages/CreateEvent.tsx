@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -44,6 +43,8 @@ export const CreateEvent = () => {
         .insert([
           {
             ...formData,
+            // Send null instead of empty string for start_time
+            start_time: formData.start_time || null,
             user_id: user.id,
             status: 'planning'
           }

@@ -15,6 +15,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const CreateEvent = lazy(() => import("./pages/CreateEvent"));
 const EventPortal = lazy(() => import("./pages/EventPortal"));
 const AdminPortal = lazy(() => import("./pages/AdminPortal"));
+const Demo = lazy(() => import("./pages/Demo"));
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ function App() {
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/create-event" element={<CreateEvent />} />
+                <Route path="/demo" element={<Demo />} />
                 <Route
                   path="/event/:eventId/*"
                   element={
