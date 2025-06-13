@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { AdminAuthProvider } from "@/contexts/AdminAuthContext";
 import { EventDataProvider } from "@/contexts/EventDataContext";
 import { CurrentEventProvider } from "@/contexts/CurrentEventContext";
 import "./App.css";
@@ -51,11 +52,13 @@ function App() {
                 <Route
                   path="/admin/:eventId/*"
                   element={
-                    <CurrentEventProvider>
-                      <EventDataProvider>
-                        <AdminPortal />
-                      </EventDataProvider>
-                    </CurrentEventProvider>
+                    <AdminAuthProvider>
+                      <CurrentEventProvider>
+                        <EventDataProvider>
+                          <AdminPortal />
+                        </EventDataProvider>
+                      </CurrentEventProvider>
+                    </AdminAuthProvider>
                   }
                 />
               </Routes>
