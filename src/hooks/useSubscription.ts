@@ -5,8 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface Subscription {
   id: string;
-  plan_type: 'free' | 'premium' | 'pro';
-  status: 'active' | 'canceled' | 'expired';
+  plan_type: string; // Changed from union type to string to match database
+  status: string; // Changed from union type to string to match database
   current_period_end?: string;
   cancel_at_period_end?: boolean;
 }
