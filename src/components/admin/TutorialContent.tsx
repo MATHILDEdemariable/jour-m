@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Calendar, Users, Building2, FileText, Settings, Drag, Clock, CheckCircle, Upload, Link } from 'lucide-react';
+import { Calendar, Users, Building2, FileText, Settings, GripVertical, Clock, CheckCircle, Upload, Link } from 'lucide-react';
 
 export const TUTORIAL_CONTENT = {
   dashboard: {
@@ -29,7 +29,7 @@ export const TUTORIAL_CONTENT = {
     description: "Créez et gérez le planning détaillé de votre événement avec drag & drop et calculs automatiques.",
     steps: [
       {
-        icon: <Drag className="w-5 h-5" />,
+        icon: <GripVertical className="w-5 h-5" />,
         title: "Drag & Drop intelligent",
         description: "Glissez-déposez les éléments pour réorganiser. Les horaires se recalculent automatiquement en fonction des durées."
       },
