@@ -11,7 +11,9 @@ import {
   Star, 
   Crown, 
   ArrowRight,
-  Sparkles
+  Sparkles,
+  UserCheck,
+  Settings
 } from 'lucide-react';
 
 export const Index = () => {
@@ -32,51 +34,6 @@ export const Index = () => {
       icon: CheckCircle,
       title: 'Suivi des tâches',
       description: 'Ne manquez aucune étape avec notre système de tâches et rappels'
-    }
-  ];
-
-  const plans = [
-    {
-      name: 'Gratuit',
-      price: '0€',
-      period: '/mois',
-      features: [
-        '1 événement',
-        'Planning de base',
-        'Gestion des invités',
-        '100MB de stockage'
-      ],
-      cta: 'Commencer gratuitement',
-      variant: 'outline' as const
-    },
-    {
-      name: 'Premium',
-      price: '9€',
-      period: '/mois',
-      features: [
-        'Événements illimités',
-        'Suggestions IA',
-        'Timeline avancée',
-        '5GB de stockage',
-        'Support prioritaire'
-      ],
-      cta: 'Essayer Premium',
-      variant: 'default' as const,
-      popular: true
-    },
-    {
-      name: 'Pro',
-      price: '29€',
-      period: '/mois',
-      features: [
-        'Toutes les fonctionnalités Premium',
-        'White-label',
-        'API access',
-        '50GB de stockage',
-        'Intégrations personnalisées'
-      ],
-      cta: 'Contactez-nous',
-      variant: 'outline' as const
     }
   ];
 
@@ -122,7 +79,7 @@ export const Index = () => {
                 Essayez gratuitement
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8">
+              <Button size="lg" variant="outline" className="text-lg px-8" onClick={() => navigate('/demo')}>
                 Voir la démo
               </Button>
             </div>
@@ -160,55 +117,110 @@ export const Index = () => {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section className="py-20 bg-gray-50">
+      {/* Team Access Section */}
+      <section className="py-20 bg-gradient-to-br from-blue-50 to-purple-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Un plan pour chaque besoin
+              Accès simplifié pour votre équipe
             </h2>
-            <p className="text-xl text-gray-600">
-              Commencez gratuitement, évoluez quand vous en avez besoin
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Vos invités et prestataires accèdent facilement à leurs informations personnalisées, 
+              sans inscription ni compte requis.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {plans.map((plan, index) => (
-              <Card key={index} className={`relative ${plan.popular ? 'ring-2 ring-purple-600 shadow-lg' : ''}`}>
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-                      <Crown className="w-3 h-3 mr-1" />
-                      Le plus populaire
-                    </Badge>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* For Event Organizers */}
+            <Card className="text-center hover:shadow-lg transition-shadow border-2 border-purple-200">
+              <CardHeader>
+                <div className="w-16 h-16 mx-auto bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mb-4">
+                  <Settings className="w-8 h-8 text-white" />
+                </div>
+                <CardTitle className="text-2xl">Organisateurs</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-gray-600">
+                  Créez votre compte, configurez votre événement et gérez tous les aspects de votre organisation.
+                </p>
+                <div className="space-y-2 text-sm text-gray-500">
+                  <div className="flex items-center justify-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <span>Portail d'administration complet</span>
                   </div>
-                )}
-                <CardHeader className="text-center">
-                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                  <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-4xl font-bold">{plan.price}</span>
-                    <span className="text-gray-600">{plan.period}</span>
+                  <div className="flex items-center justify-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <span>Gestion des tâches et timeline</span>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <ul className="space-y-3">
-                    {plan.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center gap-3">
-                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                        <span className="text-gray-600">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button 
-                    className={plan.popular ? "w-full bg-gradient-to-r from-purple-600 to-pink-600" : "w-full"}
-                    variant={plan.variant}
-                    onClick={() => navigate('/auth')}
-                  >
-                    {plan.cta}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                  <div className="flex items-center justify-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <span>Coordination équipe & prestataires</span>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => navigate('/auth')}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-lg"
+                >
+                  Créer mon événement
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* For Team Members */}
+            <Card className="text-center hover:shadow-lg transition-shadow border-2 border-blue-200">
+              <CardHeader>
+                <div className="w-16 h-16 mx-auto bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full flex items-center justify-center mb-4">
+                  <UserCheck className="w-8 h-8 text-white" />
+                </div>
+                <CardTitle className="text-2xl">Équipe & Invités</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-gray-600">
+                  Accédez directement à votre planning et vos tâches personnalisées, sans créer de compte.
+                </p>
+                <div className="space-y-2 text-sm text-gray-500">
+                  <div className="flex items-center justify-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <span>Accès sans inscription</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <span>Planning personnalisé</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <span>Communication directe</span>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => navigate('/equipe')}
+                  variant="outline"
+                  className="w-full border-blue-300 text-blue-700 hover:bg-blue-50 text-lg"
+                >
+                  <UserCheck className="w-5 h-5 mr-2" />
+                  Rejoindre un événement
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="text-center mt-12">
+            <Card className="bg-white/80 backdrop-blur-sm max-w-2xl mx-auto">
+              <CardContent className="p-8">
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <Users className="w-6 h-6 text-purple-600" />
+                  <h3 className="text-xl font-semibold">Comment ça marche ?</h3>
+                </div>
+                <p className="text-gray-600 mb-4">
+                  L'organisateur vous donne simplement l'ID de l'événement. 
+                  Vous sélectionnez votre nom dans la liste et accédez immédiatement 
+                  à votre espace personnalisé.
+                </p>
+                <Badge className="bg-purple-100 text-purple-800 border-purple-200">
+                  Simple • Rapide • Sécurisé
+                </Badge>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
@@ -222,10 +234,16 @@ export const Index = () => {
           <p className="text-xl text-purple-100 mb-8">
             Rejoignez des milliers d'organisateurs qui font confiance à Jour J
           </p>
-          <Button size="lg" onClick={() => navigate('/auth')} className="bg-white text-purple-600 hover:bg-gray-100 text-lg px-8">
-            <Sparkles className="w-5 h-5 mr-2" />
-            Commencer maintenant
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" onClick={() => navigate('/auth')} className="bg-white text-purple-600 hover:bg-gray-100 text-lg px-8">
+              <Sparkles className="w-5 h-5 mr-2" />
+              Commencer maintenant
+            </Button>
+            <Button size="lg" variant="outline" onClick={() => navigate('/equipe')} className="border-white text-white hover:bg-white/10 text-lg px-8">
+              <UserCheck className="w-5 h-5 mr-2" />
+              Rejoindre un événement
+            </Button>
+          </div>
         </div>
       </section>
 

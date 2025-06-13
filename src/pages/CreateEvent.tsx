@@ -57,7 +57,8 @@ export const CreateEvent = () => {
         return;
       }
 
-      navigate(`/event/${data.id}`);
+      // Redirect to admin portal instead of event portal
+      navigate(`/admin/${data.id}`);
     } catch (err) {
       setError('Une erreur est survenue lors de la création de l\'événement');
     } finally {

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Calendar, Settings, LogOut, Crown } from 'lucide-react';
+import { Plus, Calendar, Settings, LogOut, Crown, Eye } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
@@ -65,6 +65,11 @@ export const Dashboard = () => {
 
   const handleEventClick = (eventId: string) => {
     navigate(`/event/${eventId}`);
+  };
+
+  const handleManageEvent = (eventId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/admin/${eventId}`);
   };
 
   const limits = getPlanLimits();
@@ -206,6 +211,30 @@ export const Dashboard = () => {
                         {event.status === 'completed' && 'Terminé'}
                       </Badge>
                     </div>
+                  </div>
+                  
+                  {/* Action buttons */}
+                  <div className="flex gap-2 mt-4 pt-4 border-t">
+                    <Button
+                      size="sm"
+                      onClick={(e) => handleManageEvent(event.id, e)}
+                      className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600"
+                    >
+                      <Settings className="w-4 h-4 mr-1" />
+                      Gérer
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEventClick(event.id);
+                      }}
+                      className="flex-1"
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      Voir
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
