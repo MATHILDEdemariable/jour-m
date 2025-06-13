@@ -85,12 +85,12 @@ export const VendorManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header simplifié */}
+    <div className="space-y-4">
+      {/* Header optimisé */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900">🏢 Gestion des Prestataires</h2>
-          <p className="text-gray-600">Gérez vos prestataires et suivez leurs contrats • {vendors.length} prestataire(s)</p>
+          <h2 className="text-2xl font-bold text-gray-900">🏢 Gestion des Prestataires</h2>
+          <p className="text-sm text-gray-600">Gérez vos prestataires et suivez leurs contrats • {vendors.length} prestataire(s)</p>
         </div>
         <Button 
           onClick={() => setIsCreateModalOpen(true)}
@@ -99,6 +99,26 @@ export const VendorManagement = () => {
           <Plus className="w-4 h-4 mr-2" />
           Nouveau Prestataire
         </Button>
+      </div>
+
+      {/* Stats compactes en ligne */}
+      <div className="flex items-center gap-6 bg-white p-3 rounded-lg border border-gray-200">
+        <div className="text-center">
+          <div className="text-lg font-bold text-purple-600">{vendors.length}</div>
+          <div className="text-xs text-gray-600">Total</div>
+        </div>
+        <div className="text-center">
+          <div className="text-lg font-bold text-green-600">{vendors.filter(v => v.contract_status === 'confirmed').length}</div>
+          <div className="text-xs text-gray-600">Confirmés</div>
+        </div>
+        <div className="text-center">
+          <div className="text-lg font-bold text-blue-600">{vendors.filter(v => v.contract_status === 'quote').length}</div>
+          <div className="text-xs text-gray-600">Devis</div>
+        </div>
+        <div className="text-center">
+          <div className="text-lg font-bold text-yellow-600">{vendors.filter(v => v.contract_status === 'in_progress').length}</div>
+          <div className="text-xs text-gray-600">En cours</div>
+        </div>
       </div>
 
       {/* Vendors List */}

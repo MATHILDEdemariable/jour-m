@@ -87,11 +87,11 @@ export const PeopleManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900">Gestion des Personnes</h2>
-          <p className="text-gray-600">Gérez tous les intervenants de votre événement</p>
+          <h2 className="text-2xl font-bold text-gray-900">👥 Gestion des Personnes</h2>
+          <p className="text-sm text-gray-600">Gérez tous les intervenants • {people.length} personne(s)</p>
         </div>
         <Button onClick={handleCreatePerson} className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
           <Plus className="w-4 h-4 mr-2" />
@@ -99,32 +99,24 @@ export const PeopleManagement = () => {
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-purple-600">{people.length}</div>
-            <div className="text-sm text-gray-600">Total personnes</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">{people.filter(p => p.status === 'confirmed').length}</div>
-            <div className="text-sm text-gray-600">Confirmées</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-yellow-600">{people.filter(p => p.status === 'pending').length}</div>
-            <div className="text-sm text-gray-600">En attente</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">{people.filter(p => ['photographer', 'caterer', 'wedding-planner'].includes(p.role)).length}</div>
-            <div className="text-sm text-gray-600">Prestataires</div>
-          </CardContent>
-        </Card>
+      {/* Stats compactes */}
+      <div className="grid grid-cols-4 gap-3">
+        <div className="bg-white p-3 rounded-lg border border-gray-200 text-center">
+          <div className="text-lg font-bold text-purple-600">{people.length}</div>
+          <div className="text-xs text-gray-600">Total</div>
+        </div>
+        <div className="bg-white p-3 rounded-lg border border-gray-200 text-center">
+          <div className="text-lg font-bold text-green-600">{people.filter(p => p.status === 'confirmed').length}</div>
+          <div className="text-xs text-gray-600">Confirmées</div>
+        </div>
+        <div className="bg-white p-3 rounded-lg border border-gray-200 text-center">
+          <div className="text-lg font-bold text-yellow-600">{people.filter(p => p.status === 'pending').length}</div>
+          <div className="text-xs text-gray-600">En attente</div>
+        </div>
+        <div className="bg-white p-3 rounded-lg border border-gray-200 text-center">
+          <div className="text-lg font-bold text-blue-600">{people.filter(p => ['photographer', 'caterer', 'wedding-planner'].includes(p.role)).length}</div>
+          <div className="text-xs text-gray-600">Prestataires</div>
+        </div>
       </div>
 
       {/* People List */}

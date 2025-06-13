@@ -13,7 +13,7 @@ import { useEventData } from '@/contexts/EventDataContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 // Import des composants
-import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import { CompactRecapDashboard } from '@/components/admin/CompactRecapDashboard';
 import { UnifiedPlanningManagement } from '@/components/admin/UnifiedPlanningManagement';
 import { PeopleManagement } from '@/components/admin/PeopleManagement';
 import { VendorManagement } from '@/components/admin/VendorManagement';
@@ -40,7 +40,7 @@ export const AdminPortal = () => {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <AdminDashboard />;
+        return <CompactRecapDashboard />;
       case 'planning':
         return <UnifiedPlanningManagement />;
       case 'people':
@@ -52,7 +52,7 @@ export const AdminPortal = () => {
       case 'config':
         return <EventConfiguration />;
       default:
-        return <AdminDashboard />;
+        return <CompactRecapDashboard />;
     }
   };
 
