@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useEventData } from '@/contexts/EventDataContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Copy, Share2 } from 'lucide-react';
-import QRCode from 'qrcode.react';
+import { QRCodeCanvas as QRCode } from 'qrcode.react';
 import { useToast } from '@/components/ui/use-toast';
 
 export const ShareManagement = () => {
