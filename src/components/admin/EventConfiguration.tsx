@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,8 +40,8 @@ export const EventConfiguration = () => {
   }, [currentEvent]);
 
   const handleCopyLink = () => {
-    if (!currentEvent || !(currentEvent as any).slug) return;
-    const teamUrl = `${window.location.origin}/equipe/${(currentEvent as any).slug}`;
+    if (!currentEvent) return;
+    const teamUrl = `${window.location.origin}/event/${currentEvent.id}/team`;
     navigator.clipboard.writeText(teamUrl);
     toast({
       title: "Lien copié !",
@@ -146,10 +145,10 @@ export const EventConfiguration = () => {
           <div className="flex items-center gap-2 p-2 bg-white rounded-md border">
             <Input 
               readOnly 
-              value={currentEvent ? `${window.location.origin}/equipe/${(currentEvent as any).slug}` : 'Chargement...'}
+              value={currentEvent ? `${window.location.origin}/event/${currentEvent.id}/team` : 'Chargement...'}
               className="flex-grow bg-gray-50 border-gray-200 text-sm"
             />
-            <Button variant="outline" size="icon" onClick={handleCopyLink} disabled={!currentEvent || !(currentEvent as any).slug}>
+            <Button variant="outline" size="icon" onClick={handleCopyLink} disabled={!currentEvent}>
               <Copy className="w-4 h-4" />
             </Button>
           </div>

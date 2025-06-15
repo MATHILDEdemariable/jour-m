@@ -8,6 +8,7 @@ import { ArrowLeft, Users, Building2, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePeople } from '@/hooks/usePeople';
 import { useVendors } from '@/hooks/useVendors';
+import { useCurrentEvent } from '@/contexts/CurrentEventContext';
 
 type Event = {
   id: string;
@@ -16,39 +17,46 @@ type Event = {
 };
 
 const EventTeamAccess = () => {
-  const { eventSlug } = useParams<{ eventSlug: string }>();
+  const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
+  const { setCurrentEventId } = useCurrentEvent();
   
   const [event, setEvent] = useState<Event | null>(null);
   const [loadingEvent, setLoadingEvent] = useState(true);
   const [teamType, setTeamType] = useState<'personal' | 'professional' | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
 
-  const { people, loading: loadingPeople } = usePeople(event?.id);
-  const { vendors, loading: loadingVendors } = useVendors(event?.id);
+  const { people, loading: loadingPeople } = usePeople(eventId);
+  const { vendors, loading: loadingVendors } = useVendors(eventId);
+
+  useEffect(() => {
+    if (eventId) {
+      setCurrentEventId(eventId);
+    }
+  }, [eventId, setCurrentEventId]);
 
   useEffect(() => {
     const fetchEvent = async () => {
-      if (!eventSlug) return;
+      if (!eventId) return;
       setLoadingEvent(true);
       try {
         const { data, error } = await supabase
           .from('events')
           .select('id, name, slug')
-          .eq('slug', eventSlug)
+          .eq('id', eventId)
           .single();
 
         if (error) throw error;
         setEvent(data as Event);
       } catch (error) {
-        console.error("Error fetching event by slug:", error);
+        console.error("Error fetching event by id:", error);
         setEvent(null);
       } finally {
         setLoadingEvent(false);
       }
     };
     fetchEvent();
-  }, [eventSlug]);
+  }, [eventId]);
 
   const handleContinue = () => {
     if (!selectedUserId || !teamType || !event) return;

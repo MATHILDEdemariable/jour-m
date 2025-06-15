@@ -1,4 +1,3 @@
-
 import { Suspense, lazy } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -39,7 +38,7 @@ function App() {
                 <Route path="/create-event" element={<CreateEvent />} />
                 <Route path="/demo" element={<Demo />} />
                 <Route
-                  path="/equipe/:eventSlug"
+                  path="/event/:eventId/team"
                   element={
                     <CurrentEventProvider>
                       <EventTeamAccess />
