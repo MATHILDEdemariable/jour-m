@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -23,7 +22,7 @@ import { TUTORIAL_CONTENT } from '@/components/admin/TutorialContent';
 import { ShareManagement } from '@/components/admin/ShareManagement';
 
 export const AdminPortal = () => {
-  const [activeTab, setActiveTab] = useState('planning'); // Default to "planning"
+  const [activeTab, setActiveTab] = useState('config'); // Default = Config
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -37,20 +36,20 @@ export const AdminPortal = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'planning':
-        return <UnifiedPlanningManagement />;
+      case 'config':
+        return <EventConfiguration />;
       case 'people':
         return <PeopleManagement />;
       case 'vendors':
         return <VendorManagement />;
+      case 'planning':
+        return <UnifiedPlanningManagement />;
       case 'documents':
         return <DocumentManagement />;
       case 'share':
         return <ShareManagement />;
-      case 'config':
-        return <EventConfiguration />;
       default:
-        return <UnifiedPlanningManagement />; // Default to planning
+        return <EventConfiguration />; // Default to config
     }
   };
 
@@ -105,14 +104,14 @@ export const AdminPortal = () => {
             </div>
           </div>
 
-          {/* Desktop Navigation Tabs */}
+          {/* Desktop Navigation Tabs NOUVEL ORDRE */}
           {!isMobile && (
             <div className="bg-white border-b">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-6 h-auto p-1">
-                  <TabsTrigger value="planning" className="flex flex-col py-3">
-                    <span className="text-xs">⏰</span>
-                    <span className="text-xs">Planning & Tâches</span>
+                  <TabsTrigger value="config" className="flex flex-col py-3">
+                    <span className="text-xs">⚙️</span>
+                    <span className="text-xs">{t('config')}</span>
                   </TabsTrigger>
                   <TabsTrigger value="people" className="flex flex-col py-3">
                     <span className="text-xs">👥</span>
@@ -122,6 +121,10 @@ export const AdminPortal = () => {
                     <span className="text-xs">🏢</span>
                     <span className="text-xs">{t('vendors')}</span>
                   </TabsTrigger>
+                  <TabsTrigger value="planning" className="flex flex-col py-3">
+                    <span className="text-xs">⏰</span>
+                    <span className="text-xs">Planning & Tâches</span>
+                  </TabsTrigger>
                   <TabsTrigger value="documents" className="flex flex-col py-3">
                     <span className="text-xs">📁</span>
                     <span className="text-xs">{t('documents')}</span>
@@ -129,10 +132,6 @@ export const AdminPortal = () => {
                   <TabsTrigger value="share" className="flex flex-col py-3">
                     <span className="text-xs">🔗</span>
                     <span className="text-xs">Partage</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="config" className="flex flex-col py-3">
-                    <span className="text-xs">⚙️</span>
-                    <span className="text-xs">{t('config')}</span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>

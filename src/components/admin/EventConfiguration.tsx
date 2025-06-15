@@ -24,9 +24,6 @@ export const EventConfiguration = () => {
     description: '',
     status: 'planning'
   });
-  const [newAdminPassword, setNewAdminPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordSaving, setPasswordSaving] = useState(false);
 
   useEffect(() => {
     if (currentEvent) {
@@ -44,7 +41,6 @@ export const EventConfiguration = () => {
 
   const handleSave = async () => {
     if (!currentEvent) return;
-
     setSaving(true);
     try {
       const { data, error } = await supabase
@@ -54,15 +50,20 @@ export const EventConfiguration = () => {
         .select()
         .single();
 
-      if (error) throw error;
-
-      setCurrentEvent(data);
-      toast({
-        title: 'Configuration sauvegardée',
-        description: 'Les informations de l\'événement ont été mises à jour',
-      });
+      if (error) {
+        toast({
+          title: 'Erreur',
+          description: error.message || 'Impossible de sauvegarder la configuration',
+          variant: 'destructive',
+        });
+      } else {
+        setCurrentEvent(data);
+        toast({
+          title: 'Configuration sauvegardée',
+          description: 'Les informations de l\'événement ont été mises à jour',
+        });
+      }
     } catch (error) {
-      console.error('Error saving event configuration:', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de sauvegarder la configuration',
@@ -70,36 +71,6 @@ export const EventConfiguration = () => {
       });
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handlePasswordUpdate = async () => {
-    if (!newAdminPassword) {
-      toast({ title: 'Erreur', description: 'Le mot de passe ne peut pas être vide.', variant: 'destructive' });
-      return;
-    }
-    if (newAdminPassword !== confirmPassword) {
-      toast({ title: 'Erreur', description: 'Les mots de passe ne correspondent pas.', variant: 'destructive' });
-      return;
-    }
-
-    setPasswordSaving(true);
-    try {
-      const { error } = await supabase
-        .from('admin_settings')
-        .update({ setting_value: newAdminPassword })
-        .eq('setting_key', 'admin_password');
-
-      if (error) throw error;
-
-      toast({ title: 'Succès', description: 'Le mot de passe administrateur a été mis à jour.' });
-      setNewAdminPassword('');
-      setConfirmPassword('');
-    } catch (error) {
-      console.error('Error updating admin password:', error);
-      toast({ title: 'Erreur', description: 'Impossible de mettre à jour le mot de passe.', variant: 'destructive' });
-    } finally {
-      setPasswordSaving(false);
     }
   };
 
@@ -150,7 +121,6 @@ export const EventConfiguration = () => {
           )}
         </div>
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Informations générales */}
         <Card>
@@ -273,52 +243,7 @@ export const EventConfiguration = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Admin Security Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <KeyRound className="w-5 h-5" />
-            Sécurité Administrateur
-          </CardTitle>
-          <CardDescription>
-            Modifiez le mot de passe d'accès au portail administrateur.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="new-password">Nouveau mot de passe</Label>
-            <Input
-              id="new-password"
-              type="password"
-              value={newAdminPassword}
-              onChange={(e) => setNewAdminPassword(e.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
-            <Input
-              id="confirm-password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button 
-            onClick={handlePasswordUpdate}
-            disabled={passwordSaving}
-            className="ml-auto"
-          >
-            {passwordSaving ? 'Sauvegarde...' : 'Modifier le mot de passe'}
-          </Button>
-        </CardFooter>
-      </Card>
-
-      {/* Bouton de sauvegarde */}
+      {/* BOUTON DE SAUVEGARDE */}
       <div className="flex justify-end">
         <Button 
           onClick={handleSave}

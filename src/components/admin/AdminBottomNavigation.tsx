@@ -7,14 +7,14 @@ interface AdminBottomNavigationProps {
   onTabChange: (tab: string) => void;
 }
 
+// Nouvel ordre : Config > Équipe > Prestataires > Planning > Documents > Partage
 const ADMIN_TABS = [
-  // { id: 'dashboard', label: 'Récap', icon: '📊' }, // Removed dashboard
-  { id: 'planning', label: 'Planning', icon: '⏰' },
+  { id: 'config', label: 'Config', icon: '⚙️' },
   { id: 'people', label: 'Équipe', icon: '👥' },
   { id: 'vendors', label: 'Prestataires', icon: '🏢' },
+  { id: 'planning', label: 'Planning', icon: '⏰' },
   { id: 'documents', label: 'Documents', icon: '📁' },
   { id: 'share', label: 'Partage', icon: '🔗' },
-  { id: 'config', label: 'Config', icon: '⚙️' },
 ];
 
 export const AdminBottomNavigation: React.FC<AdminBottomNavigationProps> = ({ 

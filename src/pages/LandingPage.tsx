@@ -15,16 +15,14 @@ const LandingPage = () => {
             JOURM
           </h1>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={() => navigate('/event-portal')}>Accès Équipe</Button>
+            {/* Bouton retiré : Accès Équipe */}
             <Button onClick={() => navigate('/auth')}>Connexion / Inscription</Button>
           </div>
         </div>
       </header>
-      
       <main>
         <HeroSection />
       </main>
-
       <footer className="bg-stone-100 border-t">
         <div className="container mx-auto p-8 text-center text-stone-500">
           <p>© 2025 JOURM par Mariable. Tous droits réservés.</p>
