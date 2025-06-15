@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +16,7 @@ import AuthPage from "./pages/Auth";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import './i18n'; // Import du système i18n
 import Dashboard from "./pages/Dashboard";
+import PublicAccessPage from "./pages/PublicAccessPage"; // Correction: import direct
 
 const queryClient = new QueryClient();
 
@@ -32,7 +34,7 @@ const App = () => (
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/event-portal" element={<EventPortal />} />
                 {/* --- Ajout route publique minimaliste --- */}
-                <Route path="/public-access" element={<import('@/pages/PublicAccessPage').then(m => m.default)} />
+                <Route path="/public-access" element={<PublicAccessPage />} />
                 <Route element={<ProtectedRoute />}>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/event" element={<Index />} />
@@ -50,3 +52,4 @@ const App = () => (
 );
 
 export default App;
+
