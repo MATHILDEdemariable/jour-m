@@ -15,6 +15,7 @@ import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import './i18n'; // Import du système i18n
+import Dashboard from "./pages/Dashboard";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
                 <Route path="/" element={<Home />} />
                 <Route path="/auth" element={<AuthPage />} />
                 <Route element={<ProtectedRoute />}>
+                  <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/event" element={<Index />} />
                   <Route path="/event-portal" element={<EventPortal />} />
                   <Route path="/admin" element={<AdminPortal />} />

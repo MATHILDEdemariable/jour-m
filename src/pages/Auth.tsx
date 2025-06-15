@@ -55,7 +55,7 @@ const AuthPage = () => {
       toast({ title: 'Erreur de connexion', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Connexion réussie!', description: 'Redirection...' });
-      navigate('/');
+      navigate('/dashboard');
     }
     setLoading(false);
   };
