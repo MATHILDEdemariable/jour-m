@@ -12,6 +12,7 @@ import { TimelineAISuggestions } from './TimelineAISuggestions';
 import { DraggableTimelineItem } from './DraggableTimelineItem';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useVendors } from '@/hooks/useVendors';
 
 // Type for preview times during drag and drop
 interface PreviewTime {
@@ -48,6 +49,7 @@ export const UnifiedPlanningManagement = () => {
   
   const { currentEvent } = useEvents();
   const { people } = usePeople();
+  const { vendors } = useVendors();
   const { toast } = useToast();
 
   const categoryColors = {
@@ -87,6 +89,12 @@ export const UnifiedPlanningManagement = () => {
     return personIds
       .map(id => people.find(p => p.id === id)?.name)
       .filter(Boolean) as string[];
+  };
+
+  const getVendorName = (vendorId: string | null) => {
+    if (!vendorId) return null;
+    const vendor = vendors.find(v => v.id === vendorId);
+    return vendor?.name ?? null;
   };
 
   // Calculate preview times for drag and drop
@@ -434,6 +442,7 @@ export const UnifiedPlanningManagement = () => {
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
                     onDragEnd={handleDragEnd}
+                    getVendorName={getVendorName}
                   />
                 ))}
               </div>

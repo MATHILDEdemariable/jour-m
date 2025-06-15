@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,6 +24,7 @@ interface DraggableTimelineItemProps {
   onDragOver: (e: React.DragEvent, index: number) => void;
   onDrop: (e: React.DragEvent, index: number) => void;
   onDragEnd: () => void;
+  getVendorName?: (vendorId: string | null) => string | null;
 }
 
 const roleLabels = {
@@ -57,6 +57,7 @@ export const DraggableTimelineItem: React.FC<DraggableTimelineItemProps> = ({
   onDragOver,
   onDrop,
   onDragEnd,
+  getVendorName,
 }) => {
   // Format time to remove seconds (08:00:00 -> 08:00)
   const formatTime = (timeString: string) => {
@@ -85,6 +86,16 @@ export const DraggableTimelineItem: React.FC<DraggableTimelineItemProps> = ({
     return `${assignedPersonNames.slice(0, 2).join(", ")} et ${assignedPersonNames.length - 2} autre${assignedPersonNames.length - 2 > 1 ? 's' : ''}`;
   };
 
+  // Ajout: Si assigné à un prestataire, on le récupère
+  const vendorName = item.assigned_vendor_id && getVendorName ? getVendorName(item.assigned_vendor_id) : null;
+
+  // Coloration de la carte pour les items avec prestataire
+  const mainCardClass = `transition-all duration-200 hover:shadow-lg border-stone-200 cursor-move ${
+    isDragging ? 'opacity-60 scale-95 rotate-1 shadow-xl border-purple-300' : 
+    vendorName ? 'bg-sky-50 border-sky-300 ring-1 ring-sky-200' : // Couleur spéciale prestataires
+    'hover:shadow-md hover:border-purple-200'
+  } ${previewTimes ? 'ring-2 ring-purple-300 ring-opacity-50' : ''}`;
+
   return (
     <>
       {/* Drop zone indicator above */}
@@ -93,9 +104,7 @@ export const DraggableTimelineItem: React.FC<DraggableTimelineItemProps> = ({
       )}
       
       <Card 
-        className={`transition-all duration-200 hover:shadow-lg border-stone-200 cursor-move ${
-          isDragging ? 'opacity-60 scale-95 rotate-1 shadow-xl border-purple-300' : 'hover:shadow-md hover:border-purple-200'
-        } ${previewTimes ? 'ring-2 ring-purple-300 ring-opacity-50' : ''}`}
+        className={mainCardClass}
         draggable
         onDragStart={() => onDragStart(index)}
         onDragOver={(e) => onDragOver(e, index)}
@@ -132,6 +141,12 @@ export const DraggableTimelineItem: React.FC<DraggableTimelineItemProps> = ({
                     {item.priority === 'high' && (
                       <Badge variant="destructive" className="text-xs">
                         🔴 Urgent
+                      </Badge>
+                    )}
+                    {/* Affichage spécial prestataire */}
+                    {vendorName && (
+                      <Badge className="bg-sky-200 text-sky-800 border-sky-300 text-xs font-medium">
+                        Prestataire: {vendorName}
                       </Badge>
                     )}
                   </div>
@@ -193,7 +208,12 @@ export const DraggableTimelineItem: React.FC<DraggableTimelineItemProps> = ({
                   </div>
                   <div className="flex items-center gap-1">
                     <Users className="w-3 h-3" />
-                    <span>{getAssignedPersonsDisplay()}</span>
+                    <span>
+                      {vendorName 
+                        ? <>Prestataire: <span className="font-semibold text-sky-700">{vendorName}</span></>
+                        : getAssignedPersonsDisplay()
+                      }
+                    </span>
                   </div>
                 </div>
               </div>

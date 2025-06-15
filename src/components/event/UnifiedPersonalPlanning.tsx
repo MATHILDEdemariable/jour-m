@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, Calendar, Users } from 'lucide-react';
@@ -7,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useTimelineItems } from '@/hooks/useTimelineItems';
 import { useCurrentEvent } from '@/contexts/CurrentEventContext';
 import { usePeople } from '@/hooks/usePeople';
+import { useVendors } from '@/hooks/useVendors';
 
 interface UnifiedPersonalPlanningProps {
   userId: string;
@@ -38,20 +38,28 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
   const { timelineItems, loading } = useTimelineItems();
   const { currentEventId } = useCurrentEvent();
   const { people } = usePeople();
+  const { vendors } = useVendors();
 
   // Filter timeline items by current event
   const eventTimelineItems = timelineItems.filter(item => item.event_id === currentEventId);
 
   // Filter according to view mode
-  const filteredTimelineItems = viewMode === 'personal' 
-    ? eventTimelineItems.filter(item => {
-        if (userType === 'person') {
-          return item.assigned_person_id === userId;
-        } else {
-          return item.assigned_role === userId;
-        }
-      })
-    : eventTimelineItems;
+  let filteredTimelineItems;
+  if (viewMode === 'personal') {
+    filteredTimelineItems = timelineItems.filter(item => {
+      if (userType === 'person') {
+        // Utilisateur type personne : filter by assigned_person_ids OU assigned_person_id
+        return (item.assigned_person_id === userId)
+          || (item.assigned_person_ids && item.assigned_person_ids.includes(userId));
+      } else {
+        // Utilisateur type "vendor": filter by assigned_vendor_id
+        return item.assigned_vendor_id === userId;
+      }
+    });
+  } else {
+    // Global view : on montre tout
+    filteredTimelineItems = timelineItems.filter(item => item.event_id === currentEventId);
+  }
 
   const formatTime = (time: string, duration: number) => {
     const [hours, minutes] = time.split(':').map(Number);
@@ -72,6 +80,12 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
     const person = people.find(p => p.id === personId);
     if (!person?.role) return null;
     return roleLabels[person.role as keyof typeof roleLabels] || person.role;
+  };
+
+  const getVendorName = (vendorId: string | null) => {
+    if (!vendorId) return null;
+    const vendor = vendors.find(v => v.id === vendorId);
+    return vendor?.name ?? null;
   };
 
   const isUserItem = (item: any) => {
@@ -168,6 +182,7 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
               const personName = getPersonName(item.assigned_person_id);
               const personRole = getPersonRole(item.assigned_person_id);
               const isCurrentUser = isUserItem(item);
+              const vendorName = item.assigned_vendor_id ? getVendorName(item.assigned_vendor_id) : null;
               
               return (
                 <div 
@@ -175,7 +190,9 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
                   className={`flex items-start gap-3 lg:gap-4 p-3 lg:p-4 rounded-lg border backdrop-blur-sm shadow-sm transition-all hover:shadow-md ${
                     viewMode === 'global' && isCurrentUser 
                       ? 'border-purple-300 bg-purple-50/90 ring-1 ring-purple-200' 
-                      : 'border-gray-200 bg-white/90'
+                      : item.assigned_vendor_id === userId
+                        ? 'border-sky-300 bg-sky-50/80 ring-1 ring-sky-200'
+                        : 'border-gray-200 bg-white/90'
                   }`}
                 >
                   {/* Icon */}
@@ -183,7 +200,9 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
                     <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center text-white ${
                       isCurrentUser 
                         ? 'bg-gradient-to-br from-purple-500 to-pink-500' 
-                        : 'bg-gradient-to-br from-gray-400 to-gray-500'
+                        : item.assigned_vendor_id === userId
+                          ? 'bg-sky-500'
+                          : 'bg-gradient-to-br from-gray-400 to-gray-500'
                     }`}>
                       <Clock className="w-3 h-3 lg:w-4 lg:h-4" />
                     </div>
@@ -195,7 +214,7 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
                       {/* Time in prominent position */}
                       <div className="flex items-center gap-2">
                         <span className={`text-lg font-bold whitespace-nowrap ${
-                          isCurrentUser ? 'text-purple-600' : 'text-gray-700'
+                          isCurrentUser || item.assigned_vendor_id === userId ? 'text-sky-700' : 'text-gray-700'
                         }`}>
                           {formatTime(item.time, item.duration)}
                         </span>
@@ -207,6 +226,14 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
                       {/* Title */}
                       <h4 className="font-medium text-sm lg:text-base text-gray-900 break-words">
                         {item.title}
+                        {item.assigned_vendor_id === userId && (
+                          <span className="ml-2 text-xs font-semibold text-sky-700">Prestataire (vous)</span>
+                        )}
+                        {item.assigned_vendor_id && item.assigned_vendor_id !== userId && (
+                          <span className="ml-2 text-xs font-semibold text-sky-700">
+                              • Prestataire: {getVendorName(item.assigned_vendor_id)}
+                          </span>
+                        )}
                       </h4>
                     </div>
 
