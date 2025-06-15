@@ -14,8 +14,8 @@ export const ShareManagement = () => {
 
   useEffect(() => {
     if (currentEvent?.slug) {
-      // Nouvelle url vers accès public ultra simplifié :
-      const link = `${window.location.origin}/public-access?event_slug=${currentEvent.slug}`;
+      // Nouvelle url vers accès invité V2 :
+      const link = `${window.location.origin}/guest-dashboard?event_slug=${currentEvent.slug}`;
       setShareLink(link);
     }
   }, [currentEvent]);
@@ -67,8 +67,8 @@ export const ShareManagement = () => {
           <div>
             <h3 className="text-sm font-medium">Instructions invités</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              1. Cliquez sur le lien, puis "Équipe".<br />
-              2. Choisissez votre nom pour accéder à votre planning personnalisé.
+              1. Cliquez sur le lien et sélectionnez votre équipe.<br />
+              2. Choisissez votre nom ou prestataire pour accéder à votre planning personnalisé du jour J.
             </p>
           </div>
         </CardContent>
@@ -83,7 +83,7 @@ export const ShareManagement = () => {
           )}
         </div>
         <p className="text-sm text-muted-foreground mt-4 text-center">
-          Scannez ce code avec un téléphone pour accéder directement au portail de l'événement.
+          Scannez ce code avec un téléphone pour accéder directement à la sélection d'accès Jour J.
         </p>
       </Card>
     </div>
