@@ -112,11 +112,18 @@ export const useCreateTask = () => {
       return { previousTasks };
     },
     onSuccess: (savedTask, _newTask, context) => {
-      // Remplacer la tâche optimiste par la vraie reçue de la BDD
-      queryClient.setQueryData<Task[]>(['tasks'], (old) =>
-        old
-          ? [savedTask, ...old.filter((t) => !t.id.startsWith('optimistic-'))]
-          : [savedTask]
+      // Typage strict des champs `status` et `priority`
+      const patchedTask: Task = {
+        ...savedTask,
+        status: ['pending', 'in-progress', 'completed', 'delayed'].includes(savedTask.status)
+          ? savedTask.status as Task["status"]
+          : 'pending',
+        priority: ['high', 'medium', 'low'].includes(savedTask.priority)
+          ? savedTask.priority as Task["priority"]
+          : 'medium'
+      };
+      queryClient.setQueryData<Task[]>(['tasks'], (old = []) =>
+        [patchedTask, ...old.filter((t) => !t.id.startsWith('optimistic-'))]
       );
       toast({
         title: 'Succès',
