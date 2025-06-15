@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -17,6 +18,7 @@ const GuestDashboard = () => {
   const [teamType, setTeamType] = useState<"personal" | "professional" | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [eventId, setEventId] = useState<string | null>(null);
+  const [eventData, setEventData] = useState<any>(null);
 
   const { people, loadPeople, loading: peopleLoading } = usePeople();
   const { vendors, loadVendors, loading: vendorsLoading } = useVendors();
@@ -31,15 +33,18 @@ const GuestDashboard = () => {
         const { supabase } = await import("@/integrations/supabase/client");
         const { data, error } = await supabase
           .from("events")
-          .select("id")
+          .select("id, name, event_type, event_date")
           .eq("slug", eventSlug)
           .single();
         if (error || !data) {
+          console.error('Error fetching event:', error);
           setLoadingEvent(false);
           navigate("/not-found", { replace: true });
           return;
         }
+        console.log('Guest Dashboard - Event found:', data);
         setEventId(data.id);
+        setEventData(data);
         setCurrentEventId(data.id);
         await loadPeople();
         await loadVendors();
@@ -60,10 +65,10 @@ const GuestDashboard = () => {
     const userType = teamType === "personal" ? "person" : "vendor";
     let name = "";
     if (userType === "person") {
-      const person = people.find((p) => p.id === selectedUserId);
+      const person = filteredPeople.find((p) => p.id === selectedUserId);
       name = person?.name || "";
     } else {
-      const vendor = vendors.find((v) => v.id === selectedUserId);
+      const vendor = filteredVendors.find((v) => v.id === selectedUserId);
       name = vendor?.name || "";
     }
 
@@ -72,9 +77,9 @@ const GuestDashboard = () => {
     localStorage.setItem("eventPortalUser", JSON.stringify(userData));
 
     // Redirige vers event-portal avec auto_login
-    // Doit contenir tous les params nécessaires
     let url = `/event-portal?user_type=${userType}&user_id=${selectedUserId}&event_slug=${eventSlug}&auto_login=true`;
 
+    console.log('Guest Dashboard - Redirecting to:', url);
     navigate(url);
   };
 
@@ -85,6 +90,12 @@ const GuestDashboard = () => {
 
   const filteredPeople = people.filter((p) => p.event_id === eventId);
   const filteredVendors = vendors.filter((v) => v.event_id === eventId);
+
+  console.log('Guest Dashboard - Event ID:', eventId);
+  console.log('Guest Dashboard - All people:', people);
+  console.log('Guest Dashboard - Filtered people:', filteredPeople);
+  console.log('Guest Dashboard - All vendors:', vendors);
+  console.log('Guest Dashboard - Filtered vendors:', filteredVendors);
 
   if (loadingEvent || peopleLoading || vendorsLoading) {
     return <EventPortalLoading fullScreen message="Chargement de l'événement..." details={null} />;
@@ -103,7 +114,16 @@ const GuestDashboard = () => {
             Accès Jour J
           </CardTitle>
           <CardDescription>
-            Sélectionnez votre équipe et votre nom pour accéder à votre planning personnalisé. Ce lien est public : seul le nom/la personne permet d’accéder au bon planning.
+            {eventData && (
+              <div className="mb-2 p-2 bg-purple-50 rounded">
+                <strong>{eventData.name}</strong>
+                <br />
+                <span className="text-sm text-gray-600">
+                  {eventData.event_type} • {new Date(eventData.event_date).toLocaleDateString('fr-FR')}
+                </span>
+              </div>
+            )}
+            Sélectionnez votre équipe et votre nom pour accéder à votre planning personnalisé.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 py-2">
@@ -113,17 +133,19 @@ const GuestDashboard = () => {
                 variant="outline"
                 onClick={() => handleTeamTypeSelect("personal")}
                 className="w-full flex items-center gap-3 border-purple-200 hover:bg-purple-50"
+                disabled={filteredPeople.length === 0}
               >
                 <Users className="w-5 h-5 text-purple-600" />
-                Équipe personnelle
+                Équipe personnelle ({filteredPeople.length})
               </Button>
               <Button
                 variant="outline"
                 onClick={() => handleTeamTypeSelect("professional")}
                 className="w-full flex items-center gap-3 border-purple-200 hover:bg-purple-50"
+                disabled={filteredVendors.length === 0}
               >
                 <Building2 className="w-5 h-5 text-purple-600" />
-                Équipe professionnelle
+                Équipe professionnelle ({filteredVendors.length})
               </Button>
             </div>
           ) : (
@@ -132,7 +154,7 @@ const GuestDashboard = () => {
                 ← Retour
               </Button>
               <label className="text-sm font-medium">
-                {teamType === "personal" ? "Sélectionnez votre nom :" : "Sélectionnez votre prestataire :"}
+                {teamType === "personal" ? "Sélectionnez votre nom :" : "Sélectionnez votre prestataire :"}
               </label>
               <Select value={selectedUserId} onValueChange={setSelectedUserId}>
                 <SelectTrigger className="w-full">
@@ -149,7 +171,7 @@ const GuestDashboard = () => {
                           <SelectItem key={person.id} value={person.id}>
                             {person.name}
                             {person.role ? (
-                              <span className="ml-2 text-xs text-gray-500">{person.role}</span>
+                              <span className="ml-2 text-xs text-gray-500">({person.role})</span>
                             ) : null}
                           </SelectItem>
                         ))
@@ -159,7 +181,7 @@ const GuestDashboard = () => {
                         <SelectItem key={vendor.id} value={vendor.id}>
                           {vendor.name}
                           {vendor.service_type ? (
-                            <span className="ml-2 text-xs text-gray-500">{vendor.service_type}</span>
+                            <span className="ml-2 text-xs text-gray-500">({vendor.service_type})</span>
                           ) : null}
                         </SelectItem>
                       ))
