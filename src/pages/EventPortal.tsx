@@ -1,12 +1,8 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, RefreshCw, Settings, LogOut } from 'lucide-react';
 import { useSharedEventData } from '@/hooks/useSharedEventData';
 import { PersonLogin } from '@/components/event/PersonLogin';
-import { UnifiedPersonalPlanning } from '@/components/event/UnifiedPersonalPlanning';
-import { PersonalDocuments } from '@/components/event/PersonalDocuments';
-import { ContactsTab } from '@/components/event/ContactsTab';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useCurrentEvent } from '@/contexts/CurrentEventContext';
@@ -14,98 +10,11 @@ import { usePeople } from '@/hooks/usePeople';
 import { useVendors } from '@/hooks/useVendors';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
-interface LoggedUser {
-  id: string;
-  name: string;
-  type: 'person' | 'vendor';
-}
-
-interface GuestEvent {
-  id: string;
-  name: string;
-  event_date: string;
-  event_type: string;
-}
-
-const GuestEventView = ({ event }: { event: GuestEvent }) => {
-  const [activeTab, setActiveTab] = useState('planning');
-  const { planningItems, loading: dataLoading } = useSharedEventData();
-
-  const renderGuestTabContent = () => {
-    if (dataLoading) {
-      return (
-        <div className="flex items-center justify-center h-64">
-          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-purple-600" />
-        </div>
-      );
-    }
-    switch (activeTab) {
-      case 'planning':
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Planning de l'événement</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {planningItems && planningItems.length > 0 ? (
-                <ul className="space-y-4">
-                  {[...planningItems].sort((a, b) => (a.time || "").localeCompare(b.time || "")).map(item => (
-                    <li key={item.id} className="flex items-start gap-4">
-                      <div className="font-bold text-purple-600 w-20 shrink-0 text-right">{item.time?.substring(0, 5)}</div>
-                      <div className="flex-1 border-l-2 border-purple-200 pl-4">
-                        <h4 className="font-semibold">{item.title}</h4>
-                        <p className="text-sm text-gray-600">{item.description}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p>Le planning n'est pas encore disponible.</p>
-              )}
-            </CardContent>
-          </Card>
-        );
-      case 'contacts':
-        return <ContactsTab userId="" userType="person" />;
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
-      <div className="bg-white/80 backdrop-blur-sm border-b border-purple-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-          <div className="flex items-center justify-between h-14 lg:h-16">
-            <h1 className="text-base lg:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent truncate">
-              {event.name}
-            </h1>
-            <p className="text-xs lg:text-sm text-gray-600 truncate">
-              {event.event_type} • {new Date(event.event_date).toLocaleDateString('fr-FR')}
-            </p>
-          </div>
-        </div>
-      </div>
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 lg:py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="planning">📅 Planning</TabsTrigger>
-            <TabsTrigger value="contacts">👥 Contacts</TabsTrigger>
-          </TabsList>
-          <TabsContent value="planning" className="mt-4">
-            {activeTab === 'planning' && renderGuestTabContent()}
-          </TabsContent>
-          <TabsContent value="contacts" className="mt-4">
-            {activeTab === 'contacts' && renderGuestTabContent()}
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
-  );
-};
+import { GuestEvent, LoggedUser } from '@/types/event';
+import { GuestEventView } from '@/components/event/GuestEventView';
+import { EventPortalHeader } from '@/components/event/EventPortalHeader';
+import { EventPortalContent } from '@/components/event/EventPortalContent';
+import { EventPortalLoading } from '@/components/event/EventPortalLoading';
 
 const EventPortal = () => {
   const navigate = useNavigate();
@@ -154,21 +63,18 @@ const EventPortal = () => {
     }
   }, [searchParams, setCurrentEventId, navigate]);
 
-  // Force refresh de toutes les données au chargement
   useEffect(() => {
-    console.log('EventPortal - Initializing with event ID:', currentEventId);
     if (currentEventId) {
       handleFullDataRefresh();
     }
   }, [currentEventId]);
 
   useEffect(() => {
-    // Check URL parameters for automatic login after data is loaded
     const userType = searchParams.get('user_type') as 'person' | 'vendor' | null;
     const userId = searchParams.get('user_id');
     
     if (userType && userId && (people.length > 0 || vendors.length > 0)) {
-      let userData: { id: string; name: string; type: 'person' | 'vendor' } | null = null;
+      let userData: LoggedUser | null = null;
       
       if (userType === 'person') {
         const person = people.find(p => p.id === userId);
@@ -185,52 +91,39 @@ const EventPortal = () => {
       if (userData) {
         setLoggedInUser(userData);
         localStorage.setItem('eventPortalUser', JSON.stringify(userData));
-        console.log('Auto-logged in user from URL params:', userData);
       }
     } else if (!userType && !userId) {
-      // Check localStorage for existing session if no URL params
       const savedUser = localStorage.getItem('eventPortalUser');
       if (savedUser) {
         try {
           setLoggedInUser(JSON.parse(savedUser));
         } catch (error) {
-          console.error('Error parsing saved user:', error);
           localStorage.removeItem('eventPortalUser');
         }
       }
     }
   }, [searchParams, people, vendors, isGuestMode]);
 
-  // Force refresh when switching tabs to ensure synchronization
   useEffect(() => {
-    console.log('EventPortal - Tab changed to:', activeTab, '- refreshing data');
-    handleFullDataRefresh();
-  }, [activeTab]);
+    if (loggedInUser) {
+      handleFullDataRefresh();
+    }
+  }, [activeTab, loggedInUser]);
 
-  // Fonction de refresh complète et forcée
   const handleFullDataRefresh = async () => {
     if (!currentEventId) return;
     
     setIsRefreshing(true);
-    console.log('=== FORCED FULL DATA REFRESH ===');
-    console.log('Event ID:', currentEventId);
-    
     try {
-      // Force refresh de toutes les sources de données en parallèle
       await Promise.all([
         refreshData(),
         loadPeople(),
         loadVendors()
       ]);
-      
-      console.log('All data refreshed successfully');
-      
-      // Afficher un toast de confirmation
       toast({
         title: 'Synchronisation terminée',
         description: 'Toutes les données ont été actualisées',
       });
-      
     } catch (error) {
       console.error('Error during data refresh:', error);
       toast({
@@ -247,186 +140,58 @@ const EventPortal = () => {
     const user = { id: userId, name: userName, type: userType };
     setLoggedInUser(user);
     localStorage.setItem('eventPortalUser', JSON.stringify(user));
-    console.log('User logged in:', user);
-    
-    // Force refresh après connexion
     handleFullDataRefresh();
   };
 
   const handleLogout = () => {
     setLoggedInUser(null);
     localStorage.removeItem('eventPortalUser');
-    
-    // Clear URL parameters and redirect to home
     navigate('/', { replace: true });
-    console.log('User logged out');
   };
 
-  const handleRefreshData = () => {
-    console.log('Manual data refresh triggered for event ID:', currentEventId);
-    handleFullDataRefresh();
-  };
+  const isDataLoading = loading || peopleLoading || vendorsLoading || isRefreshing;
 
   if (guestLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
-        <RefreshCw className="h-8 w-8 animate-spin text-purple-600" />
-      </div>
-    );
+    return <EventPortalLoading fullScreen message="Chargement de l'événement..." details={null} />;
   }
 
   if (isGuestMode && guestEvent) {
     return <GuestEventView event={guestEvent} />;
   }
   
-  // Si pas encore connecté, afficher l'écran de connexion
   if (!loggedInUser) {
     return <PersonLogin onLogin={handleLogin} />;
   }
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'planning':
-        return (
-          <UnifiedPersonalPlanning 
-            userId={loggedInUser.id} 
-            userName={loggedInUser.name}
-            userType={loggedInUser.type}
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
+      <EventPortalHeader
+        userName={loggedInUser.name}
+        daysUntilEvent={daysUntilEvent}
+        isDataLoading={isDataLoading}
+        isRefreshing={isRefreshing}
+        isMobile={isMobile}
+        onBack={() => navigate('/')}
+        onRefresh={handleFullDataRefresh}
+        onLogout={handleLogout}
+        onAdmin={() => navigate('/admin')}
+      />
+
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 lg:py-8 pb-20 lg:pb-8">
+        {isDataLoading ? (
+          <EventPortalLoading isRefreshing={isRefreshing} />
+        ) : (
+          <EventPortalContent
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            isMobile={isMobile}
+            loggedInUser={loggedInUser}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
           />
-        );
-      case 'contacts':
-        return (
-          <ContactsTab 
-            userId={loggedInUser.id}
-            userType={loggedInUser.type}
-          />
-        );
-      case 'documents':
-        return (
-          <PersonalDocuments 
-            personId={loggedInUser.id} 
-            personName={loggedInUser.name} 
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
-  const isDataLoading = loading || peopleLoading || vendorsLoading || isRefreshing;
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-purple-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-          <div className="flex items-center justify-between h-14 lg:h-16">
-            <div className="flex items-center gap-2 lg:gap-4 overflow-hidden">
-              <Button
-                variant="ghost"
-                onClick={() => navigate('/')}
-                className="text-purple-700 hover:text-purple-900 px-2 lg:px-3"
-              >
-                <ArrowLeft className="w-4 h-4 mr-1 lg:mr-2" />
-                <span className="hidden sm:inline">Retour</span>
-              </Button>
-              <div className="hidden lg:block h-6 w-px bg-purple-200" />
-              <h1 className="text-base lg:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent truncate">
-                Jour-J - {loggedInUser.name}
-              </h1>
-            </div>
-            
-            <div className="flex items-center gap-1 lg:gap-3">
-              <div className="text-xs lg:text-sm text-purple-600 font-medium whitespace-nowrap">
-                J-{daysUntilEvent} jours
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefreshData}
-                disabled={isDataLoading}
-                className="border-purple-200 text-purple-700 hover:bg-purple-50 h-7 w-7 lg:h-8 lg:w-auto lg:px-3 p-0"
-                title="Synchronisation forcée"
-              >
-                <RefreshCw className={`w-4 h-4 ${!isMobile && 'mr-2'} ${isDataLoading ? 'animate-spin' : ''}`} />
-                {!isMobile && (isRefreshing ? 'Sync...' : 'Actualiser')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLogout}
-                className="border-red-200 text-red-700 hover:bg-red-50 h-7 w-7 lg:h-8 lg:w-auto lg:px-3 p-0"
-                title="Déconnexion"
-              >
-                <LogOut className="w-4 h-4 lg:mr-2" />
-                {!isMobile && 'Déconnexion'}
-              </Button>
-              {!isMobile && (
-                <Button
-                  onClick={() => navigate('/admin')}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Admin
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 lg:py-8 pb-20 lg:pb-8">
-        {isDataLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-purple-600" />
-              <p className="text-purple-600">
-                {isRefreshing ? 'Synchronisation forcée en cours...' : 'Chargement des données...'}
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                Synchronisation avec l'Admin Portal
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Desktop Tabs */}
-            {!isMobile && (
-              <div className="flex gap-2 border-b border-gray-200">
-                <Button
-                  variant={activeTab === 'planning' ? 'default' : 'ghost'}
-                  onClick={() => setActiveTab('planning')}
-                  className={activeTab === 'planning' ? 'bg-gradient-to-r from-purple-600 to-pink-600' : ''}
-                >
-                  📅 Planning
-                </Button>
-                <Button
-                  variant={activeTab === 'contacts' ? 'default' : 'ghost'}
-                  onClick={() => setActiveTab('contacts')}
-                  className={activeTab === 'contacts' ? 'bg-gradient-to-r from-purple-600 to-pink-600' : ''}
-                >
-                  👥 Contacts
-                </Button>
-                <Button
-                  variant={activeTab === 'documents' ? 'default' : 'ghost'}
-                  onClick={() => setActiveTab('documents')}
-                  className={activeTab === 'documents' ? 'bg-gradient-to-r from-purple-600 to-pink-600' : ''}
-                >
-                  📁 Mes Fichiers
-                </Button>
-              </div>
-            )}
-            
-            {/* Tab Content */}
-            {renderTabContent()}
-          </div>
         )}
       </div>
 
-      {/* Mobile Bottom Navigation */}
       {isMobile && (
         <BottomNavigation 
           activeTab={activeTab}
