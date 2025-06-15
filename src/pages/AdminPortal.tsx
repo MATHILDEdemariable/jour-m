@@ -1,12 +1,11 @@
+
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, LogOut, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAdminAuth } from '@/contexts/AdminAuthContext';
-import { AdminLoginModal } from '@/components/AdminLoginModal';
-import { useAdminProtectedRoute } from '@/hooks/useAdminProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { useEventData } from '@/contexts/EventDataContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -28,8 +27,7 @@ export const AdminPortal = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { t } = useTranslation();
-  const { isAuthenticated, logout } = useAdminAuth();
-  const { showLoginModal, handleCloseLoginModal } = useAdminProtectedRoute();
+  const { signOut } = useAuth();
   const { currentEvent } = useEventData();
 
   const getCurrentTutorial = () => {
@@ -55,9 +53,6 @@ export const AdminPortal = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AdminLoginModal isOpen={showLoginModal} onClose={handleCloseLoginModal} />
-
-      {isAuthenticated && (
         <>
           {/* Header - Responsive */}
           <div className="bg-white border-b shadow-sm">
@@ -97,7 +92,7 @@ export const AdminPortal = () => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={logout}
+                  onClick={signOut}
                   className="flex items-center gap-1 px-2 lg:px-3"
                 >
                   <LogOut className="w-3 h-3" />
@@ -159,7 +154,6 @@ export const AdminPortal = () => {
             steps={getCurrentTutorial().steps}
           />
         </>
-      )}
     </div>
   );
 };
