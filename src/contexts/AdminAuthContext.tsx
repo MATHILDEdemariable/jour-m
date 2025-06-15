@@ -1,9 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-
-// Mot de passe fixe pour l'admin
-const ADMIN_PASSWORD = 'vivelesmaries';
+import { supabase } from '@/integrations/supabase/client';
 
 type AdminAuthContextType = {
   isAuthenticated: boolean;
@@ -30,21 +28,49 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const login = async (password: string): Promise<boolean> => {
     setError(null);
     
-    // Vérification du mot de passe fixe
-    if (password === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-      localStorage.setItem('adminAuth', 'true');
-      toast({
-        title: "Connexion réussie",
-        description: "Bienvenue dans le portail administrateur",
-      });
-      return true;
-    } else {
-      setError('Mot de passe incorrect');
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('admin_settings')
+        .select('setting_value')
+        .eq('setting_key', 'admin_password')
+        .single();
+
+      if (fetchError || !data) {
+        console.error('Error fetching admin password:', fetchError);
+        setError('Erreur de configuration du serveur. Impossible de vérifier le mot de passe.');
+        toast({
+          variant: "destructive",
+          title: "Erreur de configuration",
+          description: "Impossible de vérifier le mot de passe administrateur.",
+        });
+        return false;
+      }
+      
+      if (password === data.setting_value) {
+        setIsAuthenticated(true);
+        localStorage.setItem('adminAuth', 'true');
+        toast({
+          title: "Connexion réussie",
+          description: "Bienvenue dans le portail administrateur",
+        });
+        return true;
+      } else {
+        setError('Mot de passe incorrect');
+        toast({
+          variant: "destructive",
+          title: "Erreur de connexion",
+          description: "Le mot de passe est incorrect",
+        });
+        return false;
+      }
+    } catch(e) {
+      const err = e as Error;
+      console.error('Login failed:', err.message);
+      setError('Une erreur inattendue est survenue.');
       toast({
         variant: "destructive",
         title: "Erreur de connexion",
-        description: "Le mot de passe est incorrect",
+        description: "Une erreur inattendue est survenue.",
       });
       return false;
     }

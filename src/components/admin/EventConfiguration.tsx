@@ -1,13 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, MapPin, Clock, Palette } from 'lucide-react';
+import { CalendarDays, MapPin, Clock, Palette, KeyRound } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,6 +24,9 @@ export const EventConfiguration = () => {
     description: '',
     status: 'planning'
   });
+  const [newAdminPassword, setNewAdminPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
 
   useEffect(() => {
     if (currentEvent) {
@@ -68,6 +70,36 @@ export const EventConfiguration = () => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePasswordUpdate = async () => {
+    if (!newAdminPassword) {
+      toast({ title: 'Erreur', description: 'Le mot de passe ne peut pas être vide.', variant: 'destructive' });
+      return;
+    }
+    if (newAdminPassword !== confirmPassword) {
+      toast({ title: 'Erreur', description: 'Les mots de passe ne correspondent pas.', variant: 'destructive' });
+      return;
+    }
+
+    setPasswordSaving(true);
+    try {
+      const { error } = await supabase
+        .from('admin_settings')
+        .update({ setting_value: newAdminPassword })
+        .eq('setting_key', 'admin_password');
+
+      if (error) throw error;
+
+      toast({ title: 'Succès', description: 'Le mot de passe administrateur a été mis à jour.' });
+      setNewAdminPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      console.error('Error updating admin password:', error);
+      toast({ title: 'Erreur', description: 'Impossible de mettre à jour le mot de passe.', variant: 'destructive' });
+    } finally {
+      setPasswordSaving(false);
     }
   };
 
@@ -241,6 +273,50 @@ export const EventConfiguration = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Admin Security Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <KeyRound className="w-5 h-5" />
+            Sécurité Administrateur
+          </CardTitle>
+          <CardDescription>
+            Modifiez le mot de passe d'accès au portail administrateur.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="new-password">Nouveau mot de passe</Label>
+            <Input
+              id="new-password"
+              type="password"
+              value={newAdminPassword}
+              onChange={(e) => setNewAdminPassword(e.target.value)}
+              placeholder="••••••••"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
+            <Input
+              id="confirm-password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="••••••••"
+            />
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button 
+            onClick={handlePasswordUpdate}
+            disabled={passwordSaving}
+            className="ml-auto"
+          >
+            {passwordSaving ? 'Sauvegarde...' : 'Modifier le mot de passe'}
+          </Button>
+        </CardFooter>
+      </Card>
 
       {/* Bouton de sauvegarde */}
       <div className="flex justify-end">
