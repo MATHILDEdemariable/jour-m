@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, LogOut, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
-import { AdminLoginModal } from '@/components/AdminLoginModal';
+// Removed import { AdminLoginModal } from '@/components/AdminLoginModal';
 import { useAdminProtectedRoute } from '@/hooks/useAdminProtectedRoute';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { useEventData } from '@/contexts/EventDataContext';
@@ -58,7 +58,7 @@ export const AdminPortal = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AdminLoginModal isOpen={showLoginModal} onClose={handleCloseLoginModal} />
+      {/* Removed: <AdminLoginModal isOpen={showLoginModal} onClose={handleCloseLoginModal} /> */}
 
       {isAuthenticated && (
         <>
@@ -172,3 +172,4 @@ export const AdminPortal = () => {
 };
 
 export default AdminPortal;
+
