@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -171,7 +170,7 @@ export const TeamAccess = () => {
             </p>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Étape 1: Sélectron événement via menu déroulant */}
+            {/* Étape 1: Sélection événement via menu déroulant */}
             <div className="space-y-2">
               <Label htmlFor="eventId">Sélectionnez votre événement</Label>
               <Select
@@ -183,9 +182,6 @@ export const TeamAccess = () => {
                   <SelectValue placeholder={eventsLoading ? "Chargement..." : "Choisissez l’événement"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {eventOptions.length === 0 && !eventsLoading && (
-                    <SelectItem value="" disabled>Aucun événement disponible</SelectItem>
-                  )}
                   {eventOptions.map(ev => (
                     <SelectItem key={ev.id} value={ev.id}>
                       {ev.name} {ev.event_date && `(${new Date(ev.event_date).toLocaleDateString('fr-FR')})`}
@@ -193,6 +189,11 @@ export const TeamAccess = () => {
                   ))}
                 </SelectContent>
               </Select>
+              {eventOptions.length === 0 && !eventsLoading && (
+                <p className="text-sm text-gray-500 px-2 pt-2">
+                  Aucun événement disponible.
+                </p>
+              )}
               {eventValid && (
                 <p className="text-sm text-green-600 flex items-center">
                   <UserCheck className="w-4 h-4 mr-1" />
@@ -261,4 +262,3 @@ export const TeamAccess = () => {
 };
 
 export default TeamAccess;
-
