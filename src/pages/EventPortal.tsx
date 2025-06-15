@@ -71,10 +71,49 @@ const EventPortal = () => {
   useEffect(() => {
     const userType = searchParams.get('user_type') as 'person' | 'vendor' | null;
     const userId = searchParams.get('user_id');
-    
+    const autoLogin = searchParams.get('auto_login') === 'true';
+
+    if (autoLogin && userType && userId) {
+      let userData: LoggedUser | null = null;
+
+      if (userType === 'person') {
+        let fromStorage = null;
+        try {
+          fromStorage = JSON.parse(localStorage.getItem('eventPortalUser')||"null");
+        } catch {}
+        if (fromStorage && fromStorage.id === userId && fromStorage.type === "person") {
+          userData = fromStorage;
+        } else {
+          const person = people.find(p => p.id === userId);
+          if (person) {
+            userData = { id: person.id, name: person.name, type: 'person' };
+          }
+        }
+      } else if (userType === 'vendor') {
+        let fromStorage = null;
+        try {
+          fromStorage = JSON.parse(localStorage.getItem('eventPortalUser')||"null");
+        } catch {}
+        if (fromStorage && fromStorage.id === userId && fromStorage.type === "vendor") {
+          userData = fromStorage;
+        } else {
+          const vendor = vendors.find(v => v.id === userId);
+          if (vendor) {
+            userData = { id: vendor.id, name: vendor.name, type: 'vendor' };
+          }
+        }
+      }
+
+      if (userData) {
+        setLoggedInUser(userData);
+        localStorage.setItem('eventPortalUser', JSON.stringify(userData));
+        return;
+      }
+    }
+
     if (userType && userId && (people.length > 0 || vendors.length > 0)) {
       let userData: LoggedUser | null = null;
-      
+
       if (userType === 'person') {
         const person = people.find(p => p.id === userId);
         if (person) {
@@ -86,7 +125,7 @@ const EventPortal = () => {
           userData = { id: vendor.id, name: vendor.name, type: 'vendor' };
         }
       }
-      
+
       if (userData) {
         setLoggedInUser(userData);
         localStorage.setItem('eventPortalUser', JSON.stringify(userData));

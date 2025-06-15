@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -59,7 +58,24 @@ const GuestDashboard = () => {
   const handleContinue = () => {
     if (!selectedUserId || !teamType || !eventId) return;
     const userType = teamType === "personal" ? "person" : "vendor";
-    navigate(`/event-portal?user_type=${userType}&user_id=${selectedUserId}`);
+    let name = "";
+    if (userType === "person") {
+      const person = people.find((p) => p.id === selectedUserId);
+      name = person?.name || "";
+    } else {
+      const vendor = vendors.find((v) => v.id === selectedUserId);
+      name = vendor?.name || "";
+    }
+
+    // On stocke le user directement dans localStorage (pour auto-login)
+    const userData = { id: selectedUserId, name, type: userType };
+    localStorage.setItem("eventPortalUser", JSON.stringify(userData));
+
+    // Redirige vers event-portal avec auto_login
+    // Doit contenir tous les params nécessaires
+    let url = `/event-portal?user_type=${userType}&user_id=${selectedUserId}&event_slug=${eventSlug}&auto_login=true`;
+
+    navigate(url);
   };
 
   const handleBack = () => {
