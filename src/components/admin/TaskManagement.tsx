@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,10 +6,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Edit, Trash2, Clock, Users, Search, Filter } from 'lucide-react';
+import { Plus, Edit, Trash2, Clock, Users, Search, Filter, Building } from 'lucide-react';
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useToggleTaskStatus, Task, CreateTaskData } from '@/hooks/useTasks';
 import { TaskModal } from './TaskModal';
 import { TaskSuggestions } from './TaskSuggestions';
+import { useVendors } from '@/hooks/useVendors';
 
 export const TaskManagement = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -21,6 +21,7 @@ export const TaskManagement = () => {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
 
   const { data: tasks = [], isLoading } = useTasks();
+  const { vendors } = useVendors();
   const createTaskMutation = useCreateTask();
   const updateTaskMutation = useUpdateTask();
   const deleteTaskMutation = useDeleteTask();
@@ -238,98 +239,108 @@ export const TaskManagement = () => {
             </CardContent>
           </Card>
         ) : (
-          filteredTasks.map((task) => (
-            <Card key={task.id} className="hover:shadow-md transition-shadow border-stone-200">
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    checked={task.status === 'completed'}
-                    onCheckedChange={(checked) => handleToggleStatus(task.id, checked as boolean)}
-                    className="mt-1"
-                    disabled={toggleStatusMutation.isPending}
-                  />
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className={`font-medium text-stone-800 ${task.status === 'completed' ? 'line-through text-stone-500' : ''}`}>
-                        {task.title}
-                      </h3>
-                      <Badge className={priorityColors[task.priority as keyof typeof priorityColors]}>
-                        {getPriorityLabel(task.priority)}
-                      </Badge>
-                      <Badge className={statusColors[task.status as keyof typeof statusColors]}>
-                        {getStatusLabel(task.status)}
-                      </Badge>
-                    </div>
+          filteredTasks.map((task) => {
+            const assignedVendor = task.assigned_vendor_id ? vendors.find(v => v.id === task.assigned_vendor_id) : null;
+            
+            return (
+              <Card key={task.id} className={`hover:shadow-md transition-shadow border-stone-200 ${assignedVendor ? 'bg-sky-50 border-sky-200' : ''}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      checked={task.status === 'completed'}
+                      onCheckedChange={(checked) => handleToggleStatus(task.id, checked as boolean)}
+                      className="mt-1"
+                      disabled={toggleStatusMutation.isPending}
+                    />
                     
-                    {task.description && (
-                      <p className="text-sm text-stone-600 mb-2">{task.description}</p>
-                    )}
-                    
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1 text-stone-500">
-                          <Clock className="w-3 h-3" />
-                          <span>{task.duration_minutes}min</span>
-                        </div>
-                        {task.assigned_role && (
-                          <div className="flex items-center gap-1 text-stone-500">
-                            <Users className="w-3 h-3" />
-                            <span>{task.assigned_role.replace('-', ' ')}</span>
-                          </div>
-                        )}
-                        {task.completed_at && (
-                          <span className="text-emerald-600">
-                            Terminée le {new Date(task.completed_at).toLocaleDateString('fr-FR')}
-                          </span>
-                        )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className={`font-medium text-stone-800 ${task.status === 'completed' ? 'line-through text-stone-500' : ''}`}>
+                          {task.title}
+                        </h3>
+                        <Badge className={priorityColors[task.priority as keyof typeof priorityColors]}>
+                          {getPriorityLabel(task.priority)}
+                        </Badge>
+                        <Badge className={statusColors[task.status as keyof typeof statusColors]}>
+                          {getStatusLabel(task.status)}
+                        </Badge>
                       </div>
                       
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditTask(task)}
-                          className="h-8 w-8 p-0 hover:bg-stone-100"
-                        >
-                          <Edit className="w-3 h-3" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 hover:bg-red-50 text-red-600"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Êtes-vous sûr de vouloir supprimer la tâche "{task.title}" ? 
-                                Cette action est irréversible.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Annuler</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteTask(task.id)}
-                                className="bg-red-600 hover:bg-red-700"
+                      {task.description && (
+                        <p className="text-sm text-stone-600 mb-2">{task.description}</p>
+                      )}
+                      
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-4 flex-wrap">
+                          <div className="flex items-center gap-1 text-stone-500">
+                            <Clock className="w-3 h-3" />
+                            <span>{task.duration_minutes}min</span>
+                          </div>
+                          {task.assigned_role && (
+                            <div className="flex items-center gap-1 text-stone-500">
+                              <Users className="w-3 h-3" />
+                              <span>{task.assigned_role.replace('-', ' ')}</span>
+                            </div>
+                          )}
+                           {assignedVendor && (
+                            <div className="flex items-center gap-1 text-sky-600 font-medium">
+                               <Building className="w-3 h-3" />
+                               <span>{assignedVendor.name}</span>
+                            </div>
+                          )}
+                          {task.completed_at && (
+                            <span className="text-emerald-600">
+                              Terminée le {new Date(task.completed_at).toLocaleDateString('fr-FR')}
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditTask(task)}
+                            className="h-8 w-8 p-0 hover:bg-stone-100"
+                          >
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 hover:bg-red-50 text-red-600"
                               >
-                                Supprimer
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Êtes-vous sûr de vouloir supprimer la tâche "{task.title}" ? 
+                                  Cette action est irréversible.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteTask(task.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Supprimer
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+                </CardContent>
+              </Card>
+            );
+          })
         )}
       </div>
 

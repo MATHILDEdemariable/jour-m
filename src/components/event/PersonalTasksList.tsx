@@ -16,13 +16,20 @@ export const PersonalTasksList: React.FC<PersonalTasksListProps> = ({
   personId, 
   personName 
 }) => {
-  const { tasks } = useSharedEventData();
+  const { tasks, people, vendors } = useSharedEventData();
   const toggleTaskStatus = useToggleTaskStatus();
 
-  // Filtrer les tâches assignées à cette personne
-  const personalTasks = tasks.filter(task => 
-    task.assigned_person_id === personId
-  );
+  const isPerson = people.some(p => p.id === personId);
+
+  // Filtrer les tâches assignées à cette personne ou ce prestataire
+  const personalTasks = tasks.filter(task => {
+    if (isPerson) {
+      return task.assigned_person_id === personId;
+    } else {
+      // Si ce n'est pas une personne, on suppose que c'est un prestataire
+      return task.assigned_vendor_id === personId;
+    }
+  });
 
   const handleToggleTask = async (taskId: string, completed: boolean) => {
     try {
