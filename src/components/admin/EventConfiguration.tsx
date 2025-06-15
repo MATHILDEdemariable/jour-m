@@ -22,7 +22,8 @@ export const EventConfiguration = () => {
     start_time: '',
     location: '',
     description: '',
-    status: 'planning'
+    status: 'planning',
+    magic_word: ''
   });
 
   useEffect(() => {
@@ -34,10 +35,21 @@ export const EventConfiguration = () => {
         start_time: currentEvent.start_time || '',
         location: currentEvent.location || '',
         description: currentEvent.description || '',
-        status: currentEvent.status || 'planning'
+        status: currentEvent.status || 'planning',
+        magic_word: currentEvent.magic_word || ""
       });
     }
   }, [currentEvent]);
+
+  // Magic word: random generator
+  const generateMagicWord = () => {
+    const charset = "ABCDEFGHJKLMNPQRSTUVWXYZ123456789";
+    let word = "";
+    for (let i = 0; i < 7; i++) {
+      word += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    handleInputChange('magic_word', word);
+  };
 
   const handleSave = async () => {
     if (!currentEvent) return;
@@ -253,6 +265,52 @@ export const EventConfiguration = () => {
           {saving ? 'Sauvegarde...' : 'Sauvegarder la configuration'}
         </Button>
       </div>
+      {/* New: Section accès collaboratif */}
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <KeyRound className="w-5 h-5 mr-2 inline" />
+            Accès collaborateur par “Mot Magique”
+          </CardTitle>
+          <CardDescription>
+            Configurez le mot d'accès rapide à votre événement pour les collaborateurs<br />
+            <span className="text-xs text-gray-500">À transmettre uniquement aux personnes autorisées.</span>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-3">
+            <Input
+              value={formData.magic_word || ""}
+              onChange={(e) => handleInputChange('magic_word', e.target.value.toUpperCase())}
+              maxLength={20}
+              placeholder="Ex: MARIONSNOUS24"
+              className="font-mono uppercase tracking-widest"
+              style={{ width: 180 }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={generateMagicWord}
+            >
+              Générer
+            </Button>
+            {formData.magic_word && (
+              <span className="ml-2 text-sm text-stone-600 bg-stone-50 border px-2 py-1 rounded">
+                {formData.magic_word}
+              </span>
+            )}
+          </div>
+          {formData.magic_word &&
+            <div className="mt-2 text-xs">
+              <span className="font-medium text-stone-700">Lien rapide&nbsp;:</span> 
+              <span className="ml-1 font-mono text-purple-700">
+                {window.location.origin}/auth?magic={encodeURIComponent(formData.magic_word)}
+              </span>
+            </div>
+          }
+        </CardContent>
+      </Card>
     </div>
   );
 };

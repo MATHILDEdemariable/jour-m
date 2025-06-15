@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { useMagicWordAuth } from '@/hooks/useMagicWordAuth';
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -15,6 +16,9 @@ const AuthPage = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [tab, setTab] = useState("signin"); // Track current tab
+  const [magicInput, setMagicInput] = useState('');
+  const { loading: magicLoading, error: magicError, loginWithMagicWord } = useMagicWordAuth();
 
   // Nouveau: état et logique pour reset password
   const [resetRequested, setResetRequested] = useState(false);
@@ -85,13 +89,15 @@ const AuthPage = () => {
           <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
             Bienvenue sur JOURM
           </h1>
-           <CardDescription>Connectez-vous ou créez un compte pour commencer.</CardDescription>
+          <CardDescription>Connectez-vous, créez un compte ou utilisez un mot magique !</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+          {/* Extensible tab navigation */}
+          <Tabs value={tab} onValueChange={setTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="signin">Se connecter</TabsTrigger>
               <TabsTrigger value="signup">S'inscrire</TabsTrigger>
+              <TabsTrigger value="magic">Accès par mot magique</TabsTrigger>
             </TabsList>
             <TabsContent value="signin">
               {resetRequested ? (
@@ -165,6 +171,44 @@ const AuthPage = () => {
                   {loading ? 'Création du compte...' : 'S\'inscrire'}
                 </Button>
               </form>
+            </TabsContent>
+            <TabsContent value="magic">
+              <form
+                className="space-y-4 pt-8"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  await loginWithMagicWord(magicInput.trim().toUpperCase());
+                }}>
+                <div className="space-y-2">
+                  <Label htmlFor="magic-input">Mot magique</Label>
+                  <Input
+                    id="magic-input"
+                    value={magicInput}
+                    onChange={e => setMagicInput(e.target.value)}
+                    autoFocus
+                    required
+                    placeholder="Ex: INVITEROSES24"
+                    className="font-mono tracking-wider uppercase"
+                  />
+                </div>
+                <Button type="submit"
+                     disabled={magicInput.length < 3 || magicLoading}
+                     className="w-full bg-gradient-to-r from-purple-700 to-pink-600"
+                >
+                  {magicLoading ? "Connexion..." : "Accéder"}
+                </Button>
+                {magicError &&
+                  <p className="text-xs text-red-600">{magicError}</p>
+                }
+                <div className="text-center">
+                  <Button type="button" variant="link" size="sm" onClick={() => setTab("signin")}>
+                    Retour à la connexion classique
+                  </Button>
+                </div>
+              </form>
+              <div className="text-xs text-center mt-5 text-stone-500">
+                Si vous avez reçu un "mot magique", entrez-le ici pour accéder à l'événement associé.
+              </div>
             </TabsContent>
           </Tabs>
           <div className="mt-4 text-center">

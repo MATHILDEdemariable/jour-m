@@ -285,6 +285,7 @@ export type Database = {
           google_drive_url: string | null
           id: string
           location: string | null
+          magic_word: string | null
           name: string
           slug: string
           start_time: string | null
@@ -301,6 +302,7 @@ export type Database = {
           google_drive_url?: string | null
           id?: string
           location?: string | null
+          magic_word?: string | null
           name: string
           slug: string
           start_time?: string | null
@@ -317,6 +319,7 @@ export type Database = {
           google_drive_url?: string | null
           id?: string
           location?: string | null
+          magic_word?: string | null
           name?: string
           slug?: string
           start_time?: string | null
