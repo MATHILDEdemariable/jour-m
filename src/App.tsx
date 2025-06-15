@@ -38,7 +38,14 @@ function App() {
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/create-event" element={<CreateEvent />} />
                 <Route path="/demo" element={<Demo />} />
-                <Route path="/equipe/:eventSlug" element={<EventTeamAccess />} />
+                <Route
+                  path="/equipe/:eventSlug"
+                  element={
+                    <CurrentEventProvider>
+                      <EventTeamAccess />
+                    </CurrentEventProvider>
+                  }
+                />
                 <Route
                   path="/event/:eventId/*"
                   element={
