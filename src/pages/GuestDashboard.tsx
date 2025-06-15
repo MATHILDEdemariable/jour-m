@@ -42,7 +42,6 @@ const GuestDashboard = () => {
           navigate("/not-found", { replace: true });
           return;
         }
-        console.log('Guest Dashboard - Event found:', data);
         setEventId(data.id);
         setEventData(data);
         setCurrentEventId(data.id);
@@ -61,6 +60,7 @@ const GuestDashboard = () => {
   };
 
   const handleContinue = () => {
+    // INVITÉ → Connexion directe au dashboard personnalisé !
     if (!selectedUserId || !teamType || !eventId) return;
     const userType = teamType === "personal" ? "person" : "vendor";
     let name = "";
@@ -72,15 +72,14 @@ const GuestDashboard = () => {
       name = vendor?.name || "";
     }
 
-    // On stocke le user directement dans localStorage (pour auto-login)
+    // Stockage direct pour l'accès personnalisé invitable
     const userData = { id: selectedUserId, name, type: userType };
     localStorage.setItem("eventPortalUser", JSON.stringify(userData));
 
-    // Redirige vers event-portal avec auto_login
+    // Redirection directe : auto_login = true → saute PersonLogin
     let url = `/event-portal?user_type=${userType}&user_id=${selectedUserId}&event_slug=${eventSlug}&auto_login=true`;
 
-    console.log('Guest Dashboard - Redirecting to:', url);
-    navigate(url);
+    navigate(url, { replace: true });
   };
 
   const handleBack = () => {
@@ -91,12 +90,6 @@ const GuestDashboard = () => {
   const filteredPeople = people.filter((p) => p.event_id === eventId);
   const filteredVendors = vendors.filter((v) => v.event_id === eventId);
 
-  console.log('Guest Dashboard - Event ID:', eventId);
-  console.log('Guest Dashboard - All people:', people);
-  console.log('Guest Dashboard - Filtered people:', filteredPeople);
-  console.log('Guest Dashboard - All vendors:', vendors);
-  console.log('Guest Dashboard - Filtered vendors:', filteredVendors);
-
   if (loadingEvent || peopleLoading || vendorsLoading) {
     return <EventPortalLoading fullScreen message="Chargement de l'événement..." details={null} />;
   }
@@ -106,7 +99,6 @@ const GuestDashboard = () => {
       <div className="absolute top-4 right-4">
         <LanguageToggle />
       </div>
-
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-2xl">
@@ -168,16 +160,16 @@ const GuestDashboard = () => {
                   {teamType === "personal"
                     ? filteredPeople.length > 0
                       ? filteredPeople.map((person) => (
-                          <SelectItem key={person.id} value={person.id}>
-                            {person.name}
-                            {person.role ? (
-                              <span className="ml-2 text-xs text-gray-500">({person.role})</span>
-                            ) : null}
-                          </SelectItem>
-                        ))
+                        <SelectItem key={person.id} value={person.id}>
+                          {person.name}
+                          {person.role ? (
+                            <span className="ml-2 text-xs text-gray-500">({person.role})</span>
+                          ) : null}
+                        </SelectItem>
+                      ))
                       : <SelectItem value="no-people" disabled>Aucune personne disponible</SelectItem>
                     : filteredVendors.length > 0
-                    ? filteredVendors.map((vendor) => (
+                      ? filteredVendors.map((vendor) => (
                         <SelectItem key={vendor.id} value={vendor.id}>
                           {vendor.name}
                           {vendor.service_type ? (
@@ -185,7 +177,7 @@ const GuestDashboard = () => {
                           ) : null}
                         </SelectItem>
                       ))
-                    : <SelectItem value="no-vendors" disabled>Aucun prestataire disponible</SelectItem>
+                      : <SelectItem value="no-vendors" disabled>Aucun prestataire disponible</SelectItem>
                   }
                 </SelectContent>
               </Select>
