@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -114,10 +115,10 @@ const Home: React.FC = () => {
       <div className="flex-grow flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-5xl font-extrabold text-stone-800 mb-4 tracking-tight">
-            Mariage de <span className="text-sage-600">Mathilde & Alain</span>
+            JOURM - <span className="text-purple-600">par Mariable</span>
           </h1>
           <p className="text-stone-500 text-lg mb-8">
-            Une appli, une équipe, une journée parfaite – powered by <span className="text-purple-600 font-semibold">Mariable</span>.
+            Une appli, une équipe, une journée parfaite.
           </p>
 
           {/* Boutons d'action */}
@@ -128,7 +129,7 @@ const Home: React.FC = () => {
               size="lg"
             >
               <Eye className="w-5 h-5" />
-              Jour-J
+              Equipe
             </Button>
             
             <Button
@@ -151,13 +152,6 @@ const Home: React.FC = () => {
               >
                 Se déconnecter
               </Button>
-              <Button
-                onClick={() => setShowResetDialog(true)}
-                variant="destructive"
-                className="text-sm"
-              >
-                Réinitialiser les données de l'événement
-              </Button>
             </div>
           )}
         </div>
@@ -173,8 +167,19 @@ const Home: React.FC = () => {
               className="h-12 w-12 object-contain"
             />
           </div>
-          <div className="text-white text-sm">
-            © 2025 - Powered by <a href="https://mariable.fr" target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">mariable.fr</a>
+          <div className="flex items-center gap-4 text-white text-sm">
+            <span>
+              © 2025 - Powered by <a href="https://mariable.fr" target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">mariable.fr</a>
+            </span>
+            {isAuthenticated && (
+              <Button
+                onClick={() => setShowResetDialog(true)}
+                variant="link"
+                className="text-white h-auto p-0 text-xs opacity-70 hover:opacity-100"
+              >
+                Réinitialiser les données
+              </Button>
+            )}
           </div>
         </div>
       </footer>
