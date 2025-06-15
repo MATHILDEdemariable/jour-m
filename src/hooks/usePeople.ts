@@ -16,36 +16,25 @@ export interface Person {
   updated_at?: string;
 }
 
-export const usePeople = (eventId?: string) => {
+export const usePeople = () => {
   const { toast } = useToast();
-  const { currentEventId: contextEventId } = useCurrentEvent();
-  const eventIdToUse = eventId || contextEventId;
-
+  const { currentEventId } = useCurrentEvent();
   const [people, setPeople] = useState<Person[]>([]);
   const [loading, setLoading] = useState(false);
   const subscriptionRef = useRef<any>(null);
 
   // Load people from Supabase
   const loadPeople = async () => {
-    if (!eventIdToUse) {
-      console.log('usePeople - No event ID provided, skipping load.');
-      setPeople([]);
-      return;
-    }
     setLoading(true);
     try {
-      console.log('usePeople - Loading people for event ID:', eventIdToUse);
+      console.log('usePeople - Loading people for event ID:', currentEventId);
+      
       const { data, error } = await supabase
         .from('people')
         .select('*')
-        .eq('event_id', eventIdToUse)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-
-      if (!data || data.length === 0) {
-        console.log('usePeople - No people found for event:', eventIdToUse);
-      }
       
       // Map database fields to our interface
       const mappedPeople = (data || []).map(person => ({
@@ -77,58 +66,56 @@ export const usePeople = (eventId?: string) => {
 
   // Combined useEffect for loading and realtime subscription
   useEffect(() => {
-    if (!eventIdToUse) {
-      setPeople([]);
-      setLoading(false);
-      console.warn('usePeople - eventIdToUse is missing, cannot subscribe.');
-      return;
-    }
-    // Remove previous channel safely
+    // Cleanup previous subscription
     if (subscriptionRef.current) {
       console.log('usePeople - Cleaning up previous subscription');
-      supabase.removeChannel(subscriptionRef.current);
+      subscriptionRef.current.unsubscribe();
       subscriptionRef.current = null;
     }
+
+    // Load initial data
     loadPeople();
 
-    // Setup realtime subscription
-    const channelName = `people_changes_${eventIdToUse}`;
+    // Setup realtime subscription with unique channel name
+    const channelName = `people_changes_${currentEventId}_${Date.now()}`;
     console.log('usePeople - Setting up realtime subscription:', channelName);
+    
+    try {
+      const subscription = supabase
+        .channel(channelName)
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'people' 
+          }, 
+          (payload) => {
+            console.log('usePeople - Realtime update received:', payload);
+            loadPeople(); // Reload data when changes occur
+          }
+        )
+        .subscribe();
 
-    const subscription = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'people',
-          filter: `event_id=eq.${eventIdToUse}`,
-        },
-        (payload) => {
-          console.log('usePeople - Realtime update received:', payload);
-          loadPeople();
-        }
-      )
-      .subscribe();
-
-    subscriptionRef.current = subscription;
+      subscriptionRef.current = subscription;
+    } catch (error) {
+      console.error('usePeople - Error setting up subscription:', error);
+    }
 
     return () => {
       if (subscriptionRef.current) {
-        console.log('usePeople - Cleaning up realtime subscription (unmount)');
-        supabase.removeChannel(subscriptionRef.current);
+        console.log('usePeople - Cleaning up realtime subscription');
+        subscriptionRef.current.unsubscribe();
         subscriptionRef.current = null;
       }
     };
-  }, [eventIdToUse]);
+  }, [currentEventId]);
 
   const addPerson = async (newPerson: Omit<Person, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       // TOUJOURS assigner l'event_id actuel
       const personWithEventId = {
         ...newPerson,
-        event_id: eventIdToUse || newPerson.event_id
+        event_id: currentEventId || newPerson.event_id
       };
 
       console.log('usePeople - Adding person with event_id:', personWithEventId);

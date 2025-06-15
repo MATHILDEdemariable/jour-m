@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, MapPin, Clock, Palette, Copy, Link as LinkIcon } from 'lucide-react';
+import { CalendarDays, MapPin, Clock, Palette } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,16 +39,6 @@ export const EventConfiguration = () => {
       });
     }
   }, [currentEvent]);
-
-  const handleCopyLink = () => {
-    if (!currentEvent) return;
-    const teamUrl = `${window.location.origin}/event/${currentEvent.id}/team`;
-    navigator.clipboard.writeText(teamUrl);
-    toast({
-      title: "Lien copié !",
-      description: "Le lien d'accès pour votre équipe a été copié.",
-    });
-  };
 
   const handleSave = async () => {
     if (!currentEvent) return;
@@ -127,33 +118,6 @@ export const EventConfiguration = () => {
           )}
         </div>
       </div>
-
-      <Card className="border-purple-200 border-2 bg-purple-50/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-purple-800">
-            <LinkIcon className="w-5 h-5" />
-            Partager avec votre équipe
-          </CardTitle>
-          <CardDescription className="text-purple-700">
-            Donnez accès à votre équipe pour qu'ils consultent planning et informations.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-sm text-gray-700">
-            Partagez le lien ci-dessous. Aucune création de compte n'est requise pour eux.
-          </p>
-          <div className="flex items-center gap-2 p-2 bg-white rounded-md border">
-            <Input 
-              readOnly 
-              value={currentEvent ? `${window.location.origin}/event/${currentEvent.id}/team` : 'Chargement...'}
-              className="flex-grow bg-gray-50 border-gray-200 text-sm"
-            />
-            <Button variant="outline" size="icon" onClick={handleCopyLink} disabled={!currentEvent}>
-              <Copy className="w-4 h-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Informations générales */}

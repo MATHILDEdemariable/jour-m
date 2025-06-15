@@ -31,37 +31,27 @@ export interface VendorDocument {
   created_at: string;
 }
 
-export const useVendors = (eventId?: string) => {
+export const useVendors = () => {
   const { toast } = useToast();
-  const { currentEventId: contextEventId } = useCurrentEvent();
-  const eventIdToUse = eventId || contextEventId;
-
+  const { currentEventId } = useCurrentEvent();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [documents, setDocuments] = useState<VendorDocument[]>([]);
   const [loading, setLoading] = useState(false);
   const subscriptionRef = useRef<any>(null);
 
   const loadVendors = async () => {
-    if (!eventIdToUse) {
-      console.log('useVendors - No event ID provided, skipping load.');
-      setVendors([]);
-      return;
-    }
     setLoading(true);
     try {
-      console.log('useVendors - Loading vendors for event ID:', eventIdToUse);
-
+      console.log('useVendors - Loading vendors for event ID:', currentEventId);
+      
       const { data, error } = await supabase
         .from('vendors')
         .select('*')
-        .eq('event_id', eventIdToUse)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-
-      if (!data || data.length === 0) {
-        console.log('useVendors - No vendors found for event:', eventIdToUse);
-      }
+      
+      console.log('useVendors - Loaded vendors:', data);
       setVendors(data || []);
     } catch (error) {
       console.error('Error loading vendors:', error);
@@ -75,50 +65,51 @@ export const useVendors = (eventId?: string) => {
     }
   };
 
+  // Combined useEffect for loading and realtime subscription
   useEffect(() => {
-    if (!eventIdToUse) {
-      setVendors([]);
-      setLoading(false);
-      console.warn('useVendors - eventIdToUse is missing, cannot subscribe.');
-      return;
-    }
+    // Cleanup previous subscription
     if (subscriptionRef.current) {
       console.log('useVendors - Cleaning up previous subscription');
-      supabase.removeChannel(subscriptionRef.current);
+      subscriptionRef.current.unsubscribe();
       subscriptionRef.current = null;
     }
+
+    // Load initial data
     loadVendors();
 
-    const channelName = `vendors_changes_${eventIdToUse}`;
+    // Setup realtime subscription with unique channel name
+    const channelName = `vendors_changes_${currentEventId}_${Date.now()}`;
     console.log('useVendors - Setting up realtime subscription:', channelName);
+    
+    try {
+      const subscription = supabase
+        .channel(channelName)
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'vendors' 
+          }, 
+          (payload) => {
+            console.log('useVendors - Realtime update received:', payload);
+            loadVendors(); // Reload data when changes occur
+          }
+        )
+        .subscribe();
 
-    const subscription = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'vendors',
-          filter: `event_id=eq.${eventIdToUse}`,
-        },
-        (payload) => {
-          console.log('useVendors - Realtime update received:', payload);
-          loadVendors();
-        }
-      )
-      .subscribe();
-
-    subscriptionRef.current = subscription;
+      subscriptionRef.current = subscription;
+    } catch (error) {
+      console.error('useVendors - Error setting up subscription:', error);
+    }
 
     return () => {
       if (subscriptionRef.current) {
-        console.log('useVendors - Cleaning up realtime subscription (unmount)');
-        supabase.removeChannel(subscriptionRef.current);
+        console.log('useVendors - Cleaning up realtime subscription');
+        subscriptionRef.current.unsubscribe();
         subscriptionRef.current = null;
       }
     };
-  }, [eventIdToUse]);
+  }, [currentEventId]);
 
   const loadDocuments = async (vendorId: string) => {
     try {
@@ -145,7 +136,7 @@ export const useVendors = (eventId?: string) => {
       // TOUJOURS assigner l'event_id actuel
       const vendorWithEventId = {
         ...newVendor,
-        event_id: eventIdToUse || newVendor.event_id
+        event_id: currentEventId || newVendor.event_id
       };
 
       console.log('useVendors - Adding vendor with event_id:', vendorWithEventId);

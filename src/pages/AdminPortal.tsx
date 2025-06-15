@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -5,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, LogOut, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
-// Removed import { AdminLoginModal } from '@/components/AdminLoginModal';
+import { AdminLoginModal } from '@/components/AdminLoginModal';
 import { useAdminProtectedRoute } from '@/hooks/useAdminProtectedRoute';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { useEventData } from '@/contexts/EventDataContext';
@@ -23,7 +24,7 @@ import { TutorialModal } from '@/components/admin/TutorialModal';
 import { TUTORIAL_CONTENT } from '@/components/admin/TutorialContent';
 
 export const AdminPortal = () => {
-  const [activeTab, setActiveTab] = useState('config');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -38,6 +39,8 @@ export const AdminPortal = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'dashboard':
+        return <CompactRecapDashboard />;
       case 'planning':
         return <UnifiedPlanningManagement />;
       case 'people':
@@ -49,13 +52,13 @@ export const AdminPortal = () => {
       case 'config':
         return <EventConfiguration />;
       default:
-        return <EventConfiguration />;
+        return <CompactRecapDashboard />;
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Removed: <AdminLoginModal isOpen={showLoginModal} onClose={handleCloseLoginModal} /> */}
+      <AdminLoginModal isOpen={showLoginModal} onClose={handleCloseLoginModal} />
 
       {isAuthenticated && (
         <>
@@ -111,10 +114,10 @@ export const AdminPortal = () => {
           {!isMobile && (
             <div className="bg-white border-b">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-5 h-auto p-1">
-                  <TabsTrigger value="config" className="flex flex-col py-3">
-                    <span className="text-xs">⚙️</span>
-                    <span className="text-xs">{t('config')}</span>
+                <TabsList className="grid w-full grid-cols-6 h-auto p-1">
+                  <TabsTrigger value="dashboard" className="flex flex-col py-3">
+                    <span className="text-xs">📊</span>
+                    <span className="text-xs">Récapitulatif</span>
                   </TabsTrigger>
                   <TabsTrigger value="planning" className="flex flex-col py-3">
                     <span className="text-xs">⏰</span>
@@ -131,6 +134,10 @@ export const AdminPortal = () => {
                   <TabsTrigger value="documents" className="flex flex-col py-3">
                     <span className="text-xs">📁</span>
                     <span className="text-xs">{t('documents')}</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="config" className="flex flex-col py-3">
+                    <span className="text-xs">⚙️</span>
+                    <span className="text-xs">{t('config')}</span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>

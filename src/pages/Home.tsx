@@ -12,13 +12,33 @@ import {
 } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { AdminLoginForm } from '@/components/admin/AdminLoginForm';
 import { EventPortalSelectionModal } from '@/components/event/EventPortalSelectionModal';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated, logout } = useAdminAuth();
+  const { isAuthenticated, login, logout } = useAdminAuth();
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showEventPortalSelection, setShowEventPortalSelection] = useState(false);
+
+  const handleLogin = async (password: string) => {
+    const success = await login(password);
+    if (success) {
+      toast({
+        title: "Connexion réussie",
+        description: "Vous êtes connecté en tant qu'administrateur.",
+      });
+      setShowAdminLogin(false);
+      navigate('/admin');
+    } else {
+      toast({
+        title: "Erreur de connexion",
+        description: "Mot de passe incorrect.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -32,8 +52,7 @@ const Home: React.FC = () => {
     if (isAuthenticated) {
       navigate('/admin');
     } else {
-      // Rediriger ou inviter à se connecter via le flux standard
-      navigate('/auth');
+      setShowAdminLogin(true);
     }
   };
 
@@ -105,6 +124,19 @@ const Home: React.FC = () => {
         </div>
       </footer>
 
+      {/* Admin Login Modal */}
+      <Dialog open={showAdminLogin} onOpenChange={setShowAdminLogin}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Connexion Administrateur</DialogTitle>
+            <DialogDescription>
+              Entrez le mot de passe pour accéder à l'interface d'administration.
+            </DialogDescription>
+          </DialogHeader>
+          <AdminLoginForm onSubmit={handleLogin} />
+        </DialogContent>
+      </Dialog>
+
       {/* Event Portal Selection Modal */}
       <EventPortalSelectionModal
         open={showEventPortalSelection}
@@ -115,4 +147,3 @@ const Home: React.FC = () => {
 };
 
 export default Home;
-
