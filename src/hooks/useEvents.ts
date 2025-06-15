@@ -16,6 +16,7 @@ export interface Event {
   status: string;
   created_at: string;
   updated_at: string;
+  magic_word?: string | null; // <-- Added this field to fix the error
 }
 
 export const useEvents = () => {
