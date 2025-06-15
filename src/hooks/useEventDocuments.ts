@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -97,7 +98,7 @@ export const useEventDocuments = (eventId: string | null) => {
         setDocuments(prev => [...successfulUploads, ...prev]);
         toast({
           title: 'Upload réussi',
-          description: `${successfulUploads.length} fichier(s) uploadé(s) avec succès',
+          description: `${successfulUploads.length} fichier(s) uploadé(s) avec succès`,
         });
       }
     } catch (error) {
