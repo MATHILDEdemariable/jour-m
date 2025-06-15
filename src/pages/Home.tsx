@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Eye, Settings } from 'lucide-react';
+import { Eye, Settings, LogIn, UserPlus, LogOut } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -13,8 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast"
-import { useAdminAuth } from '@/contexts/AdminAuthContext';
-import { AdminLoginForm } from '@/components/admin/AdminLoginForm';
+import { useAuth } from '@/contexts/AuthContext';
 import { EventPortalSelectionModal } from '@/components/event/EventPortalSelectionModal';
 import { useCurrentEvent } from '@/contexts/CurrentEventContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,46 +21,15 @@ import { supabase } from '@/integrations/supabase/client';
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated, login, logout } = useAdminAuth();
+  const { user, signOut } = useAuth();
   const { currentEventId } = useCurrentEvent();
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showEventPortalSelection, setShowEventPortalSelection] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState('');
   const [isResetting, setIsResetting] = useState(false);
 
-  const handleLogin = async (password: string) => {
-    const success = await login(password);
-    if (success) {
-      toast({
-        title: "Connexion réussie",
-        description: "Vous êtes connecté en tant qu'administrateur.",
-      });
-      setShowAdminLogin(false);
-      navigate('/admin');
-    } else {
-      toast({
-        title: "Erreur de connexion",
-        description: "Mot de passe incorrect.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleLogout = () => {
-    logout();
-    toast({
-      title: "Déconnexion réussie",
-      description: "Vous êtes déconnecté de l'administration.",
-    });
-  };
-
   const handleAdminAccess = () => {
-    if (isAuthenticated) {
-      navigate('/admin');
-    } else {
-      setShowAdminLogin(true);
-    }
+    navigate('/admin');
   };
 
   const handleEventPortalAccess = () => {
@@ -143,14 +111,22 @@ const Home: React.FC = () => {
             </Button>
           </div>
 
-          {isAuthenticated && (
+          {user ? (
             <div className="mt-4 flex flex-col items-center gap-2">
               <Button
-                onClick={handleLogout}
+                onClick={signOut}
                 variant="ghost"
                 className="text-stone-500 hover:text-stone-700"
               >
+                <LogOut className="w-4 h-4 mr-2" />
                 Se déconnecter
+              </Button>
+            </div>
+          ) : (
+             <div className="mt-6">
+              <Button onClick={() => navigate('/auth')} size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+                <LogIn className="w-5 h-5 mr-2" />
+                Connexion / Inscription
               </Button>
             </div>
           )}
@@ -171,7 +147,7 @@ const Home: React.FC = () => {
             <span>
               © 2025 - Powered by <a href="https://mariable.fr" target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">mariable.fr</a>
             </span>
-            {isAuthenticated && (
+            {user && (
               <Button
                 onClick={() => setShowResetDialog(true)}
                 variant="link"
@@ -183,19 +159,6 @@ const Home: React.FC = () => {
           </div>
         </div>
       </footer>
-
-      {/* Admin Login Modal */}
-      <Dialog open={showAdminLogin} onOpenChange={setShowAdminLogin}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Connexion Administrateur</DialogTitle>
-            <DialogDescription>
-              Entrez le mot de passe pour accéder à l'interface d'administration.
-            </DialogDescription>
-          </DialogHeader>
-          <AdminLoginForm onSubmit={handleLogin} />
-        </DialogContent>
-      </Dialog>
 
       {/* Reset Confirmation Dialog */}
       <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
