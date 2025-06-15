@@ -35,7 +35,6 @@ export const usePeople = (eventId?: string) => {
     setLoading(true);
     try {
       console.log('usePeople - Loading people for event ID:', eventIdToUse);
-      
       const { data, error } = await supabase
         .from('people')
         .select('*')
@@ -43,6 +42,10 @@ export const usePeople = (eventId?: string) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      if (!data || data.length === 0) {
+        console.log('usePeople - No people found for event:', eventIdToUse);
+      }
       
       // Map database fields to our interface
       const mappedPeople = (data || []).map(person => ({
@@ -74,48 +77,47 @@ export const usePeople = (eventId?: string) => {
 
   // Combined useEffect for loading and realtime subscription
   useEffect(() => {
-    if (!eventIdToUse) return;
-
-    // Cleanup previous subscription
+    if (!eventIdToUse) {
+      setPeople([]);
+      setLoading(false);
+      console.warn('usePeople - eventIdToUse is missing, cannot subscribe.');
+      return;
+    }
+    // Remove previous channel safely
     if (subscriptionRef.current) {
       console.log('usePeople - Cleaning up previous subscription');
-      subscriptionRef.current.unsubscribe();
+      supabase.removeChannel(subscriptionRef.current);
       subscriptionRef.current = null;
     }
-
-    // Load initial data
     loadPeople();
 
-    // Setup realtime subscription with unique channel name
-    const channelName = `people_changes_${eventIdToUse}_${Date.now()}`;
+    // Setup realtime subscription
+    const channelName = `people_changes_${eventIdToUse}`;
     console.log('usePeople - Setting up realtime subscription:', channelName);
-    
-    try {
-      const subscription = supabase
-        .channel(channelName)
-        .on('postgres_changes', 
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'people',
-            filter: `event_id=eq.${eventIdToUse}`
-          }, 
-          (payload) => {
-            console.log('usePeople - Realtime update received:', payload);
-            loadPeople(); // Reload data when changes occur
-          }
-        )
-        .subscribe();
 
-      subscriptionRef.current = subscription;
-    } catch (error) {
-      console.error('usePeople - Error setting up subscription:', error);
-    }
+    const subscription = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'people',
+          filter: `event_id=eq.${eventIdToUse}`,
+        },
+        (payload) => {
+          console.log('usePeople - Realtime update received:', payload);
+          loadPeople();
+        }
+      )
+      .subscribe();
+
+    subscriptionRef.current = subscription;
 
     return () => {
       if (subscriptionRef.current) {
-        console.log('usePeople - Cleaning up realtime subscription');
-        subscriptionRef.current.unsubscribe();
+        console.log('usePeople - Cleaning up realtime subscription (unmount)');
+        supabase.removeChannel(subscriptionRef.current);
         subscriptionRef.current = null;
       }
     };

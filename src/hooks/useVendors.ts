@@ -50,7 +50,7 @@ export const useVendors = (eventId?: string) => {
     setLoading(true);
     try {
       console.log('useVendors - Loading vendors for event ID:', eventIdToUse);
-      
+
       const { data, error } = await supabase
         .from('vendors')
         .select('*')
@@ -58,8 +58,10 @@ export const useVendors = (eventId?: string) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      console.log('useVendors - Loaded vendors:', data);
+
+      if (!data || data.length === 0) {
+        console.log('useVendors - No vendors found for event:', eventIdToUse);
+      }
       setVendors(data || []);
     } catch (error) {
       console.error('Error loading vendors:', error);
@@ -73,50 +75,46 @@ export const useVendors = (eventId?: string) => {
     }
   };
 
-  // Combined useEffect for loading and realtime subscription
   useEffect(() => {
-    if (!eventIdToUse) return;
-
-    // Cleanup previous subscription
+    if (!eventIdToUse) {
+      setVendors([]);
+      setLoading(false);
+      console.warn('useVendors - eventIdToUse is missing, cannot subscribe.');
+      return;
+    }
     if (subscriptionRef.current) {
       console.log('useVendors - Cleaning up previous subscription');
-      subscriptionRef.current.unsubscribe();
+      supabase.removeChannel(subscriptionRef.current);
       subscriptionRef.current = null;
     }
-
-    // Load initial data
     loadVendors();
 
-    // Setup realtime subscription with unique channel name
-    const channelName = `vendors_changes_${eventIdToUse}_${Date.now()}`;
+    const channelName = `vendors_changes_${eventIdToUse}`;
     console.log('useVendors - Setting up realtime subscription:', channelName);
-    
-    try {
-      const subscription = supabase
-        .channel(channelName)
-        .on('postgres_changes', 
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'vendors',
-            filter: `event_id=eq.${eventIdToUse}`
-          }, 
-          (payload) => {
-            console.log('useVendors - Realtime update received:', payload);
-            loadVendors(); // Reload data when changes occur
-          }
-        )
-        .subscribe();
 
-      subscriptionRef.current = subscription;
-    } catch (error) {
-      console.error('useVendors - Error setting up subscription:', error);
-    }
+    const subscription = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'vendors',
+          filter: `event_id=eq.${eventIdToUse}`,
+        },
+        (payload) => {
+          console.log('useVendors - Realtime update received:', payload);
+          loadVendors();
+        }
+      )
+      .subscribe();
+
+    subscriptionRef.current = subscription;
 
     return () => {
       if (subscriptionRef.current) {
-        console.log('useVendors - Cleaning up realtime subscription');
-        subscriptionRef.current.unsubscribe();
+        console.log('useVendors - Cleaning up realtime subscription (unmount)');
+        supabase.removeChannel(subscriptionRef.current);
         subscriptionRef.current = null;
       }
     };
