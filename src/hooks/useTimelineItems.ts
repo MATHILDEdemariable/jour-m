@@ -74,7 +74,7 @@ export const useTimelineItems = () => {
 
       if (error) throw error;
       
-      const mappedData = data ? data.map(mapSupabaseToTimelineItem) : [];
+      const mappedData = data ? (data as SupabaseTimelineItem[]).map(mapSupabaseToTimelineItem) : [];
       setTimelineItems(mappedData);
     } catch (error) {
       console.error('Error loading timeline items:', error);
@@ -104,7 +104,7 @@ export const useTimelineItems = () => {
 
       if (error) throw error;
       
-      const mappedData = mapSupabaseToTimelineItem(data);
+      const mappedData = mapSupabaseToTimelineItem(data as SupabaseTimelineItem);
       setTimelineItems(prev => [...prev, mappedData]);
       toast({
         title: 'Succès',
@@ -138,7 +138,7 @@ export const useTimelineItems = () => {
 
       if (error) throw error;
       
-      const mappedData = mapSupabaseToTimelineItem(data);
+      const mappedData = mapSupabaseToTimelineItem(data as SupabaseTimelineItem);
       setTimelineItems(prev => prev.map(item => 
         item.id === id ? { ...item, ...mappedData } : item
       ));

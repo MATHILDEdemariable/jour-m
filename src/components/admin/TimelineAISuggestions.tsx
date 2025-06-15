@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface TimelineAISuggestionsProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddSuggestion: (suggestion: Omit<TimelineItem, 'id' | 'event_id' | 'created_at' | 'updated_at'>) => void;
+  onAddSuggestion: (suggestion: Omit<TimelineItem, 'id' | 'event_id' | 'created_at' | 'updated_at' | 'assigned_person_id'>) => void;
 }
 
 const suggestedTimelineItems = [
@@ -27,6 +26,7 @@ const suggestedTimelineItems = [
     order_index: 0,
     assigned_person_id: null,
     assigned_person_ids: [] as string[],
+    assigned_vendor_id: null,
     assigned_role: "wedding-planner",
     notes: "Prévoir 2h pour être prêt à temps"
   },
@@ -41,6 +41,7 @@ const suggestedTimelineItems = [
     order_index: 1,
     assigned_person_id: null,
     assigned_person_ids: [] as string[],
+    assigned_vendor_id: null,
     assigned_role: "photographer",
     notes: "Capturer les moments d'émotion"
   },
@@ -55,6 +56,7 @@ const suggestedTimelineItems = [
     order_index: 2,
     assigned_person_id: null,
     assigned_person_ids: [] as string[],
+    assigned_vendor_id: null,
     assigned_role: "wedding-planner",
     notes: "Organiser l'accueil et la signature du livre d'or"
   },
@@ -69,6 +71,7 @@ const suggestedTimelineItems = [
     order_index: 3,
     assigned_person_id: null,
     assigned_person_ids: [] as string[],
+    assigned_vendor_id: null,
     assigned_role: null,
     notes: "Moment principal de la journée"
   },
@@ -83,6 +86,7 @@ const suggestedTimelineItems = [
     order_index: 4,
     assigned_person_id: null,
     assigned_person_ids: [] as string[],
+    assigned_vendor_id: null,
     assigned_role: "photographer",
     notes: "Profiter de la lumière naturelle"
   },
@@ -97,6 +101,7 @@ const suggestedTimelineItems = [
     order_index: 5,
     assigned_person_id: null,
     assigned_person_ids: [] as string[],
+    assigned_vendor_id: null,
     assigned_role: "wedding-planner",
     notes: "Organiser les groupes pour les photos"
   },
@@ -111,6 +116,7 @@ const suggestedTimelineItems = [
     order_index: 6,
     assigned_person_id: null,
     assigned_person_ids: [] as string[],
+    assigned_vendor_id: null,
     assigned_role: "caterer",
     notes: "Service en 3 temps avec discours"
   },
@@ -125,6 +131,7 @@ const suggestedTimelineItems = [
     order_index: 7,
     assigned_person_id: null,
     assigned_person_ids: [] as string[],
+    assigned_vendor_id: null,
     assigned_role: "dj",
     notes: "Moment symbolique à ne pas manquer"
   }
@@ -197,6 +204,7 @@ export const TimelineAISuggestions: React.FC<TimelineAISuggestionsProps> = ({
         order_index: allSuggestions.length + index,
         assigned_person_id: null,
         assigned_person_ids: [] as string[],
+        assigned_vendor_id: null,
         assigned_role: suggestion.assigned_role,
         notes: suggestion.notes
       }));

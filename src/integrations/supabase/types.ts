@@ -635,6 +635,7 @@ export type Database = {
           assigned_person_id: string | null
           assigned_person_ids: string[] | null
           assigned_role: string | null
+          assigned_vendor_id: string | null
           category: string | null
           created_at: string | null
           description: string | null
@@ -654,6 +655,7 @@ export type Database = {
           assigned_person_id?: string | null
           assigned_person_ids?: string[] | null
           assigned_role?: string | null
+          assigned_vendor_id?: string | null
           category?: string | null
           created_at?: string | null
           description?: string | null
@@ -673,6 +675,7 @@ export type Database = {
           assigned_person_id?: string | null
           assigned_person_ids?: string[] | null
           assigned_role?: string | null
+          assigned_vendor_id?: string | null
           category?: string | null
           created_at?: string | null
           description?: string | null
@@ -694,6 +697,13 @@ export type Database = {
             columns: ["assigned_person_id"]
             isOneToOne: false
             referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timeline_items_assigned_vendor_id_fkey"
+            columns: ["assigned_vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
           {
