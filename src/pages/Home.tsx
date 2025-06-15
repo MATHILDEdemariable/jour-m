@@ -1,11 +1,14 @@
 
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import LandingPage from './LandingPage';
 import { RefreshCw } from 'lucide-react';
 
 const Home = () => {
   const { user, isLoading } = useAuth();
+  const [searchParams] = useSearchParams();
+  const eventSlug = searchParams.get('event');
+  const isInvite = searchParams.get('invite');
 
   if (isLoading) {
     return (
@@ -13,6 +16,10 @@ const Home = () => {
         <RefreshCw className="h-8 w-8 animate-spin text-purple-600" />
       </div>
     );
+  }
+
+  if (isInvite === 'true' && eventSlug) {
+    return <Navigate to={`/event-portal?event_slug=${eventSlug}`} replace />;
   }
 
   if (user) {

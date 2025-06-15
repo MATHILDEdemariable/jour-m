@@ -13,6 +13,7 @@ const ADMIN_TABS = [
   { id: 'people', label: 'Équipe', icon: '👥' },
   { id: 'vendors', label: 'Prestataires', icon: '🏢' },
   { id: 'documents', label: 'Documents', icon: '📁' },
+  { id: 'share', label: 'Partage', icon: '🔗' },
   { id: 'config', label: 'Config', icon: '⚙️' },
 ];
 
@@ -22,7 +23,7 @@ export const AdminBottomNavigation: React.FC<AdminBottomNavigationProps> = ({
 }) => {
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-gray-200 shadow-lg z-50 lg:hidden">
-      <div className="grid grid-cols-5 p-2">
+      <div className="grid grid-cols-6 p-2">
         {ADMIN_TABS.map((tab) => (
           <Button
             key={tab.id}

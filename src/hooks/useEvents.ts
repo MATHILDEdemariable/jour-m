@@ -8,6 +8,7 @@ export interface Event {
   name: string;
   event_type: string;
   event_date: string;
+  slug: string;
   start_time: string | null;
   location: string | null;
   description: string | null;
