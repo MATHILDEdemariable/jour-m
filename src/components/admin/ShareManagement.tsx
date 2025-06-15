@@ -68,9 +68,7 @@ export const ShareManagement = () => {
             <p className="text-sm text-muted-foreground mt-1">
               1. Cliquez sur le lien ou scannez le QR code.
               <br />
-              2. Sur la page d'accès, entrez votre nom.
-              <br />
-              3. Vous aurez alors accès aux informations de l'événement qui vous concernent.
+              2. Vous aurez alors un accès direct en lecture seule aux informations de l'événement.
             </p>
           </div>
         </CardContent>

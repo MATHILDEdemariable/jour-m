@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,9 @@ import { useCurrentEvent } from '@/contexts/CurrentEventContext';
 import { usePeople } from '@/hooks/usePeople';
 import { useVendors } from '@/hooks/useVendors';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface LoggedUser {
   id: string;
@@ -21,12 +23,96 @@ interface LoggedUser {
   type: 'person' | 'vendor';
 }
 
+interface GuestEvent {
+  id: string;
+  name: string;
+  event_date: string;
+  event_type: string;
+}
+
+const GuestEventView = ({ event }: { event: GuestEvent }) => {
+  const [activeTab, setActiveTab] = useState('planning');
+  const { planningItems, loading: dataLoading } = useSharedEventData();
+
+  const renderGuestTabContent = () => {
+    if (dataLoading) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-purple-600" />
+        </div>
+      );
+    }
+    switch (activeTab) {
+      case 'planning':
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Planning de l'événement</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {planningItems && planningItems.length > 0 ? (
+                <ul className="space-y-4">
+                  {[...planningItems].sort((a, b) => (a.time || "").localeCompare(b.time || "")).map(item => (
+                    <li key={item.id} className="flex items-start gap-4">
+                      <div className="font-bold text-purple-600 w-20 shrink-0 text-right">{item.time?.substring(0, 5)}</div>
+                      <div className="flex-1 border-l-2 border-purple-200 pl-4">
+                        <h4 className="font-semibold">{item.title}</h4>
+                        <p className="text-sm text-gray-600">{item.description}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>Le planning n'est pas encore disponible.</p>
+              )}
+            </CardContent>
+          </Card>
+        );
+      case 'contacts':
+        return <ContactsTab userId="" userType="person" />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
+      <div className="bg-white/80 backdrop-blur-sm border-b border-purple-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex items-center justify-between h-14 lg:h-16">
+            <h1 className="text-base lg:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent truncate">
+              {event.name}
+            </h1>
+            <p className="text-xs lg:text-sm text-gray-600 truncate">
+              {event.event_type} • {new Date(event.event_date).toLocaleDateString('fr-FR')}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 lg:py-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="planning">📅 Planning</TabsTrigger>
+            <TabsTrigger value="contacts">👥 Contacts</TabsTrigger>
+          </TabsList>
+          <TabsContent value="planning" className="mt-4">
+            {activeTab === 'planning' && renderGuestTabContent()}
+          </TabsContent>
+          <TabsContent value="contacts" className="mt-4">
+            {activeTab === 'contacts' && renderGuestTabContent()}
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+};
+
 const EventPortal = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const { loading, refreshData, getDaysUntilEvent } = useSharedEventData();
-  const { currentEventId } = useCurrentEvent();
+  const { currentEventId, setCurrentEventId } = useCurrentEvent();
   const { people, loadPeople, loading: peopleLoading } = usePeople();
   const { vendors, loadVendors, loading: vendorsLoading } = useVendors();
   const { toast } = useToast();
@@ -34,8 +120,39 @@ const EventPortal = () => {
   const [activeTab, setActiveTab] = useState('planning');
   const [viewMode, setViewMode] = useState<'personal' | 'global'>('personal');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isGuestMode, setIsGuestMode] = useState(false);
+  const [guestEvent, setGuestEvent] = useState<GuestEvent | null>(null);
+  const [guestLoading, setGuestLoading] = useState(true);
   
   const daysUntilEvent = getDaysUntilEvent();
+
+  useEffect(() => {
+    const eventSlug = searchParams.get('event_slug');
+    if (eventSlug) {
+      setIsGuestMode(true);
+      const fetchGuestEvent = async () => {
+        setGuestLoading(true);
+        const { data, error } = await supabase
+          .from('events')
+          .select('id, name, event_date, event_type')
+          .eq('slug', eventSlug)
+          .single();
+
+        if (error || !data) {
+          console.error('Error fetching guest event:', error);
+          navigate('/not-found', { replace: true });
+          return;
+        }
+        
+        setGuestEvent(data);
+        setCurrentEventId(data.id);
+        setGuestLoading(false);
+      };
+      fetchGuestEvent();
+    } else {
+        setGuestLoading(false);
+    }
+  }, [searchParams, setCurrentEventId, navigate]);
 
   // Force refresh de toutes les données au chargement
   useEffect(() => {
@@ -82,7 +199,7 @@ const EventPortal = () => {
         }
       }
     }
-  }, [searchParams, people, vendors]);
+  }, [searchParams, people, vendors, isGuestMode]);
 
   // Force refresh when switching tabs to ensure synchronization
   useEffect(() => {
@@ -150,6 +267,18 @@ const EventPortal = () => {
     handleFullDataRefresh();
   };
 
+  if (guestLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
+        <RefreshCw className="h-8 w-8 animate-spin text-purple-600" />
+      </div>
+    );
+  }
+
+  if (isGuestMode && guestEvent) {
+    return <GuestEventView event={guestEvent} />;
+  }
+  
   // Si pas encore connecté, afficher l'écran de connexion
   if (!loggedInUser) {
     return <PersonLogin onLogin={handleLogin} />;
