@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -24,7 +23,7 @@ import { TutorialModal } from '@/components/admin/TutorialModal';
 import { TUTORIAL_CONTENT } from '@/components/admin/TutorialContent';
 
 export const AdminPortal = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('config');
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -39,8 +38,6 @@ export const AdminPortal = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'dashboard':
-        return <CompactRecapDashboard />;
       case 'planning':
         return <UnifiedPlanningManagement />;
       case 'people':
@@ -52,7 +49,7 @@ export const AdminPortal = () => {
       case 'config':
         return <EventConfiguration />;
       default:
-        return <CompactRecapDashboard />;
+        return <EventConfiguration />;
     }
   };
 
@@ -114,10 +111,10 @@ export const AdminPortal = () => {
           {!isMobile && (
             <div className="bg-white border-b">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-6 h-auto p-1">
-                  <TabsTrigger value="dashboard" className="flex flex-col py-3">
-                    <span className="text-xs">📊</span>
-                    <span className="text-xs">Récapitulatif</span>
+                <TabsList className="grid w-full grid-cols-5 h-auto p-1">
+                  <TabsTrigger value="config" className="flex flex-col py-3">
+                    <span className="text-xs">⚙️</span>
+                    <span className="text-xs">{t('config')}</span>
                   </TabsTrigger>
                   <TabsTrigger value="planning" className="flex flex-col py-3">
                     <span className="text-xs">⏰</span>
@@ -134,10 +131,6 @@ export const AdminPortal = () => {
                   <TabsTrigger value="documents" className="flex flex-col py-3">
                     <span className="text-xs">📁</span>
                     <span className="text-xs">{t('documents')}</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="config" className="flex flex-col py-3">
-                    <span className="text-xs">⚙️</span>
-                    <span className="text-xs">{t('config')}</span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -172,4 +165,3 @@ export const AdminPortal = () => {
 };
 
 export default AdminPortal;
-
