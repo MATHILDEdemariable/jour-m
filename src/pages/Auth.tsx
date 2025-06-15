@@ -110,6 +110,11 @@ const AuthPage = () => {
               </form>
             </TabsContent>
           </Tabs>
+          <div className="mt-4 text-center">
+            <Button variant="link" className="text-stone-600 font-normal" onClick={() => navigate('/')}>
+              Retour à l'accueil
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -16,7 +16,7 @@ const HeroSection = () => {
           De la checklist au jour J, JOURM est l'application qui centralise toute l'organisation de votre mariage pour une journée sans stress.
         </p>
         <Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white" onClick={() => navigate('/auth')}>
-          Commencez gratuitement
+          Commencer
         </Button>
       </div>
     </section>

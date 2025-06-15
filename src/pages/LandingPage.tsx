@@ -1,7 +1,6 @@
 
 import React from 'react';
 import HeroSection from '@/components/marketing/HeroSection';
-import PricingSection from '@/components/marketing/PricingSection';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,13 +14,15 @@ const LandingPage = () => {
           <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
             JOURM
           </h1>
-          <Button onClick={() => navigate('/auth')}>Connexion / Inscription</Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={() => navigate('/event-portal')}>Accès Équipe</Button>
+            <Button onClick={() => navigate('/auth')}>Connexion / Inscription</Button>
+          </div>
         </div>
       </header>
       
       <main>
         <HeroSection />
-        <PricingSection />
       </main>
 
       <footer className="bg-stone-100 border-t">
