@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TimelineItem } from '@/hooks/useTimelineItems';
 import { PersonMultiSelect } from './PersonMultiSelect';
+import { VendorMultiSelect } from './VendorMultiSelect';
 
 interface TimelineItemModalProps {
   isOpen: boolean;
@@ -31,6 +31,7 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
     priority: 'medium' as 'high' | 'medium' | 'low',
     status: 'scheduled' as 'scheduled' | 'in_progress' | 'completed' | 'delayed',
     assigned_person_ids: [] as string[],
+    assigned_vendor_ids: [] as string[],
     notes: ''
   });
 
@@ -45,6 +46,7 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
         priority: item.priority,
         status: item.status,
         assigned_person_ids: item.assigned_person_ids || [],
+        assigned_vendor_ids: item.assigned_vendor_ids || [],
         notes: item.notes || ''
       });
     } else {
@@ -57,6 +59,7 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
         priority: 'medium',
         status: 'scheduled',
         assigned_person_ids: [],
+        assigned_vendor_ids: [],
         notes: ''
       });
     }
@@ -180,11 +183,18 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
             </div>
           </div>
 
-          {/* Nouvelle section pour la multi-sélection de personnes */}
+          {/* Person selection */}
           <PersonMultiSelect
             selectedPersonIds={formData.assigned_person_ids}
             onSelectionChange={(personIds) => setFormData(prev => ({ ...prev, assigned_person_ids: personIds }))}
             label="Personnes assignées"
+          />
+
+          {/* Vendor MultiSelect */}
+          <VendorMultiSelect
+            selectedVendorIds={formData.assigned_vendor_ids}
+            onSelectionChange={ids => setFormData(prev => ({ ...prev, assigned_vendor_ids: ids }))}
+            label="Prestataires assignés"
           />
 
           <div>

@@ -27,6 +27,7 @@ export type Database = {
           preview_url: string | null
           source: string | null
           uploaded_by: string | null
+          user_id: string | null
           vendor_id: string | null
         }
         Insert: {
@@ -46,6 +47,7 @@ export type Database = {
           preview_url?: string | null
           source?: string | null
           uploaded_by?: string | null
+          user_id?: string | null
           vendor_id?: string | null
         }
         Update: {
@@ -65,6 +67,7 @@ export type Database = {
           preview_url?: string | null
           source?: string | null
           uploaded_by?: string | null
+          user_id?: string | null
           vendor_id?: string | null
         }
         Relationships: [
@@ -143,6 +146,7 @@ export type Database = {
           name: string
           source: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           assigned_to?: string[] | null
@@ -155,6 +159,7 @@ export type Database = {
           name: string
           source?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           assigned_to?: string[] | null
@@ -167,6 +172,7 @@ export type Database = {
           name?: string
           source?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -226,6 +232,7 @@ export type Database = {
           id: string
           location: string | null
           name: string
+          slug: string
           start_time: string | null
           status: string
           updated_at: string | null
@@ -240,6 +247,7 @@ export type Database = {
           id?: string
           location?: string | null
           name: string
+          slug: string
           start_time?: string | null
           status?: string
           updated_at?: string | null
@@ -254,6 +262,7 @@ export type Database = {
           id?: string
           location?: string | null
           name?: string
+          slug?: string
           start_time?: string | null
           status?: string
           updated_at?: string | null
@@ -325,6 +334,7 @@ export type Database = {
           phone: string | null
           role: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           availability_notes?: string | null
@@ -342,6 +352,7 @@ export type Database = {
           phone?: string | null
           role?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           availability_notes?: string | null
@@ -359,6 +370,7 @@ export type Database = {
           phone?: string | null
           role?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -369,6 +381,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          company_name: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_type: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_type?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_type?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       task_categories: {
         Row: {
@@ -435,6 +519,7 @@ export type Database = {
           status: string | null
           title: string
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           assigned_person_id?: string | null
@@ -456,6 +541,7 @@ export type Database = {
           status?: string | null
           title: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           assigned_person_id?: string | null
@@ -477,6 +563,7 @@ export type Database = {
           status?: string | null
           title?: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -561,6 +648,7 @@ export type Database = {
           time: string
           title: string
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           assigned_person_id?: string | null
@@ -579,6 +667,7 @@ export type Database = {
           time?: string
           title: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           assigned_person_id?: string | null
@@ -597,6 +686,7 @@ export type Database = {
           time?: string
           title?: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -637,6 +727,7 @@ export type Database = {
           service_type: string | null
           setup_time: string | null
           updated_at: string | null
+          user_id: string | null
           website: string | null
         }
         Insert: {
@@ -660,6 +751,7 @@ export type Database = {
           service_type?: string | null
           setup_time?: string | null
           updated_at?: string | null
+          user_id?: string | null
           website?: string | null
         }
         Update: {
@@ -683,6 +775,7 @@ export type Database = {
           service_type?: string | null
           setup_time?: string | null
           updated_at?: string | null
+          user_id?: string | null
           website?: string | null
         }
         Relationships: [

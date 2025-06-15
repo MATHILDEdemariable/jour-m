@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -24,7 +23,7 @@ import { TutorialModal } from '@/components/admin/TutorialModal';
 import { TUTORIAL_CONTENT } from '@/components/admin/TutorialContent';
 
 export const AdminPortal = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('planning'); // Default to "planning"
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -34,13 +33,11 @@ export const AdminPortal = () => {
   const { currentEvent } = useEventData();
 
   const getCurrentTutorial = () => {
-    return TUTORIAL_CONTENT[activeTab as keyof typeof TUTORIAL_CONTENT] || TUTORIAL_CONTENT.dashboard;
+    return TUTORIAL_CONTENT[activeTab as keyof typeof TUTORIAL_CONTENT] || TUTORIAL_CONTENT.planning;
   };
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'dashboard':
-        return <CompactRecapDashboard />;
       case 'planning':
         return <UnifiedPlanningManagement />;
       case 'people':
@@ -52,7 +49,7 @@ export const AdminPortal = () => {
       case 'config':
         return <EventConfiguration />;
       default:
-        return <CompactRecapDashboard />;
+        return <UnifiedPlanningManagement />; // Default to planning
     }
   };
 
@@ -114,11 +111,7 @@ export const AdminPortal = () => {
           {!isMobile && (
             <div className="bg-white border-b">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-6 h-auto p-1">
-                  <TabsTrigger value="dashboard" className="flex flex-col py-3">
-                    <span className="text-xs">📊</span>
-                    <span className="text-xs">Récapitulatif</span>
-                  </TabsTrigger>
+                <TabsList className="grid w-full grid-cols-5 h-auto p-1">
                   <TabsTrigger value="planning" className="flex flex-col py-3">
                     <span className="text-xs">⏰</span>
                     <span className="text-xs">Planning & Tâches</span>

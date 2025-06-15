@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -86,6 +85,11 @@ export const PeopleManagement = () => {
     );
   }
 
+  // Sort alphabetically by name
+  const sortedPeople = [...people].sort((a, b) =>
+    a.name.localeCompare(b.name, "fr", { sensitivity: "base" })
+  );
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -99,29 +103,11 @@ export const PeopleManagement = () => {
         </Button>
       </div>
 
-      {/* Stats compactes */}
-      <div className="grid grid-cols-4 gap-3">
-        <div className="bg-white p-3 rounded-lg border border-gray-200 text-center">
-          <div className="text-lg font-bold text-purple-600">{people.length}</div>
-          <div className="text-xs text-gray-600">Total</div>
-        </div>
-        <div className="bg-white p-3 rounded-lg border border-gray-200 text-center">
-          <div className="text-lg font-bold text-green-600">{people.filter(p => p.status === 'confirmed').length}</div>
-          <div className="text-xs text-gray-600">Confirmées</div>
-        </div>
-        <div className="bg-white p-3 rounded-lg border border-gray-200 text-center">
-          <div className="text-lg font-bold text-yellow-600">{people.filter(p => p.status === 'pending').length}</div>
-          <div className="text-xs text-gray-600">En attente</div>
-        </div>
-        <div className="bg-white p-3 rounded-lg border border-gray-200 text-center">
-          <div className="text-lg font-bold text-blue-600">{people.filter(p => ['photographer', 'caterer', 'wedding-planner'].includes(p.role)).length}</div>
-          <div className="text-xs text-gray-600">Prestataires</div>
-        </div>
-      </div>
+      {/* Plus de stats ni de catégorisation, juste la liste triée alphabetiquement */}
 
       {/* People List */}
       <div className="grid gap-4">
-        {people.map((person) => (
+        {sortedPeople.map((person) => (
           <Card key={person.id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -132,9 +118,11 @@ export const PeopleManagement = () => {
                   <div>
                     <h3 className="font-semibold text-lg">{person.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge className={roleColors[person.role as keyof typeof roleColors]}>
-                        {roleLabels[person.role as keyof typeof roleLabels] || person.role}
-                      </Badge>
+                      {person.role && (
+                        <Badge className={roleColors[person.role as keyof typeof roleColors]}>
+                          {roleLabels[person.role as keyof typeof roleLabels] || person.role}
+                        </Badge>
+                      )}
                       <Badge className={statusColors[person.status as keyof typeof statusColors]}>
                         {person.status === 'confirmed' ? 'Confirmé' : 
                          person.status === 'pending' ? 'En attente' : 'Décliné'}

@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -8,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CreateTaskData, Task } from '@/hooks/useTasks';
+import { VendorMultiSelect } from './VendorMultiSelect';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -25,8 +25,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   isLoading = false
 }) => {
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CreateTaskData>();
-
-  const priorityValue = watch('priority');
+  const assignedVendorIds = watch('assigned_vendor_ids') || [];
 
   useEffect(() => {
     if (task) {
@@ -37,6 +36,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         duration_minutes: task.duration_minutes,
         assigned_role: task.assigned_role || '',
         notes: task.notes || '',
+        assigned_vendor_ids: task.assigned_vendor_ids || [],
       });
     } else {
       reset({
@@ -46,6 +46,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         duration_minutes: 30,
         assigned_role: '',
         notes: '',
+        assigned_vendor_ids: [],
       });
     }
   }, [task, reset]);
@@ -115,7 +116,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
               <div>
                 <Label htmlFor="priority">Priorité *</Label>
-                <Select value={priorityValue} onValueChange={(value) => setValue('priority', value as 'high' | 'medium' | 'low')}>
+                <Select value={watch('priority')} onValueChange={(value) => setValue('priority', value as 'high' | 'medium' | 'low')}>
                   <SelectTrigger className="border-stone-300 focus:border-emerald-500">
                     <SelectValue placeholder="Sélectionner une priorité" />
                   </SelectTrigger>
@@ -150,6 +151,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 </SelectContent>
               </Select>
             </div>
+            
+            {/* Vendor MultiSelect */}
+            <VendorMultiSelect
+              selectedVendorIds={assignedVendorIds}
+              onSelectionChange={ids => setValue('assigned_vendor_ids', ids)}
+            />
 
             <div>
               <Label htmlFor="notes">Notes</Label>
