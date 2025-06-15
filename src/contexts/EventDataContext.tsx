@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import { usePlanningItems } from '@/hooks/usePlanningItems';
@@ -64,16 +63,6 @@ export const EventDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
   
-  // Auto-refresh data every 30 seconds for real-time sync
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log('EventDataContext - Auto-refresh triggered');
-      refreshData();
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  }, [currentEventId]);
-
   // Force refresh when event changes
   useEffect(() => {
     if (currentEventId) {

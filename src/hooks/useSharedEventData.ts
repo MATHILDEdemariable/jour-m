@@ -1,4 +1,3 @@
-
 import { useEventData } from '@/contexts/EventDataContext';
 import { useTimelineItems } from '@/hooks/useTimelineItems';
 import { useCurrentEvent } from '@/contexts/CurrentEventContext';
@@ -18,41 +17,22 @@ export const useSharedEventData = () => {
   const { timelineItems, loadTimelineItems } = useTimelineItems();
   const { currentEventId } = useCurrentEvent();
 
-  // Debug: Log pour vérifier la cohérence des données avec plus de détails
-  console.log('=== useSharedEventData - SYNCHRONIZATION CHECK ===');
-  console.log('Current event ID:', currentEventId);
-  console.log('All people loaded:', people.length);
-  console.log('All vendors loaded:', vendors.length);
-  console.log('People details:', people.map(p => ({ id: p.id, name: p.name, event_id: p.event_id })));
-  console.log('Vendors details:', vendors.map(v => ({ id: v.id, name: v.name, event_id: v.event_id })));
-  console.log('Loading state:', loading);
-  console.log('=== END SYNCHRONIZATION CHECK ===');
-
-  // Strict filtering par event_id pour toutes les données
+  // Nettoyage des logs : logs de debug supprimés (gardé seulement logs d’erreur lors de refreshData)
+  
   const eventFilteredTasks = tasks.filter(task => task.event_id === currentEventId);
   const eventFilteredPeople = people.filter(person => person.event_id === currentEventId);
   const eventFilteredVendors = vendors.filter(vendor => vendor.event_id === currentEventId);
   const eventFilteredPlanningItems = planningItems.filter(item => item.event_id === currentEventId);
 
-  console.log('=== FILTERED DATA RESULTS ===');
-  console.log('Filtered tasks count:', eventFilteredTasks.length);
-  console.log('Filtered people count:', eventFilteredPeople.length);
-  console.log('Filtered vendors count:', eventFilteredVendors.length);
-  console.log('Filtered planning items count:', eventFilteredPlanningItems.length);
-  console.log('=== END FILTERED DATA ===');
-
-  // Enhanced refresh avec logs détaillés
+  // Enhanced refresh avec logs réduits
   const enhancedRefreshData = async () => {
-    console.log('=== ENHANCED REFRESH STARTED ===');
-    console.log('Refreshing data for event ID:', currentEventId);
     try {
       await Promise.all([
         refreshData(),
         loadTimelineItems()
       ]);
-      console.log('=== ENHANCED REFRESH COMPLETED SUCCESSFULLY ===');
     } catch (error) {
-      console.error('=== ENHANCED REFRESH ERROR ===', error);
+      console.error('ENHANCED REFRESH ERROR', error);
     }
   };
 
@@ -160,11 +140,7 @@ export const useSharedEventData = () => {
     people: eventFilteredPeople,
     vendors: eventFilteredVendors,
     loading,
-    
-    // Actions - utiliser la version enrichie
     refreshData: enhancedRefreshData,
-    
-    // Statistiques et calculs
     getProgressStats,
     getDaysUntilEvent,
     getCriticalTasks,

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSharedEventData } from '@/hooks/useSharedEventData';
@@ -32,6 +31,7 @@ const EventPortal = () => {
   const [isGuestMode, setIsGuestMode] = useState(false);
   const [guestEvent, setGuestEvent] = useState<GuestEvent | null>(null);
   const [guestLoading, setGuestLoading] = useState(true);
+  const [hasInitialRefreshed, setHasInitialRefreshed] = useState(false);
   
   const daysUntilEvent = getDaysUntilEvent();
 
@@ -46,13 +46,11 @@ const EventPortal = () => {
           .select('id, name, event_date, event_type')
           .eq('slug', eventSlug)
           .single();
-
         if (error || !data) {
           console.error('Error fetching guest event:', error);
           navigate('/not-found', { replace: true });
           return;
         }
-        
         setGuestEvent(data);
         setCurrentEventId(data.id);
         setGuestLoading(false);
@@ -64,10 +62,11 @@ const EventPortal = () => {
   }, [searchParams, setCurrentEventId, navigate]);
 
   useEffect(() => {
-    if (currentEventId) {
+    if (currentEventId && !hasInitialRefreshed) {
       handleFullDataRefresh();
+      setHasInitialRefreshed(true);
     }
-  }, [currentEventId]);
+  }, [currentEventId, hasInitialRefreshed]);
 
   useEffect(() => {
     const userType = searchParams.get('user_type') as 'person' | 'vendor' | null;
@@ -104,15 +103,8 @@ const EventPortal = () => {
     }
   }, [searchParams, people, vendors, isGuestMode]);
 
-  useEffect(() => {
-    if (loggedInUser) {
-      handleFullDataRefresh();
-    }
-  }, [activeTab, loggedInUser]);
-
   const handleFullDataRefresh = async () => {
     if (!currentEventId) return;
-    
     setIsRefreshing(true);
     try {
       await Promise.all([
@@ -125,12 +117,14 @@ const EventPortal = () => {
         description: 'Toutes les données ont été actualisées',
       });
     } catch (error) {
-      console.error('Error during data refresh:', error);
-      toast({
-        title: 'Erreur de synchronisation',
-        description: 'Impossible de synchroniser les données',
-        variant: 'destructive',
-      });
+      if (!isRefreshing) { // n'affiche qu'une fois maximum
+        console.error('Error during data refresh:', error);
+        toast({
+          title: 'Erreur de synchronisation',
+          description: 'Impossible de synchroniser les données',
+          variant: 'destructive',
+        });
+      }
     } finally {
       setIsRefreshing(false);
     }
