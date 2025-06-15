@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -7,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CreateTaskData, Task } from '@/hooks/useTasks';
-import { VendorMultiSelect } from './VendorMultiSelect';
+import { useVendors } from '@/hooks/useVendors';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -25,7 +26,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   isLoading = false
 }) => {
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CreateTaskData>();
-  const assignedVendorIds = watch('assigned_vendor_ids') || [];
+  const assignedVendorId = watch('assigned_vendor_id') || '';
+  const { vendors, loading: vendorsLoading } = useVendors();
 
   useEffect(() => {
     if (task) {
@@ -36,7 +38,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         duration_minutes: task.duration_minutes,
         assigned_role: task.assigned_role || '',
         notes: task.notes || '',
-        assigned_vendor_ids: task.assigned_vendor_ids || [],
+        assigned_vendor_id: task.assigned_vendor_id || '',
       });
     } else {
       reset({
@@ -46,7 +48,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         duration_minutes: 30,
         assigned_role: '',
         notes: '',
-        assigned_vendor_ids: [],
+        assigned_vendor_id: '',
       });
     }
   }, [task, reset]);
@@ -152,11 +154,29 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               </Select>
             </div>
             
-            {/* Vendor MultiSelect */}
-            <VendorMultiSelect
-              selectedVendorIds={assignedVendorIds}
-              onSelectionChange={ids => setValue('assigned_vendor_ids', ids)}
-            />
+            {/* Vendor Selector */}
+            <div>
+              <Label htmlFor="assigned_vendor_id">Prestataire assigné</Label>
+              <Select
+                value={assignedVendorId}
+                onValueChange={value => setValue('assigned_vendor_id', value)}
+              >
+                <SelectTrigger className="border-stone-300 focus:border-emerald-500">
+                  <SelectValue placeholder="Aucun prestataire" />
+                </SelectTrigger>
+                <SelectContent>
+                  {vendorsLoading && (
+                    <SelectItem value="" disabled>Chargement...</SelectItem>
+                  )}
+                  <SelectItem value="">Aucun</SelectItem>
+                  {vendors.map(vendor => (
+                    <SelectItem value={vendor.id} key={vendor.id}>
+                      {vendor.name} ({vendor.service_type || "service"})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <div>
               <Label htmlFor="notes">Notes</Label>
@@ -192,3 +212,4 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     </Dialog>
   );
 };
+

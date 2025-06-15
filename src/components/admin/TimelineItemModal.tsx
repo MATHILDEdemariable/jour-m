@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TimelineItem } from '@/hooks/useTimelineItems';
 import { PersonMultiSelect } from './PersonMultiSelect';
-import { VendorMultiSelect } from './VendorMultiSelect';
+import { useVendors } from '@/hooks/useVendors';
 
 interface TimelineItemModalProps {
   isOpen: boolean;
@@ -31,9 +32,11 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
     priority: 'medium' as 'high' | 'medium' | 'low',
     status: 'scheduled' as 'scheduled' | 'in_progress' | 'completed' | 'delayed',
     assigned_person_ids: [] as string[],
-    assigned_vendor_ids: [] as string[],
+    assigned_vendor_id: '' as string | null,
     notes: ''
   });
+
+  const { vendors, loading: vendorsLoading } = useVendors();
 
   useEffect(() => {
     if (item) {
@@ -43,10 +46,10 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
         time: item.time,
         duration: item.duration,
         category: item.category,
-        priority: item.priority,
-        status: item.status,
+        priority: (item.priority as 'low'|'medium'|'high') ?? 'medium',
+        status: (item.status as 'scheduled'|'in_progress'|'completed'|'delayed') ?? 'scheduled',
         assigned_person_ids: item.assigned_person_ids || [],
-        assigned_vendor_ids: item.assigned_vendor_ids || [],
+        assigned_vendor_id: (item as any).assigned_vendor_id || '',
         notes: item.notes || ''
       });
     } else {
@@ -59,7 +62,7 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
         priority: 'medium',
         status: 'scheduled',
         assigned_person_ids: [],
-        assigned_vendor_ids: [],
+        assigned_vendor_id: '',
         notes: ''
       });
     }
@@ -190,12 +193,29 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
             label="Personnes assignées"
           />
 
-          {/* Vendor MultiSelect */}
-          <VendorMultiSelect
-            selectedVendorIds={formData.assigned_vendor_ids}
-            onSelectionChange={ids => setFormData(prev => ({ ...prev, assigned_vendor_ids: ids }))}
-            label="Prestataires assignés"
-          />
+          {/* Vendor Selector, single vendor */}
+          <div>
+            <Label htmlFor="assigned_vendor_id">Prestataire assigné</Label>
+            <Select
+              value={formData.assigned_vendor_id || ''}
+              onValueChange={value => setFormData(prev => ({ ...prev, assigned_vendor_id: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Aucun prestataire" />
+              </SelectTrigger>
+              <SelectContent>
+                {vendorsLoading && (
+                  <SelectItem value="" disabled>Chargement...</SelectItem>
+                )}
+                <SelectItem value="">Aucun</SelectItem>
+                {vendors.map(vendor => (
+                  <SelectItem value={vendor.id} key={vendor.id}>
+                    {vendor.name} ({vendor.service_type || "service"})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div>
             <Label htmlFor="notes">Notes</Label>
@@ -221,3 +241,4 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
     </Dialog>
   );
 };
+
