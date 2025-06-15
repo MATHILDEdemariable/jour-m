@@ -85,19 +85,57 @@ export const useCreateTask = () => {
       if (error) throw error;
       return result;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    onMutate: async (newTask) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previousTasks = queryClient.getQueryData<Task[]>(['tasks']) || [];
+
+      // Créer une tâche optimiste avec id temporaire
+      const optimisticTask: Task = {
+        id: `optimistic-${Date.now()}`,
+        title: newTask.title,
+        description: newTask.description ?? null,
+        status: 'pending',
+        priority: newTask.priority,
+        duration_minutes: newTask.duration_minutes,
+        category_id: newTask.category_id ?? null,
+        assigned_person_id: newTask.assigned_person_id ?? null,
+        assigned_vendor_id: newTask.assigned_vendor_id ?? null,
+        assigned_role: newTask.assigned_role ?? null,
+        event_id: newTask.event_id ?? null,
+        order_index: previousTasks.length,
+        notes: newTask.notes ?? null,
+        completed_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      queryClient.setQueryData<Task[]>(['tasks'], [optimisticTask, ...previousTasks]);
+      return { previousTasks };
+    },
+    onSuccess: (savedTask, _newTask, context) => {
+      // Remplacer la tâche optimiste par la vraie reçue de la BDD
+      queryClient.setQueryData<Task[]>(['tasks'], (old) =>
+        old
+          ? [savedTask, ...old.filter((t) => !t.id.startsWith('optimistic-'))]
+          : [savedTask]
+      );
       toast({
         title: 'Succès',
         description: 'Tâche créée avec succès',
       });
     },
-    onError: () => {
+    onError: (_error, _variables, context) => {
+      // En cas d’erreur, rollback à l’état précédent
+      if (context?.previousTasks) {
+        queryClient.setQueryData<Task[]>(['tasks'], context.previousTasks);
+      }
       toast({
         title: 'Erreur',
         description: 'Impossible de créer la tâche',
         variant: 'destructive',
       });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
 };
