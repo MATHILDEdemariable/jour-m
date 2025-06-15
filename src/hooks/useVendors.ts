@@ -31,22 +31,30 @@ export interface VendorDocument {
   created_at: string;
 }
 
-export const useVendors = () => {
+export const useVendors = (eventId?: string) => {
   const { toast } = useToast();
-  const { currentEventId } = useCurrentEvent();
+  const { currentEventId: contextEventId } = useCurrentEvent();
+  const eventIdToUse = eventId || contextEventId;
+
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [documents, setDocuments] = useState<VendorDocument[]>([]);
   const [loading, setLoading] = useState(false);
   const subscriptionRef = useRef<any>(null);
 
   const loadVendors = async () => {
+    if (!eventIdToUse) {
+      console.log('useVendors - No event ID provided, skipping load.');
+      setVendors([]);
+      return;
+    }
     setLoading(true);
     try {
-      console.log('useVendors - Loading vendors for event ID:', currentEventId);
+      console.log('useVendors - Loading vendors for event ID:', eventIdToUse);
       
       const { data, error } = await supabase
         .from('vendors')
         .select('*')
+        .eq('event_id', eventIdToUse)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -67,6 +75,8 @@ export const useVendors = () => {
 
   // Combined useEffect for loading and realtime subscription
   useEffect(() => {
+    if (!eventIdToUse) return;
+
     // Cleanup previous subscription
     if (subscriptionRef.current) {
       console.log('useVendors - Cleaning up previous subscription');
@@ -78,7 +88,7 @@ export const useVendors = () => {
     loadVendors();
 
     // Setup realtime subscription with unique channel name
-    const channelName = `vendors_changes_${currentEventId}_${Date.now()}`;
+    const channelName = `vendors_changes_${eventIdToUse}_${Date.now()}`;
     console.log('useVendors - Setting up realtime subscription:', channelName);
     
     try {
@@ -88,7 +98,8 @@ export const useVendors = () => {
           { 
             event: '*', 
             schema: 'public', 
-            table: 'vendors' 
+            table: 'vendors',
+            filter: `event_id=eq.${eventIdToUse}`
           }, 
           (payload) => {
             console.log('useVendors - Realtime update received:', payload);
@@ -109,7 +120,7 @@ export const useVendors = () => {
         subscriptionRef.current = null;
       }
     };
-  }, [currentEventId]);
+  }, [eventIdToUse]);
 
   const loadDocuments = async (vendorId: string) => {
     try {
@@ -136,7 +147,7 @@ export const useVendors = () => {
       // TOUJOURS assigner l'event_id actuel
       const vendorWithEventId = {
         ...newVendor,
-        event_id: currentEventId || newVendor.event_id
+        event_id: eventIdToUse || newVendor.event_id
       };
 
       console.log('useVendors - Adding vendor with event_id:', vendorWithEventId);

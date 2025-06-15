@@ -16,22 +16,30 @@ export interface Person {
   updated_at?: string;
 }
 
-export const usePeople = () => {
+export const usePeople = (eventId?: string) => {
   const { toast } = useToast();
-  const { currentEventId } = useCurrentEvent();
+  const { currentEventId: contextEventId } = useCurrentEvent();
+  const eventIdToUse = eventId || contextEventId;
+
   const [people, setPeople] = useState<Person[]>([]);
   const [loading, setLoading] = useState(false);
   const subscriptionRef = useRef<any>(null);
 
   // Load people from Supabase
   const loadPeople = async () => {
+    if (!eventIdToUse) {
+      console.log('usePeople - No event ID provided, skipping load.');
+      setPeople([]);
+      return;
+    }
     setLoading(true);
     try {
-      console.log('usePeople - Loading people for event ID:', currentEventId);
+      console.log('usePeople - Loading people for event ID:', eventIdToUse);
       
       const { data, error } = await supabase
         .from('people')
         .select('*')
+        .eq('event_id', eventIdToUse)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -66,6 +74,8 @@ export const usePeople = () => {
 
   // Combined useEffect for loading and realtime subscription
   useEffect(() => {
+    if (!eventIdToUse) return;
+
     // Cleanup previous subscription
     if (subscriptionRef.current) {
       console.log('usePeople - Cleaning up previous subscription');
@@ -77,7 +87,7 @@ export const usePeople = () => {
     loadPeople();
 
     // Setup realtime subscription with unique channel name
-    const channelName = `people_changes_${currentEventId}_${Date.now()}`;
+    const channelName = `people_changes_${eventIdToUse}_${Date.now()}`;
     console.log('usePeople - Setting up realtime subscription:', channelName);
     
     try {
@@ -87,7 +97,8 @@ export const usePeople = () => {
           { 
             event: '*', 
             schema: 'public', 
-            table: 'people' 
+            table: 'people',
+            filter: `event_id=eq.${eventIdToUse}`
           }, 
           (payload) => {
             console.log('usePeople - Realtime update received:', payload);
@@ -108,14 +119,14 @@ export const usePeople = () => {
         subscriptionRef.current = null;
       }
     };
-  }, [currentEventId]);
+  }, [eventIdToUse]);
 
   const addPerson = async (newPerson: Omit<Person, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       // TOUJOURS assigner l'event_id actuel
       const personWithEventId = {
         ...newPerson,
-        event_id: currentEventId || newPerson.event_id
+        event_id: eventIdToUse || newPerson.event_id
       };
 
       console.log('usePeople - Adding person with event_id:', personWithEventId);
