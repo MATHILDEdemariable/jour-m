@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentEvent } from '@/contexts/CurrentEventContext';
+import { useCurrentTenant } from './useCurrentTenant';
 
 export interface TimelineItem {
   id: string;
@@ -58,11 +59,12 @@ const mapSupabaseToTimelineItem = (item: SupabaseTimelineItem): TimelineItem => 
 export const useTimelineItems = () => {
   const { toast } = useToast();
   const { currentEventId } = useCurrentEvent();
+  const { data: currentTenant } = useCurrentTenant();
   const [timelineItems, setTimelineItems] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   const loadTimelineItems = async () => {
-    if (!currentEventId) return;
+    if (!currentEventId || !currentTenant) return;
     
     setLoading(true);
     try {
@@ -89,7 +91,7 @@ export const useTimelineItems = () => {
   };
 
   const addTimelineItem = async (item: Omit<TimelineItem, 'id' | 'event_id' | 'created_at' | 'updated_at' | 'assigned_person_id'>) => {
-    if (!currentEventId) return;
+    if (!currentEventId || !currentTenant) return;
 
     try {
       const { data, error } = await supabase
@@ -97,6 +99,7 @@ export const useTimelineItems = () => {
         .insert({
           ...item,
           event_id: currentEventId,
+          tenant_id: currentTenant.id,
           assigned_person_ids: item.assigned_person_ids || [],
         })
         .select()

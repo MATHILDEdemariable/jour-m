@@ -1,7 +1,7 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useCurrentTenant } from './useCurrentTenant';
 
 export interface Task {
   id: string;
@@ -67,12 +67,18 @@ export const useTasks = () => {
 export const useCreateTask = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { data: currentTenant } = useCurrentTenant();
 
   return useMutation({
     mutationFn: async (data: CreateTaskData) => {
+      if (!currentTenant) {
+        throw new Error('Tenant non identifié. Impossible de créer la tâche.');
+      }
+      const taskWithTenant = { ...data, tenant_id: currentTenant.id };
+
       const { data: result, error } = await supabase
         .from('tasks')
-        .insert([data])
+        .insert([taskWithTenant])
         .select()
         .single();
 
