@@ -7,12 +7,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Calendar } from 'lucide-react';
+import { Calendar, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 export const CreateEvent = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,12 +94,12 @@ export const CreateEvent = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b shadow-sm">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center h-16">
-            <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mr-4">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Retour
+          <div className="flex items-center justify-between h-16">
+            <h1 className="text-xl font-semibold">Créez votre événement</h1>
+            <Button variant="ghost" onClick={signOut}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Déconnexion
             </Button>
-            <h1 className="text-xl font-semibold">Créer un nouvel événement</h1>
           </div>
         </div>
       </div>
@@ -195,7 +195,7 @@ export const CreateEvent = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate('/dashboard')}
+                  onClick={signOut}
                   className="flex-1"
                 >
                   Annuler

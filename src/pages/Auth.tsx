@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { AlertCircle } from 'lucide-react';
 
 export const Auth = () => {
@@ -20,9 +21,31 @@ export const Auth = () => {
   const [fullName, setFullName] = useState('');
 
   useEffect(() => {
-    if (user) {
-      navigate('/dashboard');
-    }
+    const checkUserAndRedirect = async () => {
+      if (user) {
+        setLoading(true);
+        const { data: event, error } = await supabase
+          .from('events')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+
+        // PGRST116: No rows found for .single() - this is not an error here.
+        if (error && error.code !== 'PGRST116') {
+          setError("Erreur lors de la vérification de votre événement.");
+          setLoading(false);
+          return;
+        }
+
+        if (event) {
+          navigate(`/admin/${event.id}`);
+        } else {
+          navigate('/create-event');
+        }
+      }
+    };
+
+    checkUserAndRedirect();
   }, [user, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -38,13 +61,15 @@ export const Auth = () => {
         } else {
           setError(error.message);
         }
-      } else {
-        navigate('/dashboard');
       }
+      // useEffect will handle redirection.
     } catch (err) {
       setError('Une erreur est survenue lors de la connexion');
     } finally {
-      setLoading(false);
+      // Avoid state update on unmounted component if redirection is fast
+      if (document.getElementById('signin-email')) {
+        setLoading(false);
+      }
     }
   };
 

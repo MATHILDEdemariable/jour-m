@@ -3,39 +3,15 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { 
   Calendar, 
-  Users, 
-  CheckCircle, 
-  Star, 
-  Crown, 
   ArrowRight,
-  Sparkles,
-  UserCheck,
-  Settings
+  Settings,
+  UserCheck
 } from 'lucide-react';
 
 export const Index = () => {
   const navigate = useNavigate();
-
-  const features = [
-    {
-      icon: Calendar,
-      title: 'Planning intelligent',
-      description: 'Organisez votre événement avec notre timeline interactive et nos suggestions IA'
-    },
-    {
-      icon: Users,
-      title: 'Gestion des invités',
-      description: 'Suivez les confirmations, gérez les rôles et les informations de contact'
-    },
-    {
-      icon: CheckCircle,
-      title: 'Suivi des tâches',
-      description: 'Ne manquez aucune étape avec notre système de tâches et rappels'
-    }
-  ];
 
   return (
     <div className="min-h-screen">
@@ -66,67 +42,33 @@ export const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="max-w-3xl mx-auto">
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-              Organisez vos événements{' '}
+              L'organisation d'événements,{' '}
               <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                parfaitement
+                simplifiée
               </span>
             </h1>
             <p className="text-xl text-gray-600 mb-8">
-              La plateforme tout-en-un pour planifier, organiser et gérer vos événements avec une précision d'expert.
+              Une plateforme unique pour créer votre événement et collaborer avec votre équipe. Simple, direct et efficace.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex justify-center">
               <Button size="lg" onClick={() => navigate('/auth')} className="bg-gradient-to-r from-purple-600 to-pink-600 text-lg px-8">
-                Essayez gratuitement
+                Commencer l'organisation
                 <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8" onClick={() => navigate('/demo')}>
-                Voir la démo
               </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Simplified Dual-Path Section */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Tout ce dont vous avez besoin pour réussir
+              Deux façons d'utiliser Jour J
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Des outils puissants et intuitifs pour transformer votre vision en réalité
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <Card key={index} className="text-center hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="w-12 h-12 mx-auto bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center mb-4">
-                    <feature.icon className="w-6 h-6 text-white" />
-                  </div>
-                  <CardTitle>{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600">{feature.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Team Access Section */}
-      <section className="py-20 bg-gradient-to-br from-blue-50 to-purple-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Accès simplifié pour votre équipe
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Vos invités et prestataires accèdent facilement à leurs informations personnalisées, 
-              sans inscription ni compte requis.
+              Que vous soyez l'organisateur ou un membre de l'équipe, l'accès est simple et direct.
             </p>
           </div>
 
@@ -143,20 +85,6 @@ export const Index = () => {
                 <p className="text-gray-600">
                   Créez votre compte, configurez votre événement et gérez tous les aspects de votre organisation.
                 </p>
-                <div className="space-y-2 text-sm text-gray-500">
-                  <div className="flex items-center justify-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span>Portail d'administration complet</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span>Gestion des tâches et timeline</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span>Coordination équipe & prestataires</span>
-                  </div>
-                </div>
                 <Button 
                   onClick={() => navigate('/auth')}
                   className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-lg"
@@ -176,49 +104,12 @@ export const Index = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-gray-600">
-                  Accédez directement à votre planning et vos tâches personnalisées, sans créer de compte.
+                  Accédez directement à votre planning via un lien unique partagé par l'organisateur.
                 </p>
-                <div className="space-y-2 text-sm text-gray-500">
-                  <div className="flex items-center justify-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span>Accès sans inscription</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span>Planning personnalisé</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span>Communication directe</span>
-                  </div>
+                <div className="mt-4 p-4 bg-blue-50 rounded-md border border-blue-200">
+                  <h4 className="font-semibold text-blue-800">Aucune inscription requise</h4>
+                  <p className="text-sm text-blue-700">Utilisez simplement le lien fourni pour un accès instantané et sécurisé.</p>
                 </div>
-                <Button 
-                  onClick={() => navigate('/equipe')}
-                  variant="outline"
-                  className="w-full border-blue-300 text-blue-700 hover:bg-blue-50 text-lg"
-                >
-                  <UserCheck className="w-5 h-5 mr-2" />
-                  Rejoindre un événement
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="text-center mt-12">
-            <Card className="bg-white/80 backdrop-blur-sm max-w-2xl mx-auto">
-              <CardContent className="p-8">
-                <div className="flex items-center justify-center gap-2 mb-4">
-                  <Users className="w-6 h-6 text-purple-600" />
-                  <h3 className="text-xl font-semibold">Comment ça marche ?</h3>
-                </div>
-                <p className="text-gray-600 mb-4">
-                  L'organisateur vous donne simplement l'ID de l'événement. 
-                  Vous sélectionnez votre nom dans la liste et accédez immédiatement 
-                  à votre espace personnalisé.
-                </p>
-                <Badge className="bg-purple-100 text-purple-800 border-purple-200">
-                  Simple • Rapide • Sécurisé
-                </Badge>
               </CardContent>
             </Card>
           </div>
@@ -229,21 +120,11 @@ export const Index = () => {
       <section className="py-20 bg-gradient-to-r from-purple-600 to-pink-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Prêt à organiser votre prochain événement ?
+            Prêt à lancer votre événement ?
           </h2>
-          <p className="text-xl text-purple-100 mb-8">
-            Rejoignez des milliers d'organisateurs qui font confiance à Jour J
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" onClick={() => navigate('/auth')} className="bg-white text-purple-600 hover:bg-gray-100 text-lg px-8">
-              <Sparkles className="w-5 h-5 mr-2" />
-              Commencer maintenant
-            </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate('/equipe')} className="border-white text-white hover:bg-white/10 text-lg px-8">
-              <UserCheck className="w-5 h-5 mr-2" />
-              Rejoindre un événement
-            </Button>
-          </div>
+          <Button size="lg" onClick={() => navigate('/auth')} className="bg-white text-purple-600 hover:bg-gray-100 text-lg px-8">
+            Créer mon compte et mon événement
+          </Button>
         </div>
       </section>
 

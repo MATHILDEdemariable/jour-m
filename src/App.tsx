@@ -1,3 +1,4 @@
+
 import { Suspense, lazy } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -11,12 +12,10 @@ import "./App.css";
 // Lazy load pages
 const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
 const CreateEvent = lazy(() => import("./pages/CreateEvent"));
 const EventPortal = lazy(() => import("./pages/EventPortal"));
 const AdminPortal = lazy(() => import("./pages/AdminPortal"));
 const Demo = lazy(() => import("./pages/Demo"));
-const TeamAccess = lazy(() => import("./pages/TeamAccess"));
 const EventTeamAccess = lazy(() => import("./pages/EventTeamAccess"));
 
 const queryClient = new QueryClient();
@@ -37,11 +36,9 @@ function App() {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/create-event" element={<CreateEvent />} />
                 <Route path="/demo" element={<Demo />} />
                 <Route path="/equipe/:eventSlug" element={<EventTeamAccess />} />
-                <Route path="/equipe" element={<TeamAccess />} />
                 <Route
                   path="/event/:eventId/*"
                   element={
