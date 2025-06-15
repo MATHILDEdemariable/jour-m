@@ -14,7 +14,8 @@ export const ShareManagement = () => {
 
   useEffect(() => {
     if (currentEvent?.slug) {
-      const link = `${window.location.origin}/?event=${currentEvent.slug}&invite=true`;
+      // Nouvelle url vers accès public ultra simplifié :
+      const link = `${window.location.origin}/public-access?event_slug=${currentEvent.slug}`;
       setShareLink(link);
     }
   }, [currentEvent]);
@@ -47,15 +48,15 @@ export const ShareManagement = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Share2 className="w-6 h-6 text-purple-600" />
-            Partager l'accès à l'événement
+            Partager l'accès invité
           </CardTitle>
           <CardDescription>
-            Partagez ce lien avec votre équipe, vos prestataires ou vos invités pour leur donner accès au portail de l'événement.
+            Envoyez ce lien à vos invités pour qu'ils puissent accéder rapidement à leur planning sans compte.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label htmlFor="share-link" className="text-sm font-medium">Lien de partage unique</label>
+            <label htmlFor="share-link" className="text-sm font-medium">Lien de partage invité</label>
             <div className="flex gap-2 mt-1">
               <Input id="share-link" type="text" value={shareLink} readOnly />
               <Button variant="outline" size="icon" onClick={handleCopy} disabled={!shareLink}>
@@ -64,11 +65,10 @@ export const ShareManagement = () => {
             </div>
           </div>
           <div>
-            <h3 className="text-sm font-medium">Instructions pour vos invités</h3>
+            <h3 className="text-sm font-medium">Instructions invités</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              1. Cliquez sur le lien ou scannez le QR code.
-              <br />
-              2. Vous aurez alors un accès direct en lecture seule aux informations de l'événement.
+              1. Cliquez sur le lien, puis "Équipe".<br />
+              2. Choisissez votre nom pour accéder à votre planning personnalisé.
             </p>
           </div>
         </CardContent>

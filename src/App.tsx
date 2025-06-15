@@ -31,6 +31,8 @@ const App = () => (
                 <Route path="/" element={<Home />} />
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/event-portal" element={<EventPortal />} />
+                {/* --- Ajout route publique minimaliste --- */}
+                <Route path="/public-access" element={<import('@/pages/PublicAccessPage').then(m => m.default)} />
                 <Route element={<ProtectedRoute />}>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/event" element={<Index />} />
