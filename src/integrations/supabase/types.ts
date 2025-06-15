@@ -121,7 +121,7 @@ export type Database = {
           logo_url: string | null
           notifications_enabled: boolean | null
           realtime_sync_enabled: boolean | null
-          tenant_id: string | null
+          tenant_id: string
           theme_color: string | null
           updated_at: string | null
         }
@@ -134,7 +134,7 @@ export type Database = {
           logo_url?: string | null
           notifications_enabled?: boolean | null
           realtime_sync_enabled?: boolean | null
-          tenant_id?: string | null
+          tenant_id: string
           theme_color?: string | null
           updated_at?: string | null
         }
@@ -147,7 +147,7 @@ export type Database = {
           logo_url?: string | null
           notifications_enabled?: boolean | null
           realtime_sync_enabled?: boolean | null
-          tenant_id?: string | null
+          tenant_id?: string
           theme_color?: string | null
           updated_at?: string | null
         }
@@ -179,7 +179,7 @@ export type Database = {
           mime_type: string | null
           name: string
           source: string | null
-          tenant_id: string | null
+          tenant_id: string
           updated_at: string | null
           user_id: string | null
         }
@@ -193,7 +193,7 @@ export type Database = {
           mime_type?: string | null
           name: string
           source?: string | null
-          tenant_id?: string | null
+          tenant_id: string
           updated_at?: string | null
           user_id?: string | null
         }
@@ -207,7 +207,7 @@ export type Database = {
           mime_type?: string | null
           name?: string
           source?: string | null
-          tenant_id?: string | null
+          tenant_id?: string
           updated_at?: string | null
           user_id?: string | null
         }
@@ -236,7 +236,7 @@ export type Database = {
           is_active: boolean | null
           is_default: boolean | null
           role_name: string
-          tenant_id: string | null
+          tenant_id: string
           updated_at: string | null
         }
         Insert: {
@@ -246,7 +246,7 @@ export type Database = {
           is_active?: boolean | null
           is_default?: boolean | null
           role_name: string
-          tenant_id?: string | null
+          tenant_id: string
           updated_at?: string | null
         }
         Update: {
@@ -256,7 +256,7 @@ export type Database = {
           is_active?: boolean | null
           is_default?: boolean | null
           role_name?: string
-          tenant_id?: string | null
+          tenant_id?: string
           updated_at?: string | null
         }
         Relationships: [
@@ -289,7 +289,7 @@ export type Database = {
           slug: string
           start_time: string | null
           status: string
-          tenant_id: string | null
+          tenant_id: string
           updated_at: string | null
           user_id: string | null
         }
@@ -305,7 +305,7 @@ export type Database = {
           slug: string
           start_time?: string | null
           status?: string
-          tenant_id?: string | null
+          tenant_id: string
           updated_at?: string | null
           user_id?: string | null
         }
@@ -321,7 +321,7 @@ export type Database = {
           slug?: string
           start_time?: string | null
           status?: string
-          tenant_id?: string | null
+          tenant_id?: string
           updated_at?: string | null
           user_id?: string | null
         }
@@ -346,7 +346,7 @@ export type Database = {
           is_connected: boolean | null
           last_sync_at: string | null
           refresh_token: string | null
-          tenant_id: string | null
+          tenant_id: string
           updated_at: string | null
         }
         Insert: {
@@ -359,7 +359,7 @@ export type Database = {
           is_connected?: boolean | null
           last_sync_at?: string | null
           refresh_token?: string | null
-          tenant_id?: string | null
+          tenant_id: string
           updated_at?: string | null
         }
         Update: {
@@ -372,7 +372,7 @@ export type Database = {
           is_connected?: boolean | null
           last_sync_at?: string | null
           refresh_token?: string | null
-          tenant_id?: string | null
+          tenant_id?: string
           updated_at?: string | null
         }
         Relationships: [
@@ -408,7 +408,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           role: string | null
-          tenant_id: string | null
+          tenant_id: string
           updated_at: string | null
           user_id: string | null
         }
@@ -427,7 +427,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           role?: string | null
-          tenant_id?: string | null
+          tenant_id: string
           updated_at?: string | null
           user_id?: string | null
         }
@@ -446,7 +446,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           role?: string | null
-          tenant_id?: string | null
+          tenant_id?: string
           updated_at?: string | null
           user_id?: string | null
         }
@@ -508,7 +508,7 @@ export type Database = {
           status: string
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
-          tenant_id: string | null
+          tenant_id: string
           updated_at: string | null
           user_id: string
         }
@@ -522,7 +522,7 @@ export type Database = {
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
-          tenant_id?: string | null
+          tenant_id: string
           updated_at?: string | null
           user_id: string
         }
@@ -536,7 +536,7 @@ export type Database = {
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
-          tenant_id?: string | null
+          tenant_id?: string
           updated_at?: string | null
           user_id?: string
         }
@@ -561,7 +561,7 @@ export type Database = {
           is_template: boolean | null
           name: string
           order_index: number
-          tenant_id: string | null
+          tenant_id: string
         }
         Insert: {
           color?: string | null
@@ -573,7 +573,7 @@ export type Database = {
           is_template?: boolean | null
           name: string
           order_index?: number
-          tenant_id?: string | null
+          tenant_id: string
         }
         Update: {
           color?: string | null
@@ -585,7 +585,7 @@ export type Database = {
           is_template?: boolean | null
           name?: string
           order_index?: number
-          tenant_id?: string | null
+          tenant_id?: string
         }
         Relationships: [
           {
@@ -623,7 +623,7 @@ export type Database = {
           order_index: number
           priority: string | null
           status: string | null
-          tenant_id: string | null
+          tenant_id: string
           title: string
           updated_at: string | null
           user_id: string | null
@@ -646,7 +646,7 @@ export type Database = {
           order_index?: number
           priority?: string | null
           status?: string | null
-          tenant_id?: string | null
+          tenant_id: string
           title: string
           updated_at?: string | null
           user_id?: string | null
@@ -669,7 +669,7 @@ export type Database = {
           order_index?: number
           priority?: string | null
           status?: string | null
-          tenant_id?: string | null
+          tenant_id?: string
           title?: string
           updated_at?: string | null
           user_id?: string | null
@@ -815,7 +815,7 @@ export type Database = {
           order_index: number
           priority: string | null
           status: string | null
-          tenant_id: string | null
+          tenant_id: string
           time: string
           title: string
           updated_at: string | null
@@ -836,7 +836,7 @@ export type Database = {
           order_index?: number
           priority?: string | null
           status?: string | null
-          tenant_id?: string | null
+          tenant_id: string
           time?: string
           title: string
           updated_at?: string | null
@@ -857,7 +857,7 @@ export type Database = {
           order_index?: number
           priority?: string | null
           status?: string | null
-          tenant_id?: string | null
+          tenant_id?: string
           time?: string
           title?: string
           updated_at?: string | null
@@ -915,7 +915,7 @@ export type Database = {
           quoted_price: number | null
           service_type: string | null
           setup_time: string | null
-          tenant_id: string | null
+          tenant_id: string
           updated_at: string | null
           user_id: string | null
           website: string | null
@@ -940,7 +940,7 @@ export type Database = {
           quoted_price?: number | null
           service_type?: string | null
           setup_time?: string | null
-          tenant_id?: string | null
+          tenant_id: string
           updated_at?: string | null
           user_id?: string | null
           website?: string | null
@@ -965,7 +965,7 @@ export type Database = {
           quoted_price?: number | null
           service_type?: string | null
           setup_time?: string | null
-          tenant_id?: string | null
+          tenant_id?: string
           updated_at?: string | null
           user_id?: string | null
           website?: string | null
@@ -992,6 +992,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_current_tenant_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      is_member_of_tenant: {
+        Args: { p_tenant_id: string }
+        Returns: boolean
+      }
       recalculate_timeline: {
         Args: { event_uuid: string }
         Returns: undefined
