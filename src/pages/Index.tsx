@@ -10,7 +10,7 @@ import {
   UserCheck
 } from 'lucide-react';
 
-export const Index = () => {
+const Index = () => {
   const navigate = useNavigate();
 
   return (
