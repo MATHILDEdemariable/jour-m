@@ -117,7 +117,7 @@ const AuthPage = () => {
                     <button
                       type="button"
                       className="text-purple-600 hover:underline"
-                      onClick={() => setResetRequested(false) || setResetRequested(true)}
+                      onClick={() => setResetRequested(true)}
                     >
                       Mot de passe oublié&nbsp;?
                     </button>
