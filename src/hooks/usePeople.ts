@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentEvent } from '@/contexts/CurrentEventContext';
+import { useCurrentTenant } from './useCurrentTenant';
 
 export interface Person {
   id: string;
@@ -22,6 +23,7 @@ export const usePeople = () => {
   const [people, setPeople] = useState<Person[]>([]);
   const [loading, setLoading] = useState(false);
   const subscriptionRef = useRef<any>(null);
+  const { data: currentTenant } = useCurrentTenant();
 
   // Load people from Supabase
   const loadPeople = async () => {
@@ -111,6 +113,10 @@ export const usePeople = () => {
   }, [currentEventId]);
 
   const addPerson = async (newPerson: Omit<Person, 'id' | 'created_at' | 'updated_at'>) => {
+    if (!currentTenant) {
+      toast({ title: "Erreur", description: "Tenant non trouvé", variant: "destructive" });
+      throw new Error("Tenant not found");
+    }
     try {
       // TOUJOURS assigner l'event_id actuel
       const personWithEventId = {
@@ -129,6 +135,7 @@ export const usePeople = () => {
         availability_notes: personWithEventId.availability,
         confirmation_status: personWithEventId.status,
         event_id: personWithEventId.event_id,
+        tenant_id: currentTenant.id
       };
 
       const { data, error } = await supabase

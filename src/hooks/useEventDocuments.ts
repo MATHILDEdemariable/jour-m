@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useCurrentTenant } from './useCurrentTenant';
 
 export interface EventDocument {
   id: string;
@@ -20,6 +20,7 @@ export const useEventDocuments = (eventId: string | null) => {
   const { toast } = useToast();
   const [documents, setDocuments] = useState<EventDocument[]>([]);
   const [uploading, setUploading] = useState(false);
+  const { data: currentTenant } = useCurrentTenant();
 
   const loadDocuments = async () => {
     if (!eventId) return;
@@ -44,7 +45,7 @@ export const useEventDocuments = (eventId: string | null) => {
   };
 
   const uploadDocuments = async (files: FileList) => {
-    if (!eventId || files.length === 0) return;
+    if (!eventId || files.length === 0 || !currentTenant) return;
 
     setUploading(true);
     const uploadPromises = Array.from(files).map(async (file) => {
@@ -69,7 +70,8 @@ export const useEventDocuments = (eventId: string | null) => {
             file_size: file.size,
             mime_type: file.type,
             source: 'manual',
-            assigned_to: []
+            assigned_to: [],
+            tenant_id: currentTenant.id
           })
           .select()
           .single();
@@ -95,7 +97,7 @@ export const useEventDocuments = (eventId: string | null) => {
         setDocuments(prev => [...successfulUploads, ...prev]);
         toast({
           title: 'Upload réussi',
-          description: `${successfulUploads.length} fichier(s) uploadé(s) avec succès`,
+          description: `${successfulUploads.length} fichier(s) uploadé(s) avec succès',
         });
       }
     } catch (error) {

@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentEvent } from '@/contexts/CurrentEventContext';
+import { useCurrentTenant } from './useCurrentTenant';
 
 export interface Document {
   id: string;
@@ -40,6 +40,7 @@ export interface GoogleDriveConfig {
 export const useDocuments = () => {
   const { toast } = useToast();
   const { currentEventId } = useCurrentEvent();
+  const { data: currentTenant } = useCurrentTenant();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [googleDriveConfig, setGoogleDriveConfig] = useState<GoogleDriveConfig | null>(null);
   const [loading, setLoading] = useState(false);
@@ -154,7 +155,7 @@ export const useDocuments = () => {
 
   // Connecter Google Drive
   const connectGoogleDrive = async (folderId: string, folderUrl: string) => {
-    if (!currentEventId) return;
+    if (!currentEventId || !currentTenant) return;
 
     try {
       const { data, error } = await supabase
@@ -163,7 +164,8 @@ export const useDocuments = () => {
           event_id: currentEventId,
           folder_id: folderId,
           folder_url: folderUrl,
-          is_connected: true
+          is_connected: true,
+          tenant_id: currentTenant.id,
         })
         .select()
         .single();

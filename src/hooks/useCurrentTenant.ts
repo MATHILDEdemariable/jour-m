@@ -1,23 +1,24 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AdminAuthContext';
 
-const fetchCurrentTenant = async (userId: string | undefined) => {
-  if (!userId) {
+const fetchCurrentTenant = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
     return null;
   }
 
   const { data: tenantUser, error: tenantUserError } = await supabase
     .from('tenant_users')
     .select('tenant_id')
-    .eq('user_id', userId)
+    .eq('user_id', user.id)
     .single();
 
   if (tenantUserError) {
     console.error('Error fetching tenant user link:', tenantUserError.message);
     if (tenantUserError.code === 'PGRST116') {
-      console.warn(`No tenant found for user ${userId}, or multiple tenants found. This can happen during initial sign-up.`);
+      console.warn(`No tenant found for user ${user.id}, or multiple tenants found. This can happen during initial sign-up.`);
     }
     return null;
   }
@@ -41,12 +42,9 @@ const fetchCurrentTenant = async (userId: string | undefined) => {
 };
 
 export const useCurrentTenant = () => {
-  const { user } = useAuth();
-  
   return useQuery({
-    queryKey: ['currentTenant', user?.id],
-    queryFn: () => fetchCurrentTenant(user?.id),
-    enabled: !!user,
+    queryKey: ['currentTenant'],
+    queryFn: fetchCurrentTenant,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentEvent } from '@/contexts/CurrentEventContext';
+import { useCurrentTenant } from './useCurrentTenant';
 
 export interface Vendor {
   id: string;
@@ -38,6 +39,7 @@ export const useVendors = () => {
   const [documents, setDocuments] = useState<VendorDocument[]>([]);
   const [loading, setLoading] = useState(false);
   const subscriptionRef = useRef<any>(null);
+  const { data: currentTenant } = useCurrentTenant();
 
   const loadVendors = async () => {
     setLoading(true);
@@ -132,11 +134,16 @@ export const useVendors = () => {
   };
 
   const addVendor = async (newVendor: Omit<Vendor, 'id' | 'created_at' | 'updated_at'>) => {
+    if (!currentTenant) {
+      toast({ title: "Erreur", description: "Tenant non trouvé", variant: "destructive" });
+      throw new Error("Tenant not found");
+    }
     try {
       // TOUJOURS assigner l'event_id actuel
       const vendorWithEventId = {
         ...newVendor,
-        event_id: currentEventId || newVendor.event_id
+        event_id: currentEventId || newVendor.event_id,
+        tenant_id: currentTenant.id
       };
 
       console.log('useVendors - Adding vendor with event_id:', vendorWithEventId);
