@@ -232,6 +232,7 @@ export type Database = {
           id: string
           location: string | null
           name: string
+          slug: string
           start_time: string | null
           status: string
           updated_at: string | null
@@ -246,6 +247,7 @@ export type Database = {
           id?: string
           location?: string | null
           name: string
+          slug: string
           start_time?: string | null
           status?: string
           updated_at?: string | null
@@ -260,6 +262,7 @@ export type Database = {
           id?: string
           location?: string | null
           name?: string
+          slug?: string
           start_time?: string | null
           status?: string
           updated_at?: string | null

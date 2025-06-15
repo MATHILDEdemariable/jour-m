@@ -17,6 +17,7 @@ const EventPortal = lazy(() => import("./pages/EventPortal"));
 const AdminPortal = lazy(() => import("./pages/AdminPortal"));
 const Demo = lazy(() => import("./pages/Demo"));
 const TeamAccess = lazy(() => import("./pages/TeamAccess"));
+const EventTeamAccess = lazy(() => import("./pages/EventTeamAccess"));
 
 const queryClient = new QueryClient();
 
@@ -39,8 +40,8 @@ function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/create-event" element={<CreateEvent />} />
                 <Route path="/demo" element={<Demo />} />
+                <Route path="/equipe/:eventSlug" element={<EventTeamAccess />} />
                 <Route path="/equipe" element={<TeamAccess />} />
-                <Route path="/team" element={<TeamAccess />} />
                 <Route
                   path="/event/:eventId/*"
                   element={

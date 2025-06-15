@@ -37,16 +37,27 @@ export const CreateEvent = () => {
     setLoading(true);
     setError(null);
 
+    // Nouvelle: fonction pour slugifier
+    function slugify(text: string) {
+      return text
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")         // Remove accents
+        .replace(/[^a-z0-9]+/g, '-')                             // Dashes instead of anything else
+        .replace(/^-+|-+$/g, '')                                 // Remove leading/trailing dash
+        .substring(0, 60);                                       // Truncate (optional)
+    }
+
     try {
+      const slug = slugify(formData.name);
       const { data, error } = await supabase
         .from('events')
         .insert([
           {
             ...formData,
-            // Send null instead of empty string for start_time
             start_time: formData.start_time || null,
             user_id: user.id,
-            status: 'planning'
+            status: 'planning',
+            slug,      // On ajoute le slug
           }
         ])
         .select()
@@ -57,8 +68,10 @@ export const CreateEvent = () => {
         return;
       }
 
-      // Redirect to admin portal instead of event portal
+      // Rediriger vers admin + toast ou modal pour afficher l'URL équipe
       navigate(`/admin/${data.id}`);
+      // Optionnel : informer l'utilisateur de l'URL équipe personnalisée (à améliorer)
+      // toast({ title: "URL équipe", description: `${window.location.origin}/equipe/${slug}` });
     } catch (err) {
       setError('Une erreur est survenue lors de la création de l\'événement');
     } finally {
