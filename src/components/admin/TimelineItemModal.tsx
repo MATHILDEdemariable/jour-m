@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -48,7 +49,7 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
         priority: (item.priority as 'low'|'medium'|'high') ?? 'medium',
         status: (item.status as 'scheduled'|'in_progress'|'completed'|'delayed') ?? 'scheduled',
         assigned_person_ids: item.assigned_person_ids || [],
-        assigned_vendor_id: (item as any).assigned_vendor_id || 'none',
+        assigned_vendor_id: item.assigned_vendor_id || 'none',
         notes: item.notes || ''
       });
     } else {
@@ -73,7 +74,7 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
       ...formData,
       description: formData.description || null,
       notes: formData.notes || null,
-      assigned_vendor_id: formData.assigned_vendor_id === 'none' ? '' : formData.assigned_vendor_id,
+      assigned_vendor_id: formData.assigned_vendor_id === 'none' ? null : formData.assigned_vendor_id,
     });
   };
 

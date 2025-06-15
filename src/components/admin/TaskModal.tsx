@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -57,7 +58,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     const submitData = {
       ...data,
       assigned_vendor_id:
-        data.assigned_vendor_id === 'none' ? '' : data.assigned_vendor_id,
+        data.assigned_vendor_id === 'none' ? null : data.assigned_vendor_id,
     };
     onSubmit(submitData);
     if (!task) {

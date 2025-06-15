@@ -15,6 +15,7 @@ export interface TimelineItem {
   priority: 'high' | 'medium' | 'low';
   assigned_person_id: string | null; // Garder pour compatibilité descendante
   assigned_person_ids: string[]; // Nouvelle propriété pour multi-assignation
+  assigned_vendor_id: string | null;
   assigned_role: string | null;
   order_index: number;
   notes: string | null;
@@ -35,6 +36,7 @@ type SupabaseTimelineItem = {
   priority: string | null;
   assigned_person_id: string | null;
   assigned_person_ids: string[] | null;
+  assigned_vendor_id: string | null;
   assigned_role: string | null;
   order_index: number;
   notes: string | null;
@@ -48,6 +50,7 @@ const mapSupabaseToTimelineItem = (item: SupabaseTimelineItem): TimelineItem => 
   status: (item.status as TimelineItem['status']) || 'scheduled',
   priority: (item.priority as TimelineItem['priority']) || 'medium',
   assigned_person_ids: item.assigned_person_ids || [],
+  assigned_vendor_id: item.assigned_vendor_id || null,
   created_at: item.created_at || new Date().toISOString(),
   updated_at: item.updated_at || new Date().toISOString(),
 });
@@ -85,7 +88,7 @@ export const useTimelineItems = () => {
     }
   };
 
-  const addTimelineItem = async (item: Omit<TimelineItem, 'id' | 'event_id' | 'created_at' | 'updated_at'>) => {
+  const addTimelineItem = async (item: Omit<TimelineItem, 'id' | 'event_id' | 'created_at' | 'updated_at' | 'assigned_person_id'>) => {
     if (!currentEventId) return;
 
     try {
