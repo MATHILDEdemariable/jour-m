@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -26,7 +25,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   isLoading = false
 }) => {
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CreateTaskData>();
-  const assignedVendorId = watch('assigned_vendor_id') || '';
+  const assignedVendorId = watch('assigned_vendor_id') || 'none';
   const { vendors, loading: vendorsLoading } = useVendors();
 
   useEffect(() => {
@@ -38,7 +37,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         duration_minutes: task.duration_minutes,
         assigned_role: task.assigned_role || '',
         notes: task.notes || '',
-        assigned_vendor_id: task.assigned_vendor_id || '',
+        assigned_vendor_id: task.assigned_vendor_id || 'none',
       });
     } else {
       reset({
@@ -48,13 +47,19 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         duration_minutes: 30,
         assigned_role: '',
         notes: '',
-        assigned_vendor_id: '',
+        assigned_vendor_id: 'none',
       });
     }
   }, [task, reset]);
 
   const handleFormSubmit = (data: CreateTaskData) => {
-    onSubmit(data);
+    // If "none" is selected, set assigned_vendor_id to null or ''
+    const submitData = {
+      ...data,
+      assigned_vendor_id:
+        data.assigned_vendor_id === 'none' ? '' : data.assigned_vendor_id,
+    };
+    onSubmit(submitData);
     if (!task) {
       reset();
     }
@@ -166,9 +171,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   {vendorsLoading && (
-                    <SelectItem value="" disabled>Chargement...</SelectItem>
+                    <SelectItem value="none" disabled>Chargement...</SelectItem>
                   )}
-                  <SelectItem value="">Aucun</SelectItem>
+                  <SelectItem value="none">Aucun</SelectItem>
                   {vendors.map(vendor => (
                     <SelectItem value={vendor.id} key={vendor.id}>
                       {vendor.name} ({vendor.service_type || "service"})
@@ -212,4 +217,3 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     </Dialog>
   );
 };
-

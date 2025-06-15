@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -49,7 +48,7 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
         priority: (item.priority as 'low'|'medium'|'high') ?? 'medium',
         status: (item.status as 'scheduled'|'in_progress'|'completed'|'delayed') ?? 'scheduled',
         assigned_person_ids: item.assigned_person_ids || [],
-        assigned_vendor_id: (item as any).assigned_vendor_id || '',
+        assigned_vendor_id: (item as any).assigned_vendor_id || 'none',
         notes: item.notes || ''
       });
     } else {
@@ -62,7 +61,7 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
         priority: 'medium',
         status: 'scheduled',
         assigned_person_ids: [],
-        assigned_vendor_id: '',
+        assigned_vendor_id: 'none',
         notes: ''
       });
     }
@@ -73,7 +72,8 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
     onSubmit({
       ...formData,
       description: formData.description || null,
-      notes: formData.notes || null
+      notes: formData.notes || null,
+      assigned_vendor_id: formData.assigned_vendor_id === 'none' ? '' : formData.assigned_vendor_id,
     });
   };
 
@@ -197,17 +197,22 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
           <div>
             <Label htmlFor="assigned_vendor_id">Prestataire assigné</Label>
             <Select
-              value={formData.assigned_vendor_id || ''}
-              onValueChange={value => setFormData(prev => ({ ...prev, assigned_vendor_id: value }))}
+              value={formData.assigned_vendor_id || 'none'}
+              onValueChange={value =>
+                setFormData(prev => ({
+                  ...prev,
+                  assigned_vendor_id: value
+                }))
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Aucun prestataire" />
               </SelectTrigger>
               <SelectContent>
                 {vendorsLoading && (
-                  <SelectItem value="" disabled>Chargement...</SelectItem>
+                  <SelectItem value="none" disabled>Chargement...</SelectItem>
                 )}
-                <SelectItem value="">Aucun</SelectItem>
+                <SelectItem value="none">Aucun</SelectItem>
                 {vendors.map(vendor => (
                   <SelectItem value={vendor.id} key={vendor.id}>
                     {vendor.name} ({vendor.service_type || "service"})
@@ -241,4 +246,3 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
     </Dialog>
   );
 };
-
