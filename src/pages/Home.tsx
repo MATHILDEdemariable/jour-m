@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,18 +8,26 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast"
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { AdminLoginForm } from '@/components/admin/AdminLoginForm';
 import { EventPortalSelectionModal } from '@/components/event/EventPortalSelectionModal';
+import { useCurrentEvent } from '@/contexts/CurrentEventContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAuthenticated, login, logout } = useAdminAuth();
+  const { currentEventId } = useCurrentEvent();
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showEventPortalSelection, setShowEventPortalSelection] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
 
   const handleLogin = async (password: string) => {
     const success = await login(password);
@@ -60,6 +67,47 @@ const Home: React.FC = () => {
     setShowEventPortalSelection(true);
   };
 
+  const handleConfirmReset = async () => {
+    if (resetConfirmText !== 'RESET' || !currentEventId) {
+      toast({
+        title: 'Erreur de confirmation',
+        description: "Veuillez sélectionner un événement et taper 'RESET' pour confirmer.",
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      const { error } = await supabase.functions.invoke('reset-event-data', {
+        body: { eventId: currentEventId },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: 'Succès',
+        description: "Les données de l'événement ont été réinitialisées. La page va se rafraîchir.",
+      });
+
+      setTimeout(() => window.location.reload(), 2000);
+
+    } catch (error) {
+      console.error('Failed to reset event data:', error);
+      toast({
+        title: 'Erreur',
+        description: "Impossible de réinitialiser les données de l'événement.",
+        variant: 'destructive',
+      });
+    } finally {
+      setIsResetting(false);
+      setResetConfirmText('');
+      setShowResetDialog(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-sage-50 to-yellow-50 flex flex-col">
       {/* Hero Section */}
@@ -95,13 +143,20 @@ const Home: React.FC = () => {
           </div>
 
           {isAuthenticated && (
-            <div className="mt-4">
+            <div className="mt-4 flex flex-col items-center gap-2">
               <Button
                 onClick={handleLogout}
                 variant="ghost"
                 className="text-stone-500 hover:text-stone-700"
               >
                 Se déconnecter
+              </Button>
+              <Button
+                onClick={() => setShowResetDialog(true)}
+                variant="destructive"
+                className="text-sm"
+              >
+                Réinitialiser les données de l'événement
               </Button>
             </div>
           )}
@@ -134,6 +189,36 @@ const Home: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           <AdminLoginForm onSubmit={handleLogin} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Confirmation Dialog */}
+      <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Êtes-vous absolument sûr ?</DialogTitle>
+            <DialogDescription>
+              Cette action est irréversible. Toutes les données (tâches, planning, équipe, prestataires, documents, etc.) de l'événement actuel seront définitivement supprimées. Pour confirmer, veuillez taper <span className="font-bold text-red-600">RESET</span> dans le champ ci-dessous.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              value={resetConfirmText}
+              onChange={(e) => setResetConfirmText(e.target.value)}
+              placeholder='Tapez "RESET" pour confirmer'
+              className="border-red-500 focus-visible:ring-red-500"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowResetDialog(false)}>Annuler</Button>
+            <Button
+              variant="destructive"
+              disabled={resetConfirmText !== 'RESET' || isResetting}
+              onClick={handleConfirmReset}
+            >
+              {isResetting ? 'Réinitialisation en cours...' : 'Je comprends, tout supprimer'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
