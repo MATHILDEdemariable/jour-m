@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { CurrentEventProvider } from "@/contexts/CurrentEventContext";
+import { CurrentEventProvider } from "@/contexts/CurrentEventProvider";
 import { EventDataProvider } from "@/contexts/EventDataContext";
 import Home from "./pages/Home";
 import Index from "./pages/Index";
@@ -14,9 +14,9 @@ import EventPortal from "./pages/EventPortal";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
-import './i18n'; // Import du système i18n
+import './i18n';
 import Dashboard from "./pages/Dashboard";
-import PublicAccessPage from "./pages/PublicAccessPage"; // Correction: import direct
+import PublicAccessPage from "./pages/PublicAccessPage";
 import GuestDashboard from "./pages/GuestDashboard";
 import PublicTeamAccess from "./pages/PublicTeamAccess";
 
@@ -35,17 +35,18 @@ const App = () => (
                 <Route path="/" element={<Home />} />
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/event-portal" element={<EventPortal />} />
-                {/* --- Ajout route publique minimaliste --- */}
+                {/* --- Route test simple --- */}
+                <Route path="/test-simple" element={<div className="p-8 text-center"><h1 className="text-2xl font-bold text-green-600">✅ Test route OK</h1></div>} />
+                {/* --- Routes publiques --- */}
                 <Route path="/public-access" element={<PublicAccessPage />} />
                 <Route path="/guest-dashboard" element={<GuestDashboard />} />
-                {/* --- Nouvelle route publique pour l'accès équipe --- */}
+                {/* --- Route publique pour l'accès équipe (simplifiée) --- */}
                 <Route path="/team/:eventId/:shareToken" element={<PublicTeamAccess />} />
                 <Route element={<ProtectedRoute />}>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/event" element={<Index />} />
                   <Route path="/admin" element={<AdminPortal />} />
                 </Route>
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </TooltipProvider>
