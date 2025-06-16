@@ -11,6 +11,7 @@ import { UnifiedPersonalPlanning } from '@/components/event/UnifiedPersonalPlann
 import { PublicContactsTab } from './PublicContactsTab';
 import { PublicDocuments } from './PublicDocuments';
 import { useCurrentEvent } from '@/contexts/CurrentEventContext';
+import { useSharedEventData } from '@/hooks/useSharedEventData';
 
 interface SelectedUser {
   id: string;
@@ -22,16 +23,24 @@ export const PublicTeamView = () => {
   const { eventId, shareToken } = useParams<{ eventId: string; shareToken: string }>();
   const { data, loading, error } = usePublicEventData(eventId!, shareToken!);
   const { setCurrentEventId } = useCurrentEvent();
+  const { refreshData } = useSharedEventData();
   const [activeTab, setActiveTab] = useState<'planning' | 'contacts' | 'documents'>('planning');
   const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
   const [viewMode, setViewMode] = useState<'personal' | 'global'>('personal');
 
-  // Synchroniser currentEventId
+  // Synchroniser currentEventId et forcer le refresh des données
   useEffect(() => {
     if (eventId) {
+      console.log('PublicTeamView - Setting current event ID:', eventId);
       setCurrentEventId(eventId);
+      
+      // Force refresh des données après avoir défini l'event ID
+      setTimeout(() => {
+        console.log('PublicTeamView - Forcing data refresh...');
+        refreshData();
+      }, 100);
     }
-  }, [eventId, setCurrentEventId]);
+  }, [eventId, setCurrentEventId, refreshData]);
 
   // Gestion localStorage pour persistance
   useEffect(() => {
@@ -40,6 +49,7 @@ export const PublicTeamView = () => {
       if (stored) {
         try {
           const parsedUser = JSON.parse(stored);
+          console.log('PublicTeamView - Restored user from localStorage:', parsedUser);
           setSelectedUser(parsedUser);
         } catch (error) {
           console.error('Error parsing stored user:', error);
@@ -50,6 +60,7 @@ export const PublicTeamView = () => {
 
   const handleUserSelect = (userId: string, userType: 'person' | 'vendor', userName: string) => {
     const user = { id: userId, type: userType, name: userName };
+    console.log('PublicTeamView - User selected:', user);
     setSelectedUser(user);
     
     // Sauvegarder dans localStorage
@@ -59,6 +70,7 @@ export const PublicTeamView = () => {
   };
 
   const handleChangeUser = () => {
+    console.log('PublicTeamView - Changing user');
     setSelectedUser(null);
     if (eventId && shareToken) {
       localStorage.removeItem(`public-user-${eventId}-${shareToken}`);
@@ -97,12 +109,20 @@ export const PublicTeamView = () => {
 
   const { event, people, vendors, timelineItems, documents } = data;
 
+  // Logs de debug pour le filtrage
+  console.log('PublicTeamView - Render data:');
+  console.log('- Event ID:', event.id);
+  console.log('- People total:', people.length);
+  console.log('- Vendors total:', vendors.length);
+  console.log('- People filtered by event_id:', people.filter(p => p.event_id === event.id).length);
+  console.log('- Vendors filtered by event_id:', vendors.filter(v => v.event_id === event.id).length);
+
   // Afficher la sélection d'utilisateur si aucun utilisateur sélectionné
   if (!selectedUser) {
     return (
       <PublicUserSelection
-        people={people}
-        vendors={vendors}
+        people={people.filter(p => p.event_id === event.id)}
+        vendors={vendors.filter(v => v.event_id === event.id)}
         eventName={event.name}
         onUserSelect={handleUserSelect}
       />
@@ -137,7 +157,12 @@ export const PublicTeamView = () => {
           />
         );
       case 'contacts':
-        return <PublicContactsTab people={people} vendors={vendors} />;
+        return (
+          <PublicContactsTab 
+            people={people.filter(p => p.event_id === event.id)} 
+            vendors={vendors.filter(v => v.event_id === event.id)} 
+          />
+        );
       case 'documents':
         return (
           <PublicDocuments 

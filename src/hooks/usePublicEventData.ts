@@ -46,6 +46,8 @@ export const usePublicEventData = (eventId: string, shareToken: string) => {
       setLoading(true);
       setError(null);
 
+      console.log('PublicEventData - Validating token for event:', eventId);
+
       // Valider le token et récupérer l'événement
       const { data: event, error: eventError } = await supabase
         .from('events')
@@ -55,14 +57,17 @@ export const usePublicEventData = (eventId: string, shareToken: string) => {
         .single();
 
       if (eventError || !event) {
+        console.error('PublicEventData - Token validation failed:', eventError);
         setError('Lien invalide ou expiré');
         setLoading(false);
         return;
       }
 
+      console.log('PublicEventData - Token validated, event found:', event.name);
       setIsTokenValidated(true);
 
       // Forcer le refresh des données partagées
+      console.log('PublicEventData - Forcing data refresh...');
       await refreshData();
 
       // Charger les documents
@@ -74,6 +79,12 @@ export const usePublicEventData = (eventId: string, shareToken: string) => {
       if (documentsError) {
         console.error('Error loading documents:', documentsError);
       }
+
+      console.log('PublicEventData - Data loaded:');
+      console.log('- People:', people?.length || 0);
+      console.log('- Vendors:', vendors?.length || 0);
+      console.log('- Timeline items:', timelineItems?.length || 0);
+      console.log('- Documents:', documents?.length || 0);
 
       setData({
         event,
@@ -103,6 +114,11 @@ export const usePublicEventData = (eventId: string, shareToken: string) => {
   // Mettre à jour les données quand useSharedEventData change
   useEffect(() => {
     if (isTokenValidated && data) {
+      console.log('PublicEventData - Updating data from shared context:');
+      console.log('- People updated:', people?.length || 0);
+      console.log('- Vendors updated:', vendors?.length || 0);
+      console.log('- Timeline items updated:', timelineItems?.length || 0);
+      
       setData(prev => prev ? {
         ...prev,
         people: people || [],

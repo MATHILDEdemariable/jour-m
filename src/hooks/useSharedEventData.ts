@@ -1,3 +1,4 @@
+
 import { useEventData } from '@/contexts/EventDataContext';
 import { useTimelineItems } from '@/hooks/useTimelineItems';
 import { useCurrentEvent } from '@/contexts/CurrentEventContext';
@@ -17,22 +18,30 @@ export const useSharedEventData = () => {
   const { timelineItems, loadTimelineItems } = useTimelineItems();
   const { currentEventId } = useCurrentEvent();
 
-  // Nettoyage des logs : logs de debug supprimés (gardé seulement logs d’erreur lors de refreshData)
+  // Logs de debug pour le filtrage
+  console.log('useSharedEventData - Current Event ID:', currentEventId);
+  console.log('useSharedEventData - All people:', people.length);
+  console.log('useSharedEventData - All vendors:', vendors.length);
   
   const eventFilteredTasks = tasks.filter(task => task.event_id === currentEventId);
   const eventFilteredPeople = people.filter(person => person.event_id === currentEventId);
   const eventFilteredVendors = vendors.filter(vendor => vendor.event_id === currentEventId);
   const eventFilteredPlanningItems = planningItems.filter(item => item.event_id === currentEventId);
 
-  // Enhanced refresh avec logs réduits
+  console.log('useSharedEventData - Filtered people for event', currentEventId, ':', eventFilteredPeople.length);
+  console.log('useSharedEventData - Filtered vendors for event', currentEventId, ':', eventFilteredVendors.length);
+
+  // Enhanced refresh avec logs
   const enhancedRefreshData = async () => {
+    console.log('useSharedEventData - Enhanced refresh triggered for event:', currentEventId);
     try {
       await Promise.all([
         refreshData(),
         loadTimelineItems()
       ]);
+      console.log('useSharedEventData - Enhanced refresh completed successfully');
     } catch (error) {
-      console.error('ENHANCED REFRESH ERROR', error);
+      console.error('useSharedEventData - Enhanced refresh error:', error);
     }
   };
 
@@ -52,7 +61,7 @@ export const useSharedEventData = () => {
     const confirmed = eventFilteredPeople.filter(p => p.confirmation_status === 'confirmed').length;
     const pending = total - confirmed;
     
-    console.log('Team summary calculated:', { total, confirmed, pending });
+    console.log('Team summary calculated for event', currentEventId, ':', { total, confirmed, pending });
     return { confirmed, pending, total };
   };
 
@@ -61,7 +70,7 @@ export const useSharedEventData = () => {
     const confirmed = eventFilteredVendors.filter(v => v.contract_status === 'signed').length;
     const pending = total - confirmed;
     
-    console.log('Vendors summary calculated:', { total, confirmed, pending });
+    console.log('Vendors summary calculated for event', currentEventId, ':', { total, confirmed, pending });
     return { confirmed, pending, total };
   };
 
@@ -81,7 +90,7 @@ export const useSharedEventData = () => {
       progressPercentage: totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
     };
     
-    console.log('Timeline stats calculated:', stats);
+    console.log('Timeline stats calculated for event', currentEventId, ':', stats);
     return stats;
   };
 
