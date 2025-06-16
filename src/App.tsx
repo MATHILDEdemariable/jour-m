@@ -37,11 +37,11 @@ const App = () => (
                 <Route path="/event-portal" element={<EventPortal />} />
                 {/* --- Route test simple --- */}
                 <Route path="/test-simple" element={<div className="p-8 text-center"><h1 className="text-2xl font-bold text-green-600">✅ Test route OK</h1></div>} />
-                {/* --- Routes publiques --- */}
+                {/* --- Routes publiques (AVANT les routes protégées) --- */}
                 <Route path="/public-access" element={<PublicAccessPage />} />
                 <Route path="/guest-dashboard" element={<GuestDashboard />} />
-                {/* --- Route publique pour l'accès équipe (simplifiée) --- */}
                 <Route path="/team/:eventId/:shareToken" element={<PublicTeamAccess />} />
+                {/* --- Routes protégées --- */}
                 <Route element={<ProtectedRoute />}>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/event" element={<Index />} />

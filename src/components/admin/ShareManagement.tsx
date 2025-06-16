@@ -4,22 +4,79 @@ import { useEventData } from '@/contexts/EventDataContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Copy, Users, RefreshCw, Eye } from 'lucide-react';
+import { Copy, Users, RefreshCw, Eye, AlertCircle } from 'lucide-react';
 import { QRCodeCanvas as QRCode } from 'qrcode.react';
 import { useToast } from '@/components/ui/use-toast';
 import { useShareToken } from '@/hooks/useShareToken';
+import { supabase } from '@/integrations/supabase/client';
 
 export const ShareManagement = () => {
   const { currentEvent } = useEventData();
   const [teamShareLink, setTeamShareLink] = useState('');
+  const [ensuring, setEnsuring] = useState(false);
   const { toast } = useToast();
   const { regenerateShareToken, regenerating } = useShareToken();
 
-  useEffect(() => {
-    if (currentEvent?.id && currentEvent?.share_token) {
-      const teamLink = `${window.location.origin}/team/${currentEvent.id}/${currentEvent.share_token}`;
-      setTeamShareLink(teamLink);
+  const ensureShareToken = async (eventId: string) => {
+    setEnsuring(true);
+    try {
+      console.log('ShareManagement - Ensuring share token for event:', eventId);
+      
+      // Vérifier si l'événement a déjà un token
+      const { data: event, error } = await supabase
+        .from('events')
+        .select('share_token')
+        .eq('id', eventId)
+        .single();
+
+      if (error) {
+        console.error('Error checking event:', error);
+        return null;
+      }
+
+      if (!event.share_token) {
+        console.log('ShareManagement - No token found, generating one...');
+        // Générer un nouveau token
+        const newToken = await regenerateShareToken(eventId);
+        return newToken;
+      } else {
+        console.log('ShareManagement - Token exists:', event.share_token);
+        return event.share_token;
+      }
+    } catch (error) {
+      console.error('Error ensuring share token:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de générer le token de partage',
+        variant: 'destructive',
+      });
+      return null;
+    } finally {
+      setEnsuring(false);
     }
+  };
+
+  useEffect(() => {
+    const initializeShareLink = async () => {
+      if (currentEvent?.id) {
+        console.log('ShareManagement - Initializing for event:', currentEvent.id);
+        
+        let shareToken = currentEvent.share_token;
+        
+        // S'assurer qu'un token existe
+        if (!shareToken) {
+          shareToken = await ensureShareToken(currentEvent.id);
+        }
+        
+        if (shareToken) {
+          const teamLink = `${window.location.origin}/team/${currentEvent.id}/${shareToken}`;
+          setTeamShareLink(teamLink);
+          console.log('ShareManagement - Team link generated:', teamLink);
+        }
+      }
+    };
+
+    initializeShareLink();
   }, [currentEvent]);
 
   const handleCopy = (link: string) => {
@@ -42,6 +99,14 @@ export const ShareManagement = () => {
   };
 
   const handlePreview = (link: string) => {
+    if (!link) {
+      toast({
+        title: 'Erreur',
+        description: 'Le lien n\'est pas encore prêt',
+        variant: 'destructive',
+      });
+      return;
+    }
     window.open(link, '_blank');
   };
 
@@ -52,7 +117,10 @@ export const ShareManagement = () => {
           <CardTitle>Partage Équipe</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>Veuillez d'abord sélectionner un événement.</p>
+          <div className="flex items-center gap-2 text-amber-600">
+            <AlertCircle className="w-4 h-4" />
+            <p>Veuillez d'abord sélectionner un événement.</p>
+          </div>
         </CardContent>
       </Card>
     );
@@ -75,23 +143,44 @@ export const ShareManagement = () => {
           <div>
             <label htmlFor="team-share-link" className="text-sm font-medium">Lien d'accès équipe</label>
             <div className="flex gap-2 mt-1">
-              <Input id="team-share-link" type="text" value={teamShareLink} readOnly />
-              <Button variant="outline" size="icon" onClick={() => handleCopy(teamShareLink)} disabled={!teamShareLink}>
+              <Input 
+                id="team-share-link" 
+                type="text" 
+                value={teamShareLink} 
+                readOnly 
+                placeholder={ensuring ? "Génération du lien..." : "Lien en cours de génération"}
+              />
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={() => handleCopy(teamShareLink)} 
+                disabled={!teamShareLink || ensuring}
+              >
                 <Copy className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="icon" onClick={() => handlePreview(teamShareLink)} disabled={!teamShareLink}>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={() => handlePreview(teamShareLink)} 
+                disabled={!teamShareLink || ensuring}
+              >
                 <Eye className="w-4 h-4" />
               </Button>
               <Button 
                 variant="outline" 
                 size="icon" 
                 onClick={handleRegenerateToken}
-                disabled={regenerating || !currentEvent?.id}
+                disabled={regenerating || ensuring || !currentEvent?.id}
                 title="Régénérer le token (invalide l'ancien lien)"
               >
-                <RefreshCw className={`w-4 h-4 ${regenerating ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 ${regenerating || ensuring ? 'animate-spin' : ''}`} />
               </Button>
             </div>
+            {ensuring && (
+              <p className="text-sm text-amber-600 mt-2">
+                Génération du token de partage en cours...
+              </p>
+            )}
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
@@ -134,7 +223,9 @@ export const ShareManagement = () => {
           {teamShareLink ? (
             <QRCode value={teamShareLink} size={192} />
           ) : (
-            <div className="w-48 h-48 bg-gray-200 animate-pulse rounded-lg" />
+            <div className="w-48 h-48 bg-gray-200 animate-pulse rounded-lg flex items-center justify-center">
+              <span className="text-gray-500 text-sm">Génération...</span>
+            </div>
           )}
         </div>
         <p className="text-sm text-muted-foreground mt-4 text-center max-w-md">

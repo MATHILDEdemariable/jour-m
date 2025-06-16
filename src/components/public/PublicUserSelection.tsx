@@ -4,23 +4,69 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Users, Building2, ArrowRight, UserCheck } from 'lucide-react';
+import { Users, Building2, ArrowRight, UserCheck, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PublicUserSelectionProps {
   people: any[];
   vendors: any[];
   eventName: string;
+  eventId: string;
   onUserSelect: (userId: string, userType: 'person' | 'vendor', userName: string) => void;
 }
 
 export const PublicUserSelection: React.FC<PublicUserSelectionProps> = ({
-  people,
-  vendors,
   eventName,
+  eventId,
   onUserSelect
 }) => {
   const [teamType, setTeamType] = useState<'personal' | 'professional' | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [people, setPeople] = useState<any[]>([]);
+  const [vendors, setVendors] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        console.log('PublicUserSelection - Loading data for event:', eventId);
+        
+        // Charger les personnes
+        const { data: peopleData, error: peopleError } = await supabase
+          .from('people')
+          .select('*')
+          .eq('event_id', eventId);
+
+        if (peopleError) {
+          console.error('Error loading people:', peopleError);
+        } else {
+          setPeople(peopleData || []);
+          console.log('PublicUserSelection - Loaded people:', peopleData?.length);
+        }
+
+        // Charger les vendors
+        const { data: vendorsData, error: vendorsError } = await supabase
+          .from('vendors')
+          .select('*')
+          .eq('event_id', eventId);
+
+        if (vendorsError) {
+          console.error('Error loading vendors:', vendorsError);
+        } else {
+          setVendors(vendorsData || []);
+          console.log('PublicUserSelection - Loaded vendors:', vendorsData?.length);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (eventId) {
+      loadData();
+    }
+  }, [eventId]);
 
   const handleTeamTypeSelect = (type: 'personal' | 'professional') => {
     setTeamType(type);
@@ -43,6 +89,20 @@ export const PublicUserSelection: React.FC<PublicUserSelectionProps> = ({
     setTeamType(null);
     setSelectedUserId('');
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+          <CardContent className="p-8 text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-purple-600" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Chargement...</h2>
+            <p className="text-gray-600">Préparation de votre accès équipe</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center p-4">
