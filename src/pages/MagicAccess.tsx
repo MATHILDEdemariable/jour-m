@@ -28,8 +28,8 @@ const MagicAccess = () => {
     e.preventDefault();
     if (!magicWord.trim()) {
       toast({
-        title: 'Code manquant',
-        description: 'Veuillez saisir un code d\'accès',
+        title: 'Mot de passe manquant',
+        description: 'Veuillez saisir un mot de passe d\'accès',
         variant: 'destructive',
       });
       return;
@@ -39,7 +39,7 @@ const MagicAccess = () => {
     if (success) {
       toast({
         title: 'Accès autorisé',
-        description: 'Redirection vers l\'équipe...',
+        description: 'Redirection vers le dashboard équipe...',
       });
     }
   };
@@ -63,7 +63,7 @@ const MagicAccess = () => {
             Rejoindre l'Équipe
           </h1>
           <p className="text-gray-600">
-            Saisissez votre code d'accès pour accéder au planning de l'événement
+            Saisissez votre mot de passe d'accès pour accéder au planning de l'événement
           </p>
         </div>
 
@@ -72,13 +72,13 @@ const MagicAccess = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <KeyRound className="w-5 h-5 text-purple-500" />
-              Code d'Accès
+              Mot de Passe d'Accès
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="magic-word">Code d'accès</Label>
+                <Label htmlFor="magic-word">Mot de passe d'accès</Label>
                 <Input
                   id="magic-word"
                   type="text"
@@ -91,7 +91,7 @@ const MagicAccess = () => {
                   autoFocus
                 />
                 <p className="text-xs text-gray-500">
-                  Saisissez le code fourni par l'organisateur
+                  Saisissez le mot de passe fourni par l'organisateur
                 </p>
               </div>
 
@@ -106,7 +106,7 @@ const MagicAccess = () => {
                 disabled={loading || !magicWord.trim()}
                 className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
               >
-                {loading ? 'Vérification...' : 'Accéder à l\'Équipe'}
+                {loading ? 'Vérification...' : 'Accéder au Dashboard'}
               </Button>
             </form>
           </CardContent>
@@ -118,7 +118,7 @@ const MagicAccess = () => {
             <div className="bg-green-50 border border-green-200 rounded-lg p-3">
               <div className="flex items-center justify-center gap-2 text-green-600">
                 <CheckCircle className="w-4 h-4" />
-                <p className="text-sm font-medium">Code pré-rempli automatiquement</p>
+                <p className="text-sm font-medium">Mot de passe pré-rempli automatiquement</p>
               </div>
             </div>
           </div>
@@ -139,7 +139,7 @@ const MagicAccess = () => {
         {/* Info */}
         <div className="mt-8 text-center">
           <p className="text-xs text-gray-500">
-            Vous n'avez pas de code ? Contactez l'organisateur de l'événement
+            Vous n'avez pas de mot de passe ? Contactez l'organisateur de l'événement
           </p>
         </div>
       </div>

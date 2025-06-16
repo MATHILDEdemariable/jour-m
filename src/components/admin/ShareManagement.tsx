@@ -114,7 +114,7 @@ export const ShareManagement = () => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Partage Équipe</CardTitle>
+          <CardTitle>Accès Équipe</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2 text-amber-600">
@@ -128,21 +128,21 @@ export const ShareManagement = () => {
 
   return (
     <div className="space-y-6">
-      {/* Accès par Code Magique */}
+      {/* Accès par Code d'Accès */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <KeyRound className="w-6 h-6 text-purple-600" />
-            Accès Équipe par Code
+            Mot de Passe d'Accès Équipe
           </CardTitle>
           <CardDescription>
-            Partagez ce code d'accès simple avec votre équipe. Ils pourront accéder directement à leur planning sans authentification.
+            Générez un mot de passe d'accès simple pour votre équipe. Ils pourront accéder directement à leur planning sans créer de compte utilisateur.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Code d'accès */}
           <div>
-            <label htmlFor="magic-code" className="text-sm font-medium">Code d'accès actuel</label>
+            <label htmlFor="magic-code" className="text-sm font-medium">Mot de passe d'accès actuel</label>
             <div className="flex gap-2 mt-1">
               <Input 
                 id="magic-code" 
@@ -156,7 +156,7 @@ export const ShareManagement = () => {
                 size="icon" 
                 onClick={handleCopyCode} 
                 disabled={!currentEvent.magic_word}
-                title="Copier le code"
+                title="Copier le mot de passe"
               >
                 <Copy className="w-4 h-4" />
               </Button>
@@ -165,7 +165,7 @@ export const ShareManagement = () => {
                 size="icon" 
                 onClick={handleRegenerateMagicWord}
                 disabled={generating}
-                title="Générer un nouveau code"
+                title="Générer un nouveau mot de passe"
               >
                 <RefreshCw className={`w-4 h-4 ${generating ? 'animate-spin' : ''}`} />
               </Button>
@@ -206,9 +206,9 @@ export const ShareManagement = () => {
             <div>
               <h3 className="text-sm font-medium mb-2">Mode d'emploi</h3>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Partagez le code ou le lien avec votre équipe</li>
+                <li>• Partagez le mot de passe ou le lien avec votre équipe</li>
                 <li>• L'équipe accède via "Rejoindre équipe"</li>
-                <li>• Saisie du code → accès direct</li>
+                <li>• Saisie du mot de passe → dashboard → équipe</li>
                 <li>• Sélection du profil → planning personnalisé</li>
                 <li>• Synchronisation en temps réel</li>
               </ul>
@@ -218,7 +218,7 @@ export const ShareManagement = () => {
               <h3 className="text-sm font-medium mb-2">Avantages</h3>
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>• Accès rapide sans compte utilisateur</li>
-                <li>• Code simple à mémoriser et partager</li>
+                <li>• Mot de passe simple à partager</li>
                 <li>• Interface mobile et desktop optimisée</li>
                 <li>• Régénération possible si compromis</li>
                 <li>• Accès révocable instantanément</li>
@@ -228,7 +228,7 @@ export const ShareManagement = () => {
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
             <p className="text-sm text-blue-800">
-              <strong>Instructions pour l'équipe:</strong> Rendez-vous sur votre site → "Rejoindre équipe" → saisissez le code <span className="font-mono bg-blue-100 px-1 rounded">{currentEvent.magic_word}</span>
+              <strong>Instructions pour l'équipe:</strong> Rendez-vous sur votre site → "Rejoindre équipe" → saisissez le mot de passe <span className="font-mono bg-blue-100 px-1 rounded">{currentEvent.magic_word}</span> → Accédez au dashboard → Cliquez sur "Accéder à l'équipe"
             </p>
           </div>
         </CardContent>
@@ -247,7 +247,7 @@ export const ShareManagement = () => {
           )}
         </div>
         <p className="text-sm text-muted-foreground mt-4 text-center max-w-md">
-          Scannez ce QR code pour accéder directement à la page d'accès équipe avec le code pré-rempli
+          Scannez ce QR code pour accéder directement à la page d'accès équipe avec le mot de passe pré-rempli
         </p>
         <div className="mt-3 text-xs text-gray-500 text-center">
           Compatible avec tous les lecteurs QR code standards

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +19,7 @@ import PublicAccessPage from "./pages/PublicAccessPage";
 import GuestDashboard from "./pages/GuestDashboard";
 import MagicAccess from "./pages/MagicAccess";
 import LandingPage from "./pages/LandingPage";
+import TeamDashboard from "./pages/TeamDashboard";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +42,7 @@ const App = () => (
                 <Route path="/public-access" element={<PublicAccessPage />} />
                 <Route path="/guest-dashboard" element={<GuestDashboard />} />
                 <Route path="/magic-access" element={<MagicAccess />} />
+                <Route path="/team-dashboard" element={<TeamDashboard />} />
                 {/* --- Routes protégées --- */}
                 <Route element={<ProtectedRoute />}>
                   <Route path="/dashboard" element={<Dashboard />} />

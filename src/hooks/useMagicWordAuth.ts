@@ -40,8 +40,8 @@ export function useMagicWordAuth() {
         magicWord: magic
       }));
 
-      // Redirect to event-portal with magic access flag
-      navigate(`/event-portal?magic_access=true&event_id=${data.id}`, { replace: true });
+      // Redirect to team dashboard with magic access flag
+      navigate(`/team-dashboard?magic_access=true&event_id=${data.id}`, { replace: true });
       setLoading(false);
       return true;
     } catch (error) {
