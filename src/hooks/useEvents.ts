@@ -16,7 +16,8 @@ export interface Event {
   status: string;
   created_at: string;
   updated_at: string;
-  magic_word?: string | null; // <-- Added this field to fix the error
+  magic_word?: string | null;
+  share_token?: string | null; // Ajout du share_token
 }
 
 export const useEvents = () => {

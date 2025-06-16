@@ -287,6 +287,7 @@ export type Database = {
           location: string | null
           magic_word: string | null
           name: string
+          share_token: string | null
           slug: string
           start_time: string | null
           status: string
@@ -304,6 +305,7 @@ export type Database = {
           location?: string | null
           magic_word?: string | null
           name: string
+          share_token?: string | null
           slug: string
           start_time?: string | null
           status?: string
@@ -321,6 +323,7 @@ export type Database = {
           location?: string | null
           magic_word?: string | null
           name?: string
+          share_token?: string | null
           slug?: string
           start_time?: string | null
           status?: string
@@ -1006,6 +1009,10 @@ export type Database = {
       recalculate_timeline: {
         Args: { event_uuid: string }
         Returns: undefined
+      }
+      regenerate_event_share_token: {
+        Args: { event_id: string }
+        Returns: string
       }
     }
     Enums: {

@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +18,7 @@ import './i18n'; // Import du système i18n
 import Dashboard from "./pages/Dashboard";
 import PublicAccessPage from "./pages/PublicAccessPage"; // Correction: import direct
 import GuestDashboard from "./pages/GuestDashboard";
+import PublicTeamAccess from "./pages/PublicTeamAccess";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +38,8 @@ const App = () => (
                 {/* --- Ajout route publique minimaliste --- */}
                 <Route path="/public-access" element={<PublicAccessPage />} />
                 <Route path="/guest-dashboard" element={<GuestDashboard />} />
+                {/* --- Nouvelle route publique pour l'accès équipe --- */}
+                <Route path="/team/:eventId/:shareToken" element={<PublicTeamAccess />} />
                 <Route element={<ProtectedRoute />}>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/event" element={<Index />} />
