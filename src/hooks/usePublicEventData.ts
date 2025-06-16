@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useSharedEventData } from '@/hooks/useSharedEventData';
 
 export interface PublicEventData {
   event: {
@@ -24,6 +25,15 @@ export const usePublicEventData = (eventId: string, shareToken: string) => {
   const [data, setData] = useState<PublicEventData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isTokenValidated, setIsTokenValidated] = useState(false);
+
+  // Utiliser useSharedEventData pour synchroniser avec l'admin
+  const {
+    people,
+    vendors,
+    timelineItems,
+    refreshData
+  } = useSharedEventData();
 
   const validateTokenAndLoadData = async () => {
     if (!eventId || !shareToken) {
@@ -50,36 +60,27 @@ export const usePublicEventData = (eventId: string, shareToken: string) => {
         return;
       }
 
-      // Charger les données associées
-      const [peopleResult, vendorsResult, timelineResult, documentsResult] = await Promise.all([
-        supabase
-          .from('people')
-          .select('*')
-          .eq('event_id', eventId),
-        
-        supabase
-          .from('vendors')
-          .select('*')
-          .eq('event_id', eventId),
-        
-        supabase
-          .from('timeline_items')
-          .select('*')
-          .eq('event_id', eventId)
-          .order('time'),
-        
-        supabase
-          .from('event_documents')
-          .select('*')
-          .eq('event_id', eventId)
-      ]);
+      setIsTokenValidated(true);
+
+      // Forcer le refresh des données partagées
+      await refreshData();
+
+      // Charger les documents
+      const { data: documents, error: documentsError } = await supabase
+        .from('event_documents')
+        .select('*')
+        .eq('event_id', eventId);
+
+      if (documentsError) {
+        console.error('Error loading documents:', documentsError);
+      }
 
       setData({
         event,
-        people: peopleResult.data || [],
-        vendors: vendorsResult.data || [],
-        timelineItems: timelineResult.data || [],
-        documents: documentsResult.data || []
+        people: people || [],
+        vendors: vendors || [],
+        timelineItems: timelineItems || [],
+        documents: documents || []
       });
 
     } catch (error) {
@@ -98,6 +99,18 @@ export const usePublicEventData = (eventId: string, shareToken: string) => {
   useEffect(() => {
     validateTokenAndLoadData();
   }, [eventId, shareToken]);
+
+  // Mettre à jour les données quand useSharedEventData change
+  useEffect(() => {
+    if (isTokenValidated && data) {
+      setData(prev => prev ? {
+        ...prev,
+        people: people || [],
+        vendors: vendors || [],
+        timelineItems: timelineItems || []
+      } : null);
+    }
+  }, [people, vendors, timelineItems, isTokenValidated]);
 
   return {
     data,

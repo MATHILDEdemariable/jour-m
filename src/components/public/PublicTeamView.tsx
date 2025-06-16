@@ -1,20 +1,69 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Users, FileText, Clock, MapPin, AlertCircle } from 'lucide-react';
+import { Calendar, Users, FileText, Clock, MapPin, AlertCircle, UserCheck } from 'lucide-react';
 import { usePublicEventData } from '@/hooks/usePublicEventData';
-import { PublicPersonalPlanning } from './PublicPersonalPlanning';
+import { PublicUserSelection } from './PublicUserSelection';
+import { UnifiedPersonalPlanning } from '@/components/event/UnifiedPersonalPlanning';
 import { PublicContactsTab } from './PublicContactsTab';
 import { PublicDocuments } from './PublicDocuments';
+import { useCurrentEvent } from '@/contexts/CurrentEventContext';
+
+interface SelectedUser {
+  id: string;
+  type: 'person' | 'vendor';
+  name: string;
+}
 
 export const PublicTeamView = () => {
   const { eventId, shareToken } = useParams<{ eventId: string; shareToken: string }>();
   const { data, loading, error } = usePublicEventData(eventId!, shareToken!);
+  const { setCurrentEventId } = useCurrentEvent();
   const [activeTab, setActiveTab] = useState<'planning' | 'contacts' | 'documents'>('planning');
-  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
+  const [viewMode, setViewMode] = useState<'personal' | 'global'>('personal');
+
+  // Synchroniser currentEventId
+  useEffect(() => {
+    if (eventId) {
+      setCurrentEventId(eventId);
+    }
+  }, [eventId, setCurrentEventId]);
+
+  // Gestion localStorage pour persistance
+  useEffect(() => {
+    if (eventId && shareToken) {
+      const stored = localStorage.getItem(`public-user-${eventId}-${shareToken}`);
+      if (stored) {
+        try {
+          const parsedUser = JSON.parse(stored);
+          setSelectedUser(parsedUser);
+        } catch (error) {
+          console.error('Error parsing stored user:', error);
+        }
+      }
+    }
+  }, [eventId, shareToken]);
+
+  const handleUserSelect = (userId: string, userType: 'person' | 'vendor', userName: string) => {
+    const user = { id: userId, type: userType, name: userName };
+    setSelectedUser(user);
+    
+    // Sauvegarder dans localStorage
+    if (eventId && shareToken) {
+      localStorage.setItem(`public-user-${eventId}-${shareToken}`, JSON.stringify(user));
+    }
+  };
+
+  const handleChangeUser = () => {
+    setSelectedUser(null);
+    if (eventId && shareToken) {
+      localStorage.removeItem(`public-user-${eventId}-${shareToken}`);
+    }
+  };
 
   if (loading) {
     return (
@@ -48,6 +97,18 @@ export const PublicTeamView = () => {
 
   const { event, people, vendors, timelineItems, documents } = data;
 
+  // Afficher la sélection d'utilisateur si aucun utilisateur sélectionné
+  if (!selectedUser) {
+    return (
+      <PublicUserSelection
+        people={people}
+        vendors={vendors}
+        eventName={event.name}
+        onUserSelect={handleUserSelect}
+      />
+    );
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
       weekday: 'long',
@@ -67,12 +128,12 @@ export const PublicTeamView = () => {
     switch (activeTab) {
       case 'planning':
         return (
-          <PublicPersonalPlanning 
-            timelineItems={timelineItems}
-            people={people}
-            vendors={vendors}
-            selectedPersonId={selectedPersonId}
-            onPersonSelect={setSelectedPersonId}
+          <UnifiedPersonalPlanning 
+            userId={selectedUser.id}
+            userName={selectedUser.name}
+            userType={selectedUser.type}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
           />
         );
       case 'contacts':
@@ -81,7 +142,7 @@ export const PublicTeamView = () => {
         return (
           <PublicDocuments 
             documents={documents}
-            selectedPersonId={selectedPersonId}
+            selectedPersonId={selectedUser.type === 'person' ? selectedUser.id : null}
           />
         );
       default:
@@ -122,6 +183,25 @@ export const PublicTeamView = () => {
                   </div>
                 )}
               </div>
+            </div>
+            
+            {/* User info and change button */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-sm">
+                <UserCheck className="w-4 h-4 text-purple-600" />
+                <span className="font-medium text-gray-700">{selectedUser.name}</span>
+                <Badge variant="secondary" className="text-xs">
+                  {selectedUser.type === 'person' ? 'Équipe' : 'Prestataire'}
+                </Badge>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleChangeUser}
+                className="border-purple-200 text-purple-700 hover:bg-purple-50"
+              >
+                Changer d'utilisateur
+              </Button>
             </div>
           </div>
         </div>
