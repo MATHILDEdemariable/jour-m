@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Users, FileText, Clock, MapPin, AlertCircle, UserCheck } from 'lucide-react';
-import { usePublicEventData } from '@/hooks/usePublicEventData';
+import { useTokenValidation } from '@/hooks/useTokenValidation';
 import { PublicUserSelection } from './PublicUserSelection';
 import { UnifiedPersonalPlanning } from '@/components/event/UnifiedPersonalPlanning';
 import { PublicContactsTab } from './PublicContactsTab';
@@ -21,16 +21,16 @@ interface SelectedUser {
 
 export const PublicTeamView = () => {
   const { eventId, shareToken } = useParams<{ eventId: string; shareToken: string }>();
-  const { data, loading, error } = usePublicEventData(eventId!, shareToken!);
+  const { isValid, loading, error, event } = useTokenValidation(eventId!, shareToken!);
   const { setCurrentEventId } = useCurrentEvent();
-  const { refreshData } = useSharedEventData();
+  const { people, vendors, timelineItems, documents, refreshData } = useSharedEventData();
   const [activeTab, setActiveTab] = useState<'planning' | 'contacts' | 'documents'>('planning');
   const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
   const [viewMode, setViewMode] = useState<'personal' | 'global'>('personal');
 
-  // Synchroniser currentEventId et forcer le refresh des données
+  // Configuration de l'event ID et refresh des données
   useEffect(() => {
-    if (eventId) {
+    if (eventId && isValid) {
       console.log('PublicTeamView - Setting current event ID:', eventId);
       setCurrentEventId(eventId);
       
@@ -40,11 +40,11 @@ export const PublicTeamView = () => {
         refreshData();
       }, 100);
     }
-  }, [eventId, setCurrentEventId, refreshData]);
+  }, [eventId, isValid, setCurrentEventId, refreshData]);
 
-  // Gestion localStorage pour persistance
+  // Gestion localStorage pour persistance utilisateur
   useEffect(() => {
-    if (eventId && shareToken) {
+    if (eventId && shareToken && isValid) {
       const stored = localStorage.getItem(`public-user-${eventId}-${shareToken}`);
       if (stored) {
         try {
@@ -56,7 +56,7 @@ export const PublicTeamView = () => {
         }
       }
     }
-  }, [eventId, shareToken]);
+  }, [eventId, shareToken, isValid]);
 
   const handleUserSelect = (userId: string, userType: 'person' | 'vendor', userName: string) => {
     const user = { id: userId, type: userType, name: userName };
@@ -77,18 +77,19 @@ export const PublicTeamView = () => {
     }
   };
 
+  // États de chargement et d'erreur
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Chargement des données de l'équipe...</p>
+          <p className="text-gray-600">Validation de l'accès...</p>
         </div>
       </div>
     );
   }
 
-  if (error || !data) {
+  if (error || !isValid || !event) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center">
         <Card className="max-w-md mx-auto">
@@ -107,22 +108,25 @@ export const PublicTeamView = () => {
     );
   }
 
-  const { event, people, vendors, timelineItems, documents } = data;
+  // Filtrage des données par event_id
+  const filteredPeople = people.filter(p => p.event_id === eventId);
+  const filteredVendors = vendors.filter(v => v.event_id === eventId);
+  const filteredTimelineItems = timelineItems.filter(t => t.event_id === eventId);
+  const filteredDocuments = documents.filter(d => d.event_id === eventId);
 
-  // Logs de debug pour le filtrage
   console.log('PublicTeamView - Render data:');
-  console.log('- Event ID:', event.id);
-  console.log('- People total:', people.length);
-  console.log('- Vendors total:', vendors.length);
-  console.log('- People filtered by event_id:', people.filter(p => p.event_id === event.id).length);
-  console.log('- Vendors filtered by event_id:', vendors.filter(v => v.event_id === event.id).length);
+  console.log('- Event ID:', eventId);
+  console.log('- People filtered:', filteredPeople.length);
+  console.log('- Vendors filtered:', filteredVendors.length);
+  console.log('- Timeline items filtered:', filteredTimelineItems.length);
+  console.log('- Documents filtered:', filteredDocuments.length);
 
   // Afficher la sélection d'utilisateur si aucun utilisateur sélectionné
   if (!selectedUser) {
     return (
       <PublicUserSelection
-        people={people.filter(p => p.event_id === event.id)}
-        vendors={vendors.filter(v => v.event_id === event.id)}
+        people={filteredPeople}
+        vendors={filteredVendors}
         eventName={event.name}
         onUserSelect={handleUserSelect}
       />
@@ -139,9 +143,9 @@ export const PublicTeamView = () => {
   };
 
   const tabs = [
-    { id: 'planning', label: 'Planning', icon: Calendar, count: timelineItems.length },
-    { id: 'contacts', label: 'Équipe', icon: Users, count: people.length + vendors.length },
-    { id: 'documents', label: 'Documents', icon: FileText, count: documents.length }
+    { id: 'planning', label: 'Planning', icon: Calendar, count: filteredTimelineItems.length },
+    { id: 'contacts', label: 'Équipe', icon: Users, count: filteredPeople.length + filteredVendors.length },
+    { id: 'documents', label: 'Documents', icon: FileText, count: filteredDocuments.length }
   ];
 
   const renderContent = () => {
@@ -159,14 +163,14 @@ export const PublicTeamView = () => {
       case 'contacts':
         return (
           <PublicContactsTab 
-            people={people.filter(p => p.event_id === event.id)} 
-            vendors={vendors.filter(v => v.event_id === event.id)} 
+            people={filteredPeople} 
+            vendors={filteredVendors} 
           />
         );
       case 'documents':
         return (
           <PublicDocuments 
-            documents={documents}
+            documents={filteredDocuments}
             selectedPersonId={selectedUser.type === 'person' ? selectedUser.id : null}
           />
         );
