@@ -1,4 +1,3 @@
-
 import { useEventData } from '@/contexts/EventDataContext';
 import { useTimelineItems } from '@/hooks/useTimelineItems';
 import { useCurrentEvent } from '@/contexts/CurrentEventContext';
@@ -9,6 +8,7 @@ export const useSharedEventData = () => {
     planningItems,
     people,
     vendors,
+    documents,
     loading,
     refreshData,
     getProgressStats,
@@ -27,9 +27,11 @@ export const useSharedEventData = () => {
   const eventFilteredPeople = people.filter(person => person.event_id === currentEventId);
   const eventFilteredVendors = vendors.filter(vendor => vendor.event_id === currentEventId);
   const eventFilteredPlanningItems = planningItems.filter(item => item.event_id === currentEventId);
+  const eventFilteredDocuments = documents.filter(doc => doc.event_id === currentEventId);
 
   console.log('useSharedEventData - Filtered people for event', currentEventId, ':', eventFilteredPeople.length);
   console.log('useSharedEventData - Filtered vendors for event', currentEventId, ':', eventFilteredVendors.length);
+  console.log('useSharedEventData - Filtered documents for event', currentEventId, ':', eventFilteredDocuments.length);
 
   // Enhanced refresh avec logs
   const enhancedRefreshData = async () => {
@@ -96,9 +98,9 @@ export const useSharedEventData = () => {
 
   const getDocumentStats = () => {
     return {
-      totalDocuments: 18,
+      totalDocuments: eventFilteredDocuments.length,
       pendingDocuments: 3,
-      approvedDocuments: 15
+      approvedDocuments: eventFilteredDocuments.length - 3
     };
   };
 
@@ -148,6 +150,7 @@ export const useSharedEventData = () => {
     timelineItems: timelineItems.filter(item => item.event_id === currentEventId),
     people: eventFilteredPeople,
     vendors: eventFilteredVendors,
+    documents: eventFilteredDocuments,
     loading,
     refreshData: enhancedRefreshData,
     getProgressStats,
