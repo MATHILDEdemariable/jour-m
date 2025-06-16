@@ -1,17 +1,16 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, Clock, Users, User } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PublicPersonalPlanningProps {
-  timelineItems: any[];
-  people: any[];
-  vendors: any[];
-  selectedPersonId: string | null;
-  onPersonSelect: (personId: string | null) => void;
+  eventId: string;
+  userId: string;
+  userType: 'person' | 'vendor';
 }
 
 const roleLabels = {
@@ -27,13 +26,65 @@ const roleLabels = {
 };
 
 export const PublicPersonalPlanning: React.FC<PublicPersonalPlanningProps> = ({
-  timelineItems,
-  people,
-  vendors,
-  selectedPersonId,
-  onPersonSelect
+  eventId,
+  userId,
+  userType
 }) => {
   const [viewMode, setViewMode] = useState<'personal' | 'global'>('global');
+  const [timelineItems, setTimelineItems] = useState<any[]>([]);
+  const [people, setPeople] = useState<any[]>([]);
+  const [vendors, setVendors] = useState<any[]>([]);
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(userType === 'person' ? userId : null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Charger les éléments de timeline
+        const { data: timelineData, error: timelineError } = await supabase
+          .from('timeline_items')
+          .select('*')
+          .eq('event_id', eventId)
+          .order('time');
+
+        if (timelineError) {
+          console.error('Error loading timeline:', timelineError);
+        } else {
+          setTimelineItems(timelineData || []);
+        }
+
+        // Charger les personnes
+        const { data: peopleData, error: peopleError } = await supabase
+          .from('people')
+          .select('*')
+          .eq('event_id', eventId);
+
+        if (peopleError) {
+          console.error('Error loading people:', peopleError);
+        } else {
+          setPeople(peopleData || []);
+        }
+
+        // Charger les prestataires
+        const { data: vendorsData, error: vendorsError } = await supabase
+          .from('vendors')
+          .select('*')
+          .eq('event_id', eventId);
+
+        if (vendorsError) {
+          console.error('Error loading vendors:', vendorsError);
+        } else {
+          setVendors(vendorsData || []);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [eventId]);
 
   // Filtrer les items selon le mode de vue et la personne sélectionnée
   const filteredItems = timelineItems.filter(item => {
@@ -75,6 +126,17 @@ export const PublicPersonalPlanning: React.FC<PublicPersonalPlanningProps> = ({
     ...vendors.map(v => ({ id: v.id, name: v.name, type: 'vendor', role: v.service_type }))
   ];
 
+  if (loading) {
+    return (
+      <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+        <CardContent className="p-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement du planning...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Contrôles */}
@@ -88,7 +150,7 @@ export const PublicPersonalPlanning: React.FC<PublicPersonalPlanningProps> = ({
             <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
               {/* Sélecteur de personne */}
               <div className="flex items-center gap-2">
-                <Select value={selectedPersonId || 'all'} onValueChange={(value) => onPersonSelect(value === 'all' ? null : value)}>
+                <Select value={selectedPersonId || 'all'} onValueChange={(value) => setSelectedPersonId(value === 'all' ? null : value)}>
                   <SelectTrigger className="w-48">
                     <SelectValue placeholder="Voir le planning de..." />
                   </SelectTrigger>
