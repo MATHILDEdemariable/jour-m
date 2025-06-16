@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Eye, Settings, LogIn, UserPlus, LogOut, Users } from 'lucide-react';
+import { Eye, Settings, LogIn, LogOut } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -33,10 +34,6 @@ const Home: React.FC = () => {
 
   const handleEventPortalAccess = () => {
     setShowEventPortalSelection(true);
-  };
-
-  const handleJoinTeam = () => {
-    navigate('/magic-access');
   };
 
   const handleConfirmReset = async () => {
@@ -101,16 +98,6 @@ const Home: React.FC = () => {
             >
               <Eye className="w-5 h-5" />
               Equipe
-            </Button>
-
-            <Button
-              onClick={handleJoinTeam}
-              variant="outline"
-              className="border-green-200 text-green-700 hover:bg-green-50 flex items-center gap-2"
-              size="lg"
-            >
-              <Users className="w-5 h-5" />
-              Rejoindre Équipe
             </Button>
             
             <Button

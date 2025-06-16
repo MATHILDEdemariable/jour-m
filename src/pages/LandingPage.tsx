@@ -3,6 +3,7 @@ import React from 'react';
 import HeroSection from '@/components/marketing/HeroSection';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { Users, LogIn } from 'lucide-react';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -15,8 +16,18 @@ const LandingPage = () => {
             JOURM
           </h1>
           <div className="flex items-center gap-2">
-            {/* Bouton retiré : Accès Équipe */}
-            <Button onClick={() => navigate('/auth')}>Connexion / Inscription</Button>
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/magic-access')}
+              className="border-green-200 text-green-700 hover:bg-green-50 flex items-center gap-2"
+            >
+              <Users className="w-4 h-4" />
+              Rejoindre Équipe
+            </Button>
+            <Button onClick={() => navigate('/auth')} className="flex items-center gap-2">
+              <LogIn className="w-4 h-4" />
+              Connexion / Inscription
+            </Button>
           </div>
         </div>
       </header>

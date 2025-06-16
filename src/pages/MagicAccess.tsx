@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useMagicWordAuth } from '@/hooks/useMagicWordAuth';
-import { KeyRound, Users, ArrowLeft } from 'lucide-react';
+import { KeyRound, Users, ArrowLeft, CheckCircle } from 'lucide-react';
 
 const MagicAccess = () => {
   const [magicWord, setMagicWord] = useState('');
@@ -111,6 +111,18 @@ const MagicAccess = () => {
             </form>
           </CardContent>
         </Card>
+
+        {/* Exemple de code pré-rempli */}
+        {searchParams.get('magic') && (
+          <div className="mt-4 text-center">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+              <div className="flex items-center justify-center gap-2 text-green-600">
+                <CheckCircle className="w-4 h-4" />
+                <p className="text-sm font-medium">Code pré-rempli automatiquement</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Retour */}
         <div className="text-center mt-6">
