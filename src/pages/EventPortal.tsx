@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSharedEventData } from '@/hooks/useSharedEventData';
@@ -32,32 +33,64 @@ const EventPortal = () => {
   const [guestEvent, setGuestEvent] = useState<GuestEvent | null>(null);
   const [guestLoading, setGuestLoading] = useState(true);
   const [hasInitialRefreshed, setHasInitialRefreshed] = useState(false);
+  const [isMagicAccess, setIsMagicAccess] = useState(false);
   
   const daysUntilEvent = getDaysUntilEvent();
 
   useEffect(() => {
-    const eventSlug = searchParams.get('event_slug');
-    if (eventSlug) {
-      setIsGuestMode(true);
-      const fetchGuestEvent = async () => {
+    // Vérifier l'accès par code magique
+    const magicAccess = searchParams.get('magic_access') === 'true';
+    const eventIdParam = searchParams.get('event_id');
+    
+    if (magicAccess && eventIdParam) {
+      setIsMagicAccess(true);
+      setCurrentEventId(eventIdParam);
+      
+      // Charger les informations de l'événement
+      const fetchEventForMagic = async () => {
         setGuestLoading(true);
         const { data, error } = await supabase
           .from('events')
           .select('id, name, event_date, event_type')
-          .eq('slug', eventSlug)
+          .eq('id', eventIdParam)
           .single();
+          
         if (error || !data) {
-          console.error('Error fetching guest event:', error);
-          navigate('/not-found', { replace: true });
+          console.error('Error fetching magic event:', error);
+          navigate('/magic-access', { replace: true });
           return;
         }
+        
         setGuestEvent(data);
-        setCurrentEventId(data.id);
         setGuestLoading(false);
       };
-      fetchGuestEvent();
+      
+      fetchEventForMagic();
     } else {
+      // Code existant pour event_slug
+      const eventSlug = searchParams.get('event_slug');
+      if (eventSlug) {
+        setIsGuestMode(true);
+        const fetchGuestEvent = async () => {
+          setGuestLoading(true);
+          const { data, error } = await supabase
+            .from('events')
+            .select('id, name, event_date, event_type')
+            .eq('slug', eventSlug)
+            .single();
+          if (error || !data) {
+            console.error('Error fetching guest event:', error);
+            navigate('/not-found', { replace: true });
+            return;
+          }
+          setGuestEvent(data);
+          setCurrentEventId(data.id);
+          setGuestLoading(false);
+        };
+        fetchGuestEvent();
+      } else {
         setGuestLoading(false);
+      }
     }
   }, [searchParams, setCurrentEventId, navigate]);
 
@@ -156,7 +189,7 @@ const EventPortal = () => {
         description: 'Toutes les données ont été actualisées',
       });
     } catch (error) {
-      if (!isRefreshing) { // n'affiche qu'une fois maximum
+      if (!isRefreshing) {
         console.error('Error during data refresh:', error);
         toast({
           title: 'Erreur de synchronisation',
@@ -179,6 +212,7 @@ const EventPortal = () => {
   const handleLogout = () => {
     setLoggedInUser(null);
     localStorage.removeItem('eventPortalUser');
+    localStorage.removeItem('eventPortalMagicLogin');
     navigate('/', { replace: true });
   };
 
@@ -188,8 +222,50 @@ const EventPortal = () => {
     return <EventPortalLoading fullScreen message="Chargement de l'événement..." details={null} />;
   }
 
-  if (isGuestMode && guestEvent) {
-    return <GuestEventView event={guestEvent} />;
+  if ((isGuestMode && guestEvent) || (isMagicAccess && guestEvent)) {
+    if (loggedInUser) {
+      // Utilisateur connecté via magic access, afficher l'interface normale
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
+          <EventPortalHeader
+            userName={loggedInUser.name}
+            daysUntilEvent={daysUntilEvent}
+            isDataLoading={isDataLoading}
+            isRefreshing={isRefreshing}
+            isMobile={isMobile}
+            onBack={() => navigate('/')}
+            onRefresh={handleFullDataRefresh}
+            onLogout={handleLogout}
+            onAdmin={() => navigate('/admin')}
+          />
+
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 lg:py-8 pb-20 lg:pb-8">
+            {isDataLoading ? (
+              <EventPortalLoading isRefreshing={isRefreshing} />
+            ) : (
+              <EventPortalContent
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                isMobile={isMobile}
+                loggedInUser={loggedInUser}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+              />
+            )}
+          </div>
+
+          {isMobile && (
+            <BottomNavigation 
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+            />
+          )}
+        </div>
+      );
+    } else {
+      // Pas encore connecté, afficher la sélection d'utilisateur
+      return <PersonLogin onLogin={handleLogin} />;
+    }
   }
   
   if (!loggedInUser) {

@@ -4,79 +4,80 @@ import { useEventData } from '@/contexts/EventDataContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Copy, Users, RefreshCw, Eye, AlertCircle } from 'lucide-react';
+import { Copy, Users, RefreshCw, Eye, AlertCircle, KeyRound } from 'lucide-react';
 import { QRCodeCanvas as QRCode } from 'qrcode.react';
 import { useToast } from '@/components/ui/use-toast';
-import { useShareToken } from '@/hooks/useShareToken';
 import { supabase } from '@/integrations/supabase/client';
 
 export const ShareManagement = () => {
   const { currentEvent } = useEventData();
-  const [teamShareLink, setTeamShareLink] = useState('');
-  const [ensuring, setEnsuring] = useState(false);
+  const [magicAccessLink, setMagicAccessLink] = useState('');
+  const [generating, setGenerating] = useState(false);
   const { toast } = useToast();
-  const { regenerateShareToken, regenerating } = useShareToken();
 
-  const ensureShareToken = async (eventId: string) => {
-    setEnsuring(true);
+  const generateMagicWord = () => {
+    const charset = "ABCDEFGHJKLMNPQRSTUVWXYZ123456789";
+    let word = "";
+    for (let i = 0; i < 8; i++) {
+      word += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    return word;
+  };
+
+  const updateMagicWord = async (newMagicWord: string) => {
+    if (!currentEvent?.id) return;
+    
+    setGenerating(true);
     try {
-      console.log('ShareManagement - Ensuring share token for event:', eventId);
-      
-      // Vérifier si l'événement a déjà un token
-      const { data: event, error } = await supabase
+      const { error } = await supabase
         .from('events')
-        .select('share_token')
-        .eq('id', eventId)
-        .single();
+        .update({ magic_word: newMagicWord })
+        .eq('id', currentEvent.id);
 
-      if (error) {
-        console.error('Error checking event:', error);
-        return null;
-      }
+      if (error) throw error;
 
-      if (!event.share_token) {
-        console.log('ShareManagement - No token found, generating one...');
-        // Générer un nouveau token
-        const newToken = await regenerateShareToken(eventId);
-        return newToken;
-      } else {
-        console.log('ShareManagement - Token exists:', event.share_token);
-        return event.share_token;
-      }
+      toast({
+        title: 'Code mis à jour',
+        description: 'Le nouveau code d\'accès a été généré avec succès',
+      });
+
+      // Mettre à jour le lien
+      const newLink = `${window.location.origin}/magic-access?magic=${newMagicWord}`;
+      setMagicAccessLink(newLink);
     } catch (error) {
-      console.error('Error ensuring share token:', error);
+      console.error('Error updating magic word:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de générer le token de partage',
+        description: 'Impossible de mettre à jour le code d\'accès',
         variant: 'destructive',
       });
-      return null;
     } finally {
-      setEnsuring(false);
+      setGenerating(false);
     }
   };
 
+  const handleRegenerateMagicWord = async () => {
+    const newMagicWord = generateMagicWord();
+    await updateMagicWord(newMagicWord);
+  };
+
   useEffect(() => {
-    const initializeShareLink = async () => {
+    const initializeMagicLink = async () => {
       if (currentEvent?.id) {
-        console.log('ShareManagement - Initializing for event:', currentEvent.id);
+        let magicWord = currentEvent.magic_word;
         
-        let shareToken = currentEvent.share_token;
-        
-        // S'assurer qu'un token existe
-        if (!shareToken) {
-          shareToken = await ensureShareToken(currentEvent.id);
-        }
-        
-        if (shareToken) {
-          const teamLink = `${window.location.origin}/team/${currentEvent.id}/${shareToken}`;
-          setTeamShareLink(teamLink);
-          console.log('ShareManagement - Team link generated:', teamLink);
+        // Générer un magic word s'il n'existe pas
+        if (!magicWord) {
+          magicWord = generateMagicWord();
+          await updateMagicWord(magicWord);
+        } else {
+          const magicLink = `${window.location.origin}/magic-access?magic=${magicWord}`;
+          setMagicAccessLink(magicLink);
         }
       }
     };
 
-    initializeShareLink();
+    initializeMagicLink();
   }, [currentEvent]);
 
   const handleCopy = (link: string) => {
@@ -84,18 +85,17 @@ export const ShareManagement = () => {
     navigator.clipboard.writeText(link);
     toast({
       title: 'Copié !',
-      description: 'Le lien équipe a été copié dans le presse-papiers.',
+      description: 'Le lien d\'accès équipe a été copié dans le presse-papiers.',
     });
   };
 
-  const handleRegenerateToken = async () => {
-    if (!currentEvent?.id) return;
-    
-    const newToken = await regenerateShareToken(currentEvent.id);
-    if (newToken) {
-      const newTeamLink = `${window.location.origin}/team/${currentEvent.id}/${newToken}`;
-      setTeamShareLink(newTeamLink);
-    }
+  const handleCopyCode = () => {
+    if (!currentEvent?.magic_word) return;
+    navigator.clipboard.writeText(currentEvent.magic_word);
+    toast({
+      title: 'Code copié !',
+      description: 'Le code d\'accès a été copié dans le presse-papiers.',
+    });
   };
 
   const handlePreview = (link: string) => {
@@ -128,100 +128,118 @@ export const ShareManagement = () => {
 
   return (
     <div className="space-y-6">
-      {/* Accès Équipe Public Unifié */}
+      {/* Accès par Code Magique */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Users className="w-6 h-6 text-purple-600" />
-            Partage Équipe
+            <KeyRound className="w-6 h-6 text-purple-600" />
+            Accès Équipe par Code
           </CardTitle>
           <CardDescription>
-            Partagez ce lien sécurisé avec votre équipe pour qu'ils accèdent directement à leur planning personnalisé sans authentification.
+            Partagez ce code d'accès simple avec votre équipe. Ils pourront accéder directement à leur planning sans authentification.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Code d'accès */}
           <div>
-            <label htmlFor="team-share-link" className="text-sm font-medium">Lien d'accès équipe</label>
+            <label htmlFor="magic-code" className="text-sm font-medium">Code d'accès actuel</label>
             <div className="flex gap-2 mt-1">
               <Input 
-                id="team-share-link" 
+                id="magic-code" 
                 type="text" 
-                value={teamShareLink} 
+                value={currentEvent.magic_word || 'Génération...'}
                 readOnly 
-                placeholder={ensuring ? "Génération du lien..." : "Lien en cours de génération"}
+                className="font-mono text-lg tracking-wider text-center bg-gray-50"
               />
               <Button 
                 variant="outline" 
                 size="icon" 
-                onClick={() => handleCopy(teamShareLink)} 
-                disabled={!teamShareLink || ensuring}
+                onClick={handleCopyCode} 
+                disabled={!currentEvent.magic_word}
+                title="Copier le code"
               >
                 <Copy className="w-4 h-4" />
               </Button>
               <Button 
                 variant="outline" 
                 size="icon" 
-                onClick={() => handlePreview(teamShareLink)} 
-                disabled={!teamShareLink || ensuring}
+                onClick={handleRegenerateMagicWord}
+                disabled={generating}
+                title="Générer un nouveau code"
               >
-                <Eye className="w-4 h-4" />
+                <RefreshCw className={`w-4 h-4 ${generating ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+          </div>
+
+          {/* Lien d'accès direct */}
+          <div>
+            <label htmlFor="magic-access-link" className="text-sm font-medium">Lien d'accès direct</label>
+            <div className="flex gap-2 mt-1">
+              <Input 
+                id="magic-access-link" 
+                type="text" 
+                value={magicAccessLink || 'Génération du lien...'}
+                readOnly 
+                placeholder="Génération du lien..."
+              />
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={() => handleCopy(magicAccessLink)} 
+                disabled={!magicAccessLink}
+              >
+                <Copy className="w-4 h-4" />
               </Button>
               <Button 
                 variant="outline" 
                 size="icon" 
-                onClick={handleRegenerateToken}
-                disabled={regenerating || ensuring || !currentEvent?.id}
-                title="Régénérer le token (invalide l'ancien lien)"
+                onClick={() => handlePreview(magicAccessLink)} 
+                disabled={!magicAccessLink}
               >
-                <RefreshCw className={`w-4 h-4 ${regenerating || ensuring ? 'animate-spin' : ''}`} />
+                <Eye className="w-4 h-4" />
               </Button>
             </div>
-            {ensuring && (
-              <p className="text-sm text-amber-600 mt-2">
-                Génération du token de partage en cours...
-              </p>
-            )}
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <h3 className="text-sm font-medium mb-2">Mode d'emploi</h3>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Partagez ce lien avec votre équipe</li>
-                <li>• Chaque membre sélectionne son profil</li>
-                <li>• Accès à son planning personnalisé</li>
-                <li>• Vue des contacts et documents</li>
+                <li>• Partagez le code ou le lien avec votre équipe</li>
+                <li>• L'équipe accède via "Rejoindre équipe"</li>
+                <li>• Saisie du code → accès direct</li>
+                <li>• Sélection du profil → planning personnalisé</li>
                 <li>• Synchronisation en temps réel</li>
               </ul>
             </div>
             
             <div>
-              <h3 className="text-sm font-medium mb-2">Fonctionnalités</h3>
+              <h3 className="text-sm font-medium mb-2">Avantages</h3>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Accès sans mot de passe requis</li>
-                <li>• Interface mobile et desktop</li>
-                <li>• Mode lecture seule sécurisé</li>
-                <li>• Données synchronisées avec l'admin</li>
-                <li>• Token révocable à tout moment</li>
+                <li>• Accès rapide sans compte utilisateur</li>
+                <li>• Code simple à mémoriser et partager</li>
+                <li>• Interface mobile et desktop optimisée</li>
+                <li>• Régénération possible si compromis</li>
+                <li>• Accès révocable instantanément</li>
               </ul>
             </div>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <p className="text-sm text-amber-800">
-              <strong>Sécurité:</strong> Ce lien contient un token unique. En cas de compromission, 
-              utilisez le bouton de régénération pour invalider l'ancien lien et créer un nouveau token.
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-sm text-blue-800">
+              <strong>Instructions pour l'équipe:</strong> Rendez-vous sur votre site → "Rejoindre équipe" → saisissez le code <span className="font-mono bg-blue-100 px-1 rounded">{currentEvent.magic_word}</span>
             </p>
           </div>
         </CardContent>
       </Card>
 
-      {/* QR Code Unifié */}
+      {/* QR Code */}
       <Card className="flex flex-col items-center justify-center p-6">
         <h3 className="text-lg font-semibold mb-4">QR Code - Accès Équipe</h3>
         <div className="bg-white p-4 rounded-lg shadow-md">
-          {teamShareLink ? (
-            <QRCode value={teamShareLink} size={192} />
+          {magicAccessLink ? (
+            <QRCode value={magicAccessLink} size={192} />
           ) : (
             <div className="w-48 h-48 bg-gray-200 animate-pulse rounded-lg flex items-center justify-center">
               <span className="text-gray-500 text-sm">Génération...</span>
@@ -229,7 +247,7 @@ export const ShareManagement = () => {
           )}
         </div>
         <p className="text-sm text-muted-foreground mt-4 text-center max-w-md">
-          Scannez ce QR code avec votre téléphone pour accéder directement à la sélection d'équipe et votre planning personnalisé
+          Scannez ce QR code pour accéder directement à la page d'accès équipe avec le code pré-rempli
         </p>
         <div className="mt-3 text-xs text-gray-500 text-center">
           Compatible avec tous les lecteurs QR code standards

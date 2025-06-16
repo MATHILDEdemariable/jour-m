@@ -18,7 +18,7 @@ import './i18n';
 import Dashboard from "./pages/Dashboard";
 import PublicAccessPage from "./pages/PublicAccessPage";
 import GuestDashboard from "./pages/GuestDashboard";
-import PublicTeamAccess from "./pages/PublicTeamAccess";
+import MagicAccess from "./pages/MagicAccess";
 
 const queryClient = new QueryClient();
 
@@ -40,7 +40,7 @@ const App = () => (
                 {/* --- Routes publiques (AVANT les routes protégées) --- */}
                 <Route path="/public-access" element={<PublicAccessPage />} />
                 <Route path="/guest-dashboard" element={<GuestDashboard />} />
-                <Route path="/team/:eventId/:shareToken" element={<PublicTeamAccess />} />
+                <Route path="/magic-access" element={<MagicAccess />} />
                 {/* --- Routes protégées --- */}
                 <Route element={<ProtectedRoute />}>
                   <Route path="/dashboard" element={<Dashboard />} />
