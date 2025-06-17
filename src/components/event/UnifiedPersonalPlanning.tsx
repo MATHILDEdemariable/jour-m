@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, Calendar, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useTimelineItems } from '@/hooks/useTimelineItems';
+import { useEventStore } from '@/stores/eventStore';
 import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
-import { usePeople } from '@/hooks/usePeople';
-import { useVendors } from '@/hooks/useVendors';
 
 interface UnifiedPersonalPlanningProps {
   userId: string;
@@ -35,10 +34,8 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
   viewMode,
   onViewModeChange
 }) => {
-  const { timelineItems, loading } = useTimelineItems();
+  const { timelineItems, people, vendors, loading } = useEventStore();
   const { currentEventId } = useLocalCurrentEvent();
-  const { people } = usePeople();
-  const { vendors } = useVendors();
 
   // Filter timeline items by current event
   const eventTimelineItems = timelineItems.filter(item => item.event_id === currentEventId);
@@ -46,7 +43,7 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
   // Filter according to view mode
   let filteredTimelineItems;
   if (viewMode === 'personal') {
-    filteredTimelineItems = timelineItems.filter(item => {
+    filteredTimelineItems = eventTimelineItems.filter(item => {
       if (userType === 'person') {
         // Utilisateur type personne : filter by assigned_person_ids OU assigned_person_id
         return (item.assigned_person_id === userId)
@@ -58,7 +55,7 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
     });
   } else {
     // Global view : on montre tout
-    filteredTimelineItems = timelineItems.filter(item => item.event_id === currentEventId);
+    filteredTimelineItems = eventTimelineItems;
   }
 
   const formatTime = (time: string, duration: number) => {
@@ -90,9 +87,9 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
 
   const isUserItem = (item: any) => {
     if (userType === 'person') {
-      return item.assigned_person_id === userId;
+      return item.assigned_person_id === userId || (item.assigned_person_ids && item.assigned_person_ids.includes(userId));
     } else {
-      return item.assigned_role === userId;
+      return item.assigned_vendor_id === userId;
     }
   };
 

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
@@ -39,7 +39,7 @@ export const EventPortalSelectionModal: React.FC<EventPortalSelectionModalProps>
   const handleContinue = () => {
     if (!selectedUserId || !selectedUserType || !currentEventId) return;
 
-    const url = `/event-portal?user_type=${selectedUserType}&user_id=${selectedUserId}`;
+    const url = `/event-portal?user_type=${selectedUserType}&user_id=${selectedUserId}&auto_login=true`;
     
     navigate(url);
     onOpenChange(false);
@@ -93,17 +93,17 @@ export const EventPortalSelectionModal: React.FC<EventPortalSelectionModalProps>
             Accès Jour-J
           </DialogTitle>
           <DialogDescription>
-            Sélectionnez votre profil pour accéder à votre planning personnalisé du jour J
+            Sélectionnez votre profil pour accéder directement à votre planning personnalisé du jour J
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           <div className="space-y-4">
-            <h3 className="font-medium text-gray-900">Sélectionnez votre profil :</h3>
+            <h3 className="font-medium text-gray-900">Qui êtes-vous ?</h3>
 
             <Select value={selectedUserId} onValueChange={handleUserSelect}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Choisir mon profil..." />
+                <SelectValue placeholder="Sélectionnez votre profil..." />
               </SelectTrigger>
               <SelectContent>
                 {allUsers.length > 0 ? (
@@ -137,7 +137,7 @@ export const EventPortalSelectionModal: React.FC<EventPortalSelectionModalProps>
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
             >
               <ArrowRight className="w-4 h-4 mr-2" />
-              Accéder à mon planning du jour J
+              Accéder à mon planning
             </Button>
           </div>
         </div>

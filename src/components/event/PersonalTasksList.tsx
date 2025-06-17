@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CheckSquare, Clock, AlertTriangle } from 'lucide-react';
-import { useSharedEventData } from '@/hooks/useSharedEventData';
-import { useToggleTaskStatus } from '@/hooks/useTasks';
+import { useEventStore } from '@/stores/eventStore';
+import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
+import { useLocalToggleTaskStatus } from '@/hooks/useLocalTasks';
 
 interface PersonalTasksListProps {
   personId: string;
@@ -16,13 +17,17 @@ export const PersonalTasksList: React.FC<PersonalTasksListProps> = ({
   personId, 
   personName 
 }) => {
-  const { tasks, people, vendors } = useSharedEventData();
-  const toggleTaskStatus = useToggleTaskStatus();
+  const { tasks, people, vendors } = useEventStore();
+  const { currentEventId } = useLocalCurrentEvent();
+  const toggleTaskStatus = useLocalToggleTaskStatus();
 
+  // Filtrer les tâches par événement actuel
+  const eventTasks = tasks.filter(task => task.event_id === currentEventId);
+  
   const isPerson = people.some(p => p.id === personId);
 
   // Filtrer les tâches assignées à cette personne ou ce prestataire
-  const personalTasks = tasks.filter(task => {
+  const personalTasks = eventTasks.filter(task => {
     if (isPerson) {
       return task.assigned_person_id === personId;
     } else {
