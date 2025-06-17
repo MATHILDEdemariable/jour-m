@@ -33,35 +33,56 @@ export const EventPortalSelectionModal: React.FC<EventPortalSelectionModalProps>
   const { currentEventId } = useLocalCurrentEvent();
   const { people, vendors } = useEventStore();
   
-  const [teamType, setTeamType] = useState<'personal' | 'professional' | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
-
-  const handleTeamTypeSelect = (type: 'personal' | 'professional') => {
-    setTeamType(type);
-    setSelectedUserId('');
-  };
+  const [selectedUserType, setSelectedUserType] = useState<'person' | 'vendor' | ''>('');
 
   const handleContinue = () => {
-    if (!selectedUserId || !teamType || !currentEventId) return;
+    if (!selectedUserId || !selectedUserType || !currentEventId) return;
 
-    const userType = teamType === 'personal' ? 'person' : 'vendor';
-    const url = `/event-portal?user_type=${userType}&user_id=${selectedUserId}`;
+    const url = `/event-portal?user_type=${selectedUserType}&user_id=${selectedUserId}`;
     
     navigate(url);
     onOpenChange(false);
     
     // Reset state
-    setTeamType(null);
     setSelectedUserId('');
-  };
-
-  const handleBack = () => {
-    setTeamType(null);
-    setSelectedUserId('');
+    setSelectedUserType('');
   };
 
   const filteredPeople = people.filter(person => person.event_id === currentEventId);
   const filteredVendors = vendors.filter(vendor => vendor.event_id === currentEventId);
+
+  const handleUserSelect = (value: string) => {
+    setSelectedUserId(value);
+    
+    // Déterminer automatiquement le type d'utilisateur basé sur l'ID
+    const isPerson = filteredPeople.some(p => p.id === value);
+    const isVendor = filteredVendors.some(v => v.id === value);
+    
+    if (isPerson) {
+      setSelectedUserType('person');
+    } else if (isVendor) {
+      setSelectedUserType('vendor');
+    }
+  };
+
+  // Combiner toutes les options dans une seule liste
+  const allUsers = [
+    ...filteredPeople.map(person => ({
+      id: person.id,
+      name: person.name,
+      type: 'person' as const,
+      subtitle: person.role || 'Membre de l\'équipe',
+      icon: Users
+    })),
+    ...filteredVendors.map(vendor => ({
+      id: vendor.id,
+      name: vendor.name,
+      type: 'vendor' as const,
+      subtitle: vendor.service_type || 'Prestataire',
+      icon: Building2
+    }))
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -77,124 +98,48 @@ export const EventPortalSelectionModal: React.FC<EventPortalSelectionModalProps>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {!teamType ? (
-            // Step 1: Choose team type
-            <div className="space-y-4">
-              <h3 className="font-medium text-gray-900">Choisissez votre équipe :</h3>
-              
-              <div className="grid grid-cols-1 gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => handleTeamTypeSelect('personal')}
-                  className="h-auto p-4 justify-start border-purple-200 hover:bg-purple-50"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="bg-purple-100 p-2 rounded-lg">
-                      <Users className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-medium">Équipe personnelle</div>
-                      <div className="text-sm text-gray-500">
-                        Personnes inscrites à l'événement
-                      </div>
-                    </div>
-                  </div>
-                </Button>
+          <div className="space-y-4">
+            <h3 className="font-medium text-gray-900">Sélectionnez votre profil :</h3>
 
-                <Button
-                  variant="outline"
-                  onClick={() => handleTeamTypeSelect('professional')}
-                  className="h-auto p-4 justify-start border-purple-200 hover:bg-purple-50"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="bg-purple-100 p-2 rounded-lg">
-                      <Building2 className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-medium">Équipe professionnelle</div>
-                      <div className="text-sm text-gray-500">
-                        Prestataires et fournisseurs
-                      </div>
-                    </div>
-                  </div>
-                </Button>
-              </div>
-            </div>
-          ) : (
-            // Step 2: Select specific person/vendor
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-4">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleBack}
-                  className="text-purple-600 hover:text-purple-700"
-                >
-                  ← Retour
-                </Button>
-              </div>
-
-              <h3 className="font-medium text-gray-900">
-                {teamType === 'personal' ? 'Sélectionnez une personne :' : 'Sélectionnez un prestataire :'}
-              </h3>
-
-              <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={
-                    teamType === 'personal' 
-                      ? "Choisir une personne..." 
-                      : "Choisir un prestataire..."
-                  } />
-                </SelectTrigger>
-                <SelectContent>
-                  {teamType === 'personal' ? (
-                    filteredPeople.length > 0 ? (
-                      filteredPeople.map((person) => (
-                        <SelectItem key={person.id} value={person.id}>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{person.name}</span>
-                            {person.role && (
-                              <span className="text-xs text-gray-500">{person.role}</span>
-                            )}
+            <Select value={selectedUserId} onValueChange={handleUserSelect}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Choisir mon profil..." />
+              </SelectTrigger>
+              <SelectContent>
+                {allUsers.length > 0 ? (
+                  allUsers.map((user) => {
+                    const IconComponent = user.icon;
+                    return (
+                      <SelectItem key={user.id} value={user.id}>
+                        <div className="flex items-center gap-3">
+                          <div className={`p-1 rounded ${user.type === 'person' ? 'bg-purple-100' : 'bg-blue-100'}`}>
+                            <IconComponent className={`w-4 h-4 ${user.type === 'person' ? 'text-purple-600' : 'text-blue-600'}`} />
                           </div>
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="no-people" disabled>
-                        Aucune personne disponible
-                      </SelectItem>
-                    )
-                  ) : (
-                    filteredVendors.length > 0 ? (
-                      filteredVendors.map((vendor) => (
-                        <SelectItem key={vendor.id} value={vendor.id}>
                           <div className="flex flex-col">
-                            <span className="font-medium">{vendor.name}</span>
-                            {vendor.service_type && (
-                              <span className="text-xs text-gray-500">{vendor.service_type}</span>
-                            )}
+                            <span className="font-medium">{user.name}</span>
+                            <span className="text-xs text-gray-500">{user.subtitle}</span>
                           </div>
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="no-vendors" disabled>
-                        Aucun prestataire disponible
+                        </div>
                       </SelectItem>
-                    )
-                  )}
-                </SelectContent>
-              </Select>
+                    );
+                  })
+                ) : (
+                  <SelectItem value="no-users" disabled>
+                    Aucun utilisateur disponible
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
 
-              <Button
-                onClick={handleContinue}
-                disabled={!selectedUserId || selectedUserId === 'no-people' || selectedUserId === 'no-vendors'}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-              >
-                <ArrowRight className="w-4 h-4 mr-2" />
-                Accéder à mon planning du jour J
-              </Button>
-            </div>
-          )}
+            <Button
+              onClick={handleContinue}
+              disabled={!selectedUserId || selectedUserId === 'no-users'}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            >
+              <ArrowRight className="w-4 h-4 mr-2" />
+              Accéder à mon planning du jour J
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

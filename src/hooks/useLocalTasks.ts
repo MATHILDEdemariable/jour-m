@@ -13,12 +13,16 @@ export const useLocalTasks = () => {
     loading
   } = useEventStore();
 
+  console.log('useLocalTasks - Current event ID:', currentEventId);
+  console.log('useLocalTasks - All tasks:', tasks.length);
+  console.log('useLocalTasks - Filtered tasks:', tasks.filter(t => t.event_id === currentEventId).length);
+
   return {
-    data: tasks,
+    data: tasks.filter(task => task.event_id === currentEventId),
     isLoading: loading,
     refetch: async () => {
       console.log('useLocalTasks - Tasks refetched from localStorage');
-      return { data: tasks };
+      return { data: tasks.filter(task => task.event_id === currentEventId) };
     }
   };
 };
@@ -36,7 +40,7 @@ export const useLocalCreateTask = () => {
         ...data,
         id: generateId(),
         event_id: currentEventId || data.event_id,
-        status: 'pending',
+        status: data.status || 'pending',
         completed_at: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -49,14 +53,18 @@ export const useLocalCreateTask = () => {
         ...data,
         id: generateId(),
         event_id: currentEventId || data.event_id,
-        status: 'pending',
+        status: data.status || 'pending',
         completed_at: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
       addTask(task);
+      console.log('useLocalCreateTask - Task created async:', task);
       return task;
-    }
+    },
+    isPending: false,
+    isError: false,
+    error: null
   };
 };
 
@@ -71,7 +79,7 @@ export const useLocalUpdateTask = () => {
         updated_at: new Date().toISOString()
       };
       updateTask(id, updatedData);
-      console.log('useLocalUpdateTask - Task updated:', id);
+      console.log('useLocalUpdateTask - Task updated:', id, updatedData);
     },
     mutateAsync: async ({ id, data }: { id: string; data: Partial<Task> }) => {
       const updatedData = {
@@ -79,8 +87,12 @@ export const useLocalUpdateTask = () => {
         updated_at: new Date().toISOString()
       };
       updateTask(id, updatedData);
+      console.log('useLocalUpdateTask - Task updated async:', id, updatedData);
       return updatedData;
-    }
+    },
+    isPending: false,
+    isError: false,
+    error: null
   };
 };
 
@@ -95,7 +107,11 @@ export const useLocalDeleteTask = () => {
     },
     mutateAsync: async (id: string) => {
       deleteTask(id);
-    }
+      console.log('useLocalDeleteTask - Task deleted async:', id);
+    },
+    isPending: false,
+    isError: false,
+    error: null
   };
 };
 
@@ -113,6 +129,9 @@ export const useLocalToggleTaskStatus = () => {
       };
       updateTask(id, updatedData);
       console.log('useLocalToggleTaskStatus - Task status toggled:', id, status);
-    }
+    },
+    isPending: false,
+    isError: false,
+    error: null
   };
 };

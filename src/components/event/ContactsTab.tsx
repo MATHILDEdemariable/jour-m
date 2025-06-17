@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Users, Building2, Phone, Mail, User } from 'lucide-react';
-import { useSharedEventData } from '@/hooks/useSharedEventData';
-import { useCurrentEvent } from '@/contexts/CurrentEventContext';
+import { useLocalEventData } from '@/contexts/LocalEventDataContext';
+import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
 
 interface ContactsTabProps {
   userId: string;
@@ -26,18 +26,12 @@ const roleLabels = {
 
 export const ContactsTab: React.FC<ContactsTabProps> = ({ userId, userType }) => {
   const [activeSection, setActiveSection] = useState<'team' | 'vendors'>('team');
-  const { people, vendors } = useSharedEventData();
-  const { currentEventId } = useCurrentEvent();
-
-  // Filter data by current event to ensure synchronization
-  const eventPeople = people.filter(person => person.event_id === currentEventId);
-  const eventVendors = vendors.filter(vendor => vendor.event_id === currentEventId);
+  const { people, vendors } = useLocalEventData();
+  const { currentEventId } = useLocalCurrentEvent();
 
   console.log('ContactsTab - Current event ID:', currentEventId);
   console.log('ContactsTab - All people:', people);
-  console.log('ContactsTab - Filtered people:', eventPeople);
   console.log('ContactsTab - All vendors:', vendors);
-  console.log('ContactsTab - Filtered vendors:', eventVendors);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -60,7 +54,7 @@ export const ContactsTab: React.FC<ContactsTabProps> = ({ userId, userType }) =>
         return <Badge className="bg-blue-100 text-blue-800 text-xs">Devis</Badge>;
       case 'negotiation':
         return <Badge className="bg-yellow-100 text-yellow-800 text-xs">Négociation</Badge>;
-      case 'rejecte, rejected':
+      case 'rejected':
         return <Badge className="bg-red-100 text-red-800 text-xs">Refusé</Badge>;
       default:
         return <Badge variant="outline" className="text-xs">{status}</Badge>;
@@ -77,7 +71,7 @@ export const ContactsTab: React.FC<ContactsTabProps> = ({ userId, userType }) =>
           className={`flex-1 text-xs lg:text-sm px-2 lg:px-4 ${activeSection === 'team' ? 'bg-gradient-to-r from-purple-600 to-pink-600' : ''}`}
         >
           <Users className="w-4 h-4 mr-1 lg:mr-2" />
-          Équipe ({eventPeople.length})
+          Équipe ({people.length})
         </Button>
         <Button
           variant={activeSection === 'vendors' ? 'default' : 'outline'}
@@ -85,7 +79,7 @@ export const ContactsTab: React.FC<ContactsTabProps> = ({ userId, userType }) =>
           className={`flex-1 text-xs lg:text-sm px-2 lg:px-4 ${activeSection === 'vendors' ? 'bg-gradient-to-r from-purple-600 to-pink-600' : ''}`}
         >
           <Building2 className="w-4 h-4 mr-1 lg:mr-2" />
-          Prestataires ({eventVendors.length})
+          Prestataires ({vendors.length})
         </Button>
       </div>
 
@@ -100,14 +94,14 @@ export const ContactsTab: React.FC<ContactsTabProps> = ({ userId, userType }) =>
             <p className="text-xs lg:text-sm text-gray-600">Contacts de tous les membres de l'équipe</p>
           </CardHeader>
           <CardContent className="p-4 lg:p-6">
-            {eventPeople.length === 0 ? (
+            {people.length === 0 ? (
               <div className="text-center py-6 lg:py-8 text-gray-500">
                 <Users className="w-10 h-10 lg:w-12 lg:h-12 mx-auto mb-3 lg:mb-4 text-gray-300" />
                 <p className="text-sm lg:text-base">Aucun membre d'équipe trouvé</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {eventPeople.map((person) => (
+                {people.map((person) => (
                   <div 
                     key={person.id}
                     className={`flex items-center gap-3 lg:gap-4 p-3 lg:p-4 bg-gray-50 rounded-lg border border-gray-200 hover:shadow-md transition-all ${
@@ -177,14 +171,14 @@ export const ContactsTab: React.FC<ContactsTabProps> = ({ userId, userType }) =>
             <p className="text-xs lg:text-sm text-gray-600">Contacts de tous les prestataires de l'événement</p>
           </CardHeader>
           <CardContent className="p-4 lg:p-6">
-            {eventVendors.length === 0 ? (
+            {vendors.length === 0 ? (
               <div className="text-center py-6 lg:py-8 text-gray-500">
                 <Building2 className="w-10 h-10 lg:w-12 lg:h-12 mx-auto mb-3 lg:mb-4 text-gray-300" />
                 <p className="text-sm lg:text-base">Aucun prestataire trouvé</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {eventVendors.map((vendor) => (
+                {vendors.map((vendor) => (
                   <div 
                     key={vendor.id}
                     className={`flex items-center gap-3 lg:gap-4 p-3 lg:p-4 bg-gray-50 rounded-lg border border-gray-200 hover:shadow-md transition-all ${

@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FileText, Download, ExternalLink, Folder } from 'lucide-react';
-import { useEventDocuments } from '@/hooks/useEventDocuments';
-import { useCurrentEvent } from '@/contexts/CurrentEventContext';
+import { useLocalEventData } from '@/contexts/LocalEventDataContext';
+import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
 
 interface PersonalDocumentsProps {
   personId: string;
@@ -16,8 +16,8 @@ export const PersonalDocuments: React.FC<PersonalDocumentsProps> = ({
   personId, 
   personName 
 }) => {
-  const { currentEventId } = useCurrentEvent();
-  const { documents, getDocumentUrl } = useEventDocuments(currentEventId);
+  const { currentEventId } = useLocalCurrentEvent();
+  const { documents } = useLocalEventData();
 
   // Filtrer les documents assignés à cette personne
   const personalDocuments = documents.filter(doc => 
@@ -44,9 +44,9 @@ export const PersonalDocuments: React.FC<PersonalDocumentsProps> = ({
   };
 
   const handleDownload = (document: any) => {
-    const url = getDocumentUrl(document.file_path);
+    // Pour le mode local, on simule le téléchargement
     const link = document.createElement('a');
-    link.href = url;
+    link.href = document.file_path || '#';
     link.download = document.name;
     link.click();
   };
@@ -104,7 +104,7 @@ export const PersonalDocuments: React.FC<PersonalDocumentsProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <h4 className="font-medium text-gray-900 truncate">{document.name}</h4>
-                    {getSourceBadge(document.source)}
+                    {getSourceBadge(document.source || 'manual')}
                   </div>
                   
                   <div className="flex items-center gap-3 text-xs text-gray-500">
@@ -127,7 +127,7 @@ export const PersonalDocuments: React.FC<PersonalDocumentsProps> = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => window.open(getDocumentUrl(document.file_path), '_blank')}
+                    onClick={() => window.open(document.file_path || '#', '_blank')}
                     className="h-8 w-8 p-0"
                   >
                     <ExternalLink className="w-3 h-3" />
