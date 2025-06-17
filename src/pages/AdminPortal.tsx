@@ -6,7 +6,7 @@ import { ArrowLeft, LogOut, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
-import { useEventData } from '@/contexts/EventDataContext';
+import { useLocalEventData } from '@/contexts/LocalEventDataContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 // Import des composants
@@ -28,7 +28,7 @@ export const AdminPortal = () => {
   const isMobile = useIsMobile();
   const { t } = useTranslation();
   const { signOut } = useAuth();
-  const { currentEvent } = useEventData();
+  const { currentEvent } = useLocalEventData();
 
   const getCurrentTutorial = () => {
     return TUTORIAL_CONTENT[activeTab as keyof typeof TUTORIAL_CONTENT] || TUTORIAL_CONTENT.planning;
