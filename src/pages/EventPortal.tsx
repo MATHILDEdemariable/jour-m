@@ -1,9 +1,8 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSharedEventData } from '@/hooks/useSharedEventData';
 import { useMagicAccessData } from '@/hooks/useMagicAccessData';
-import { PersonLogin } from '@/components/event/PersonLogin';
+import { UserSelectionModal } from '@/components/event/UserSelectionModal';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
@@ -36,6 +35,7 @@ const EventPortal = () => {
   const [hasInitialRefreshed, setHasInitialRefreshed] = useState(false);
   const [isMagicAccess, setIsMagicAccess] = useState(false);
   const [magicEventId, setMagicEventId] = useState<string | null>(null);
+  const [showUserModal, setShowUserModal] = useState(false);
   
   // Utiliser le hook magic access si nécessaire
   const { isInitialized: magicDataInitialized } = useMagicAccessData(magicEventId || '');
@@ -242,7 +242,15 @@ const EventPortal = () => {
     }
 
     if (!loggedInUser) {
-      return <PersonLogin onLogin={handleLogin} />;
+      return (
+        <>
+          <UserSelectionModal
+            isOpen={true}
+            onClose={() => navigate('/team-dashboard?magic_access=true&event_id=' + magicEventId)}
+            onLogin={handleLogin}
+          />
+        </>
+      );
     }
 
     // Utilisateur connecté via magic access, afficher l'interface normale
@@ -291,7 +299,15 @@ const EventPortal = () => {
   }
   
   if (!loggedInUser) {
-    return <PersonLogin onLogin={handleLogin} />;
+    return (
+      <>
+        <UserSelectionModal
+          isOpen={true}
+          onClose={() => navigate('/')}
+          onLogin={handleLogin}
+        />
+      </>
+    );
   }
 
   return (

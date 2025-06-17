@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -43,6 +44,36 @@ export interface Vendor {
   updated_at: string;
 }
 
+export interface Task {
+  id: string;
+  event_id: string | null;
+  title: string;
+  description: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  priority: 'high' | 'medium' | 'low';
+  assigned_person_id: string | null;
+  assigned_vendor_id: string | null;
+  due_date: string;
+  completed_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlanningItem {
+  id: string;
+  event_id: string | null;
+  title: string;
+  description?: string;
+  time?: string;
+  duration?: number;
+  category: string;
+  status: 'scheduled' | 'in_progress' | 'completed';
+  assigned_person_id?: string;
+  assigned_vendor_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface TimelineItem {
   id: string;
   event_id: string | null;
@@ -79,9 +110,13 @@ interface EventStore {
   events: Event[];
   people: Person[];
   vendors: Vendor[];
+  tasks: Task[];
+  planningItems: PlanningItem[];
   timelineItems: TimelineItem[];
   documents: Document[];
   loading: boolean;
+  isOffline: boolean;
+  lastSyncAt: string | null;
   
   setCurrentEventId: (eventId: string | null) => void;
   addEvent: (event: Event) => void;
@@ -96,6 +131,14 @@ interface EventStore {
   updateVendor: (id: string, updates: Partial<Vendor>) => void;
   deleteVendor: (id: string) => void;
 
+  addTask: (task: Task) => void;
+  updateTask: (id: string, updates: Partial<Task>) => void;
+  deleteTask: (id: string) => void;
+
+  addPlanningItem: (item: PlanningItem) => void;
+  updatePlanningItem: (id: string, updates: Partial<PlanningItem>) => void;
+  deletePlanningItem: (id: string) => void;
+
   addTimelineItem: (item: TimelineItem) => void;
   updateTimelineItem: (id: string, updates: Partial<TimelineItem>) => void;
   deleteTimelineItem: (id: string) => void;
@@ -105,6 +148,15 @@ interface EventStore {
   updateDocument: (id: string, updates: Partial<Document>) => void;
   deleteDocument: (id: string) => void;
   setLoading: (loading: boolean) => void;
+  
+  // Data management methods
+  refreshData: () => Promise<void>;
+  resetAllData: () => void;
+  exportData: () => string;
+  importData: (data: string) => void;
+  createBackup: () => string;
+  restoreFromBackup: (backup: string) => void;
+  getStorageSize: () => number;
 }
 
 export const useEventStore = create<EventStore>()(
@@ -115,9 +167,13 @@ export const useEventStore = create<EventStore>()(
       events: [],
       people: [],
       vendors: [],
+      tasks: [],
+      planningItems: [],
       timelineItems: [],
       documents: [],
       loading: false,
+      isOffline: false,
+      lastSyncAt: null,
 
       // Méthodes pour manipuler l'état
       setCurrentEventId: (eventId) => set({ currentEventId: eventId }),
@@ -139,6 +195,18 @@ export const useEventStore = create<EventStore>()(
       })),
       deleteVendor: (id) => set((state) => ({ vendors: state.vendors.filter(vendor => vendor.id !== id) })),
 
+      addTask: (task) => set((state) => ({ tasks: [...state.tasks, task] })),
+      updateTask: (id, updates) => set((state) => ({
+        tasks: state.tasks.map(task => task.id === id ? { ...task, ...updates } : task)
+      })),
+      deleteTask: (id) => set((state) => ({ tasks: state.tasks.filter(task => task.id !== id) })),
+
+      addPlanningItem: (item) => set((state) => ({ planningItems: [...state.planningItems, item] })),
+      updatePlanningItem: (id, updates) => set((state) => ({
+        planningItems: state.planningItems.map(item => item.id === id ? { ...item, ...updates } : item)
+      })),
+      deletePlanningItem: (id) => set((state) => ({ planningItems: state.planningItems.filter(item => item.id !== id) })),
+
       addTimelineItem: (item) => set((state) => ({ timelineItems: [...state.timelineItems, item] })),
       updateTimelineItem: (id, updates) => set((state) => ({
         timelineItems: state.timelineItems.map(item => item.id === id ? { ...item, ...updates } : item)
@@ -158,9 +226,56 @@ export const useEventStore = create<EventStore>()(
       })),
       deleteDocument: (id) => set((state) => ({ documents: state.documents.filter(document => document.id !== id) })),
       setLoading: (loading) => set({ loading }),
+
+      // Data management methods
+      refreshData: async () => {
+        // Implementation for refreshing data
+        set({ lastSyncAt: new Date().toISOString() });
+      },
+      resetAllData: () => set({
+        events: [],
+        people: [],
+        vendors: [],
+        tasks: [],
+        planningItems: [],
+        timelineItems: [],
+        documents: [],
+        currentEventId: null
+      }),
+      exportData: () => {
+        const state = get();
+        return JSON.stringify(state);
+      },
+      importData: (data: string) => {
+        try {
+          const importedState = JSON.parse(data);
+          set(importedState);
+        } catch (error) {
+          console.error('Error importing data:', error);
+        }
+      },
+      createBackup: () => {
+        const state = get();
+        return JSON.stringify({
+          timestamp: new Date().toISOString(),
+          data: state
+        });
+      },
+      restoreFromBackup: (backup: string) => {
+        try {
+          const { data } = JSON.parse(backup);
+          set(data);
+        } catch (error) {
+          console.error('Error restoring backup:', error);
+        }
+      },
+      getStorageSize: () => {
+        const state = get();
+        return JSON.stringify(state).length;
+      }
     }),
     {
-      name: 'event-store-v1', // Changement de version pour nettoyer les anciennes données
+      name: 'event-store-v1',
       version: 1,
     }
   )
