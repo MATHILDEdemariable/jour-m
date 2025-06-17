@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -63,7 +64,7 @@ export const AdminPortal = () => {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/')}
                   className="text-gray-600 px-2 lg:px-3"
                 >
                   <ArrowLeft className="w-4 h-4 mr-1 lg:mr-2" />

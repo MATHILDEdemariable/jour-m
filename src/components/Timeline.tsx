@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 interface TimelineProps {
   viewMode: 'personal' | 'global';
   userRole: string;
-  userId?: string; // Nouvel prop pour l'ID utilisateur
+  userId?: string;
 }
 
 const ROLE_LABELS = {
@@ -29,18 +29,35 @@ export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole, userId }
   const { timelineItems, people, loading } = useSharedEventData();
   const navigate = useNavigate();
 
+  console.log('Timeline component - Data received:', {
+    timelineItemsCount: timelineItems.length,
+    peopleCount: people.length,
+    viewMode,
+    userRole,
+    userId
+  });
+
   // Fonction pour obtenir l'ID utilisateur basé sur le rôle si userId n'est pas fourni
   const getCurrentUserId = () => {
     if (userId) return userId;
     
     // Fallback: chercher une personne avec le rôle correspondant
     const matchingPerson = people.find(person => person.role === userRole);
+    console.log('Timeline - Looking for user with role:', userRole, 'found:', matchingPerson);
     return matchingPerson?.id || null;
   };
 
   const filteredItems = viewMode === 'personal' 
     ? timelineItems.filter(item => {
         const currentUserId = getCurrentUserId();
+        
+        console.log('Timeline - Filtering item:', item.title, {
+          assigned_person_ids: item.assigned_person_ids,
+          assigned_person_id: item.assigned_person_id,
+          assigned_role: item.assigned_role,
+          currentUserId,
+          userRole
+        });
         
         // Nouvelle logique : vérifier si l'utilisateur est dans la liste des personnes assignées
         if (item.assigned_person_ids && item.assigned_person_ids.length > 0 && currentUserId) {
@@ -51,6 +68,8 @@ export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole, userId }
         return item.assigned_person_id === currentUserId || item.assigned_role === userRole;
       })
     : timelineItems;
+
+  console.log('Timeline - Filtered items count:', filteredItems.length);
 
   const calculateEndTime = (startTime: string, duration: number): string => {
     const [hours, minutes] = startTime.split(':').map(Number);
@@ -77,6 +96,8 @@ export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole, userId }
         item.assigned_person_ids.includes(person.id)
       );
       
+      console.log('Timeline - Assigned people for item', item.title, ':', assignedPeople);
+      
       if (assignedPeople.length === 0) return "Personnes assignées";
       if (assignedPeople.length === 1) return assignedPeople[0].name;
       if (assignedPeople.length <= 2) {
@@ -85,7 +106,7 @@ export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole, userId }
       return `${assignedPeople.slice(0, 2).map(p => p.name).join(", ")} et ${assignedPeople.length - 2} autre${assignedPeople.length - 2 > 1 ? 's' : ''}`;
     }
     
-    return "Non assigné";
+    return item.assigned_role || "Non assigné";
   };
 
   if (loading) {

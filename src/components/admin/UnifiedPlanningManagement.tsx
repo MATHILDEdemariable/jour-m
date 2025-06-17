@@ -1,18 +1,38 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Download, Search, Filter, Clock4, Sparkles, Plus, Users, Star } from 'lucide-react';
-import { useTimelineItems, TimelineItem } from '@/hooks/useTimelineItems';
-import { useEvents } from '@/hooks/useEvents';
-import { usePeople } from '@/hooks/usePeople';
+import { useLocalTimelineItems } from '@/hooks/useLocalTimelineItems';
+import { useLocalEventData } from '@/contexts/LocalEventDataContext';
 import { TimelineItemModal } from './TimelineItemModal';
 import { TimelineAISuggestions } from './TimelineAISuggestions';
 import { DraggableTimelineItem } from './DraggableTimelineItem';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useVendors } from '@/hooks/useVendors';
+
+// Type for timeline items compatible with local store
+interface TimelineItem {
+  id: string;
+  event_id: string | null;
+  title: string;
+  description: string | null;
+  time: string;
+  duration: number;
+  category: string;
+  status: 'scheduled' | 'in_progress' | 'completed' | 'delayed';
+  priority: 'high' | 'medium' | 'low';
+  assigned_person_id: string | null;
+  assigned_person_ids: string[];
+  assigned_vendor_id: string | null;
+  assigned_role: string | null;
+  order_index: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 // Type for preview times during drag and drop
 interface PreviewTime {
@@ -45,11 +65,9 @@ export const UnifiedPlanningManagement = () => {
     getTotalDuration,
     getEndTime,
     loading
-  } = useTimelineItems();
+  } = useLocalTimelineItems();
   
-  const { currentEvent } = useEvents();
-  const { people } = usePeople();
-  const { vendors } = useVendors();
+  const { currentEvent, people, vendors } = useLocalEventData();
   const { toast } = useToast();
 
   const categoryColors = {
@@ -77,12 +95,6 @@ export const UnifiedPlanningManagement = () => {
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     return `${hours}h${minutes > 0 ? minutes : ''}`;
-  };
-
-  const getPersonName = (personId: string | null) => {
-    if (!personId) return null;
-    const person = people.find(p => p.id === personId);
-    return person?.name || null;
   };
 
   const getPersonNames = (personIds: string[]): string[] => {
@@ -143,6 +155,10 @@ export const UnifiedPlanningManagement = () => {
     try {
       if (editingItem) {
         await updateTimelineItem(editingItem.id, data);
+        toast({
+          title: 'Succès',
+          description: 'Étape modifiée avec succès',
+        });
       } else {
         await addTimelineItem({
           ...data,
@@ -151,21 +167,48 @@ export const UnifiedPlanningManagement = () => {
           status: 'scheduled',
           time: data.time || '08:00',
           order_index: timelineItems.length,
-          priority: data.priority || 'medium'
-        } as Omit<TimelineItem, 'id' | 'event_id' | 'created_at' | 'updated_at'>);
+          priority: data.priority || 'medium',
+          assigned_person_ids: data.assigned_person_ids || [],
+          title: data.title || '',
+          description: data.description || null,
+          assigned_person_id: null,
+          assigned_vendor_id: data.assigned_vendor_id || null,
+          assigned_role: data.assigned_role || null,
+          notes: data.notes || null
+        });
+        toast({
+          title: 'Succès',
+          description: 'Nouvelle étape ajoutée avec succès',
+        });
       }
       setIsModalOpen(false);
       setEditingItem(null);
     } catch (error) {
       console.error('Error saving timeline item:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de sauvegarder l\'étape',
+        variant: 'destructive',
+      });
     }
   };
 
-  const handleAddAISuggestion = async (suggestion: Omit<TimelineItem, 'id' | 'event_id' | 'created_at' | 'updated_at'>) => {
+  const handleAddAISuggestion = async (suggestion: any) => {
     try {
       await addTimelineItem({
-        ...suggestion,
-        order_index: timelineItems.length
+        title: suggestion.title,
+        description: suggestion.description,
+        duration: suggestion.duration,
+        category: suggestion.category,
+        priority: suggestion.priority,
+        assigned_role: suggestion.assigned_role,
+        notes: suggestion.notes,
+        status: 'scheduled',
+        time: '08:00',
+        order_index: timelineItems.length,
+        assigned_person_ids: [],
+        assigned_person_id: null,
+        assigned_vendor_id: null
       });
       toast({
         title: 'Succès',
