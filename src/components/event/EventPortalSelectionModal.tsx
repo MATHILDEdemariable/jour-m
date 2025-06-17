@@ -31,10 +31,23 @@ export const EventPortalSelectionModal: React.FC<EventPortalSelectionModalProps>
 }) => {
   const navigate = useNavigate();
   const { currentEventId } = useLocalCurrentEvent();
+  
+  // CHANGEMENT: Utiliser EventStore comme source unique de données
   const { people, vendors } = useEventStore();
   
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedUserType, setSelectedUserType] = useState<'person' | 'vendor' | ''>('');
+
+  // Filtrer par événement actuel
+  const filteredPeople = people.filter(person => person.event_id === currentEventId);
+  const filteredVendors = vendors.filter(vendor => vendor.event_id === currentEventId);
+
+  // Debug pour vérifier les données
+  console.log('EventPortalSelectionModal - Current event:', currentEventId);
+  console.log('EventPortalSelectionModal - All people:', people.length);
+  console.log('EventPortalSelectionModal - Filtered people:', filteredPeople.length, filteredPeople);
+  console.log('EventPortalSelectionModal - All vendors:', vendors.length);
+  console.log('EventPortalSelectionModal - Filtered vendors:', filteredVendors.length, filteredVendors);
 
   const handleContinue = () => {
     if (!selectedUserId || !selectedUserType || !currentEventId) return;
@@ -48,9 +61,6 @@ export const EventPortalSelectionModal: React.FC<EventPortalSelectionModalProps>
     setSelectedUserId('');
     setSelectedUserType('');
   };
-
-  const filteredPeople = people.filter(person => person.event_id === currentEventId);
-  const filteredVendors = vendors.filter(vendor => vendor.event_id === currentEventId);
 
   const handleUserSelect = (value: string) => {
     setSelectedUserId(value);
@@ -125,11 +135,18 @@ export const EventPortalSelectionModal: React.FC<EventPortalSelectionModalProps>
                   })
                 ) : (
                   <SelectItem value="no-users" disabled>
-                    Aucun utilisateur disponible
+                    Aucun utilisateur disponible pour cet événement
                   </SelectItem>
                 )}
               </SelectContent>
             </Select>
+
+            {allUsers.length === 0 && (
+              <div className="text-center py-4 text-gray-500">
+                <p className="text-sm">Aucune personne ou prestataire trouvé pour cet événement.</p>
+                <p className="text-xs mt-1">Veuillez d'abord ajouter des participants dans le portail admin.</p>
+              </div>
+            )}
 
             <Button
               onClick={handleContinue}

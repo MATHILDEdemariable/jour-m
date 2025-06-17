@@ -171,6 +171,11 @@ interface EventStore {
   createBackup: () => string;
   restoreFromBackup: (backup: string) => boolean;
   getStorageSize: () => number;
+  
+  // NOUVELLES méthodes de synchronisation
+  syncData: () => void;
+  loadFromStorage: () => void;
+  saveToStorage: () => void;
 }
 
 export const useEventStore = create<EventStore>()(
@@ -190,20 +195,58 @@ export const useEventStore = create<EventStore>()(
       lastSyncAt: null,
 
       // Méthodes pour manipuler l'état
-      setCurrentEventId: (eventId) => set({ currentEventId: eventId }),
+      setCurrentEventId: (eventId) => {
+        set({ currentEventId: eventId });
+        if (eventId) {
+          localStorage.setItem('currentEventId', eventId);
+        }
+      },
+      
       addEvent: (event) => set((state) => ({ events: [...state.events, event] })),
       updateEvent: (id, updates) => set((state) => ({
         events: state.events.map(event => event.id === id ? { ...event, ...updates } : event)
       })),
       deleteEvent: (id) => set((state) => ({ events: state.events.filter(event => event.id !== id) })),
 
-      addPerson: (person) => set((state) => ({ people: [...state.people, person] })),
+      addPerson: (personData) => {
+        const currentEventId = localStorage.getItem('currentEventId') || 'default-event';
+        const newPerson = {
+          ...personData,
+          id: personData.id || crypto.randomUUID(),
+          event_id: personData.event_id || currentEventId,
+          created_at: personData.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        console.log('EventStore - Adding person:', newPerson);
+        set((state) => ({ people: [...state.people, newPerson] }));
+        
+        // Sauvegarder immédiatement
+        setTimeout(() => get().saveToStorage(), 100);
+      },
+      
       updatePerson: (id, updates) => set((state) => ({
         people: state.people.map(person => person.id === id ? { ...person, ...updates } : person)
       })),
       deletePerson: (id) => set((state) => ({ people: state.people.filter(person => person.id !== id) })),
 
-      addVendor: (vendor) => set((state) => ({ vendors: [...state.vendors, vendor] })),
+      addVendor: (vendorData) => {
+        const currentEventId = localStorage.getItem('currentEventId') || 'default-event';
+        const newVendor = {
+          ...vendorData,
+          id: vendorData.id || crypto.randomUUID(),
+          event_id: vendorData.event_id || currentEventId,
+          created_at: vendorData.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        console.log('EventStore - Adding vendor:', newVendor);
+        set((state) => ({ vendors: [...state.vendors, newVendor] }));
+        
+        // Sauvegarder immédiatement
+        setTimeout(() => get().saveToStorage(), 100);
+      },
+      
       updateVendor: (id, updates) => set((state) => ({
         vendors: state.vendors.map(vendor => vendor.id === id ? { ...vendor, ...updates } : vendor)
       })),
@@ -243,9 +286,10 @@ export const useEventStore = create<EventStore>()(
 
       // Data management methods
       refreshData: async () => {
-        // Implementation for refreshing data
+        console.log('EventStore - Refreshing data');
         set({ lastSyncAt: new Date().toISOString() });
       },
+      
       resetAllData: () => set({
         events: [],
         people: [],
@@ -256,10 +300,12 @@ export const useEventStore = create<EventStore>()(
         documents: [],
         currentEventId: null
       }),
+      
       exportData: () => {
         const state = get();
         return JSON.stringify(state);
       },
+      
       importData: (data: string) => {
         try {
           const importedState = JSON.parse(data);
@@ -268,6 +314,7 @@ export const useEventStore = create<EventStore>()(
           console.error('Error importing data:', error);
         }
       },
+      
       createBackup: () => {
         const state = get();
         return JSON.stringify({
@@ -275,6 +322,7 @@ export const useEventStore = create<EventStore>()(
           data: state
         });
       },
+      
       restoreFromBackup: (backup: string) => {
         try {
           const { data } = JSON.parse(backup);
@@ -285,9 +333,45 @@ export const useEventStore = create<EventStore>()(
           return false;
         }
       },
+      
       getStorageSize: () => {
         const state = get();
         return JSON.stringify(state).length;
+      },
+
+      // NOUVELLES méthodes de synchronisation
+      syncData: () => {
+        console.log('EventStore - Syncing data');
+        const state = get();
+        console.log('EventStore - Current data:', {
+          events: state.events.length,
+          people: state.people.length,
+          vendors: state.vendors.length,
+          tasks: state.tasks.length
+        });
+        set({ lastSyncAt: new Date().toISOString() });
+      },
+
+      loadFromStorage: () => {
+        console.log('EventStore - Loading data from storage');
+        // Les données sont automatiquement chargées par zustand persist
+        const state = get();
+        console.log('EventStore - Loaded data:', {
+          events: state.events.length,
+          people: state.people.length,
+          vendors: state.vendors.length
+        });
+      },
+
+      saveToStorage: () => {
+        console.log('EventStore - Saving data to storage');
+        // Les données sont automatiquement sauvegardées par zustand persist
+        const state = get();
+        console.log('EventStore - Saved data counts:', {
+          events: state.events.length,
+          people: state.people.length,
+          vendors: state.vendors.length
+        });
       }
     }),
     {
