@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Eye, Settings, LogIn, LogOut } from 'lucide-react';
+import { Eye, Settings, LogIn, LogOut, Download, Upload } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -15,17 +15,20 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from '@/contexts/AuthContext';
 import { EventPortalSelectionModal } from '@/components/event/EventPortalSelectionModal';
-import { useCurrentEvent } from '@/contexts/CurrentEventContext';
-import { supabase } from '@/integrations/supabase/client';
+import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
+import { useEventStore } from '@/stores/eventStore';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, signOut } = useAuth();
-  const { currentEventId } = useCurrentEvent();
+  const { currentEventId } = useLocalCurrentEvent();
+  const { resetAllData, exportData, importData } = useEventStore();
   const [showEventPortalSelection, setShowEventPortalSelection] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState('');
+  const [importText, setImportText] = useState('');
   const [isResetting, setIsResetting] = useState(false);
 
   const handleAdminAccess = () => {
@@ -37,10 +40,10 @@ const Home: React.FC = () => {
   };
 
   const handleConfirmReset = async () => {
-    if (resetConfirmText !== 'RESET' || !currentEventId) {
+    if (resetConfirmText !== 'RESET') {
       toast({
         title: 'Erreur de confirmation',
-        description: "Veuillez sélectionner un événement et taper 'RESET' pour confirmer.",
+        description: "Veuillez taper 'RESET' pour confirmer.",
         variant: 'destructive',
       });
       return;
@@ -48,32 +51,66 @@ const Home: React.FC = () => {
 
     setIsResetting(true);
     try {
-      const { error } = await supabase.functions.invoke('reset-event-data', {
-        body: { eventId: currentEventId },
-      });
-
-      if (error) {
-        throw error;
-      }
-
+      resetAllData();
       toast({
         title: 'Succès',
-        description: "Les données de l'événement ont été réinitialisées. La page va se rafraîchir.",
+        description: "Les données ont été réinitialisées.",
       });
-
-      setTimeout(() => window.location.reload(), 2000);
-
+      setResetConfirmText('');
+      setShowResetDialog(false);
     } catch (error) {
-      console.error('Failed to reset event data:', error);
+      console.error('Failed to reset data:', error);
       toast({
         title: 'Erreur',
-        description: "Impossible de réinitialiser les données de l'événement.",
+        description: "Impossible de réinitialiser les données.",
         variant: 'destructive',
       });
     } finally {
       setIsResetting(false);
-      setResetConfirmText('');
-      setShowResetDialog(false);
+    }
+  };
+
+  const handleExport = () => {
+    try {
+      const data = exportData();
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `jourm-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: 'Export réussi',
+        description: 'Les données ont été exportées.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Erreur d\'export',
+        description: 'Impossible d\'exporter les données.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleImport = () => {
+    try {
+      importData(importText);
+      toast({
+        title: 'Import réussi',
+        description: 'Les données ont été importées.',
+      });
+      setImportText('');
+      setShowImportDialog(false);
+    } catch (error) {
+      toast({
+        title: 'Erreur d\'import',
+        description: 'Impossible d\'importer les données. Vérifiez le format JSON.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -111,8 +148,32 @@ const Home: React.FC = () => {
             </Button>
           </div>
 
+          {/* Boutons d'export/import */}
+          <div className="flex flex-col sm:flex-row gap-2 justify-center max-w-md mx-auto mt-4">
+            <Button
+              onClick={handleExport}
+              variant="outline"
+              size="sm"
+              className="text-gray-600 border-gray-200"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Exporter
+            </Button>
+            
+            <Button
+              onClick={() => setShowImportDialog(true)}
+              variant="outline"
+              size="sm"
+              className="text-gray-600 border-gray-200"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Importer
+            </Button>
+          </div>
+
           {user ? (
             <div className="mt-4 flex flex-col items-center gap-2">
+              <p className="text-sm text-gray-600">Connecté en tant que: {user.email}</p>
               <Button
                 onClick={signOut}
                 variant="ghost"
@@ -147,15 +208,13 @@ const Home: React.FC = () => {
             <span>
               © 2025 - Powered by <a href="https://mariable.fr" target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">mariable.fr</a>
             </span>
-            {user && (
-              <Button
-                onClick={() => setShowResetDialog(true)}
-                variant="link"
-                className="text-white h-auto p-0 text-xs opacity-70 hover:opacity-100"
-              >
-                Réinitialiser les données
-              </Button>
-            )}
+            <Button
+              onClick={() => setShowResetDialog(true)}
+              variant="link"
+              className="text-white h-auto p-0 text-xs opacity-70 hover:opacity-100"
+            >
+              Réinitialiser les données
+            </Button>
           </div>
         </div>
       </footer>
@@ -166,7 +225,7 @@ const Home: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Êtes-vous absolument sûr ?</DialogTitle>
             <DialogDescription>
-              Cette action est irréversible. Toutes les données (tâches, planning, équipe, prestataires, documents, etc.) de l'événement actuel seront définitivement supprimées. Pour confirmer, veuillez taper <span className="font-bold text-red-600">RESET</span> dans le champ ci-dessous.
+              Cette action est irréversible. Toutes les données (tâches, planning, équipe, prestataires, documents, etc.) seront définitivement supprimées. Pour confirmer, veuillez taper <span className="font-bold text-red-600">RESET</span> dans le champ ci-dessous.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -185,6 +244,35 @@ const Home: React.FC = () => {
               onClick={handleConfirmReset}
             >
               {isResetting ? 'Réinitialisation en cours...' : 'Je comprends, tout supprimer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Dialog */}
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Importer des données</DialogTitle>
+            <DialogDescription>
+              Collez ici le contenu JSON exporté précédemment pour restaurer vos données.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <textarea
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+              placeholder='Collez le JSON ici...'
+              className="w-full h-32 p-2 border rounded-md resize-none font-mono text-xs"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowImportDialog(false)}>Annuler</Button>
+            <Button
+              disabled={!importText.trim()}
+              onClick={handleImport}
+            >
+              Importer
             </Button>
           </DialogFooter>
         </DialogContent>

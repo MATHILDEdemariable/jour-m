@@ -1,51 +1,37 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { useMagicWordAuth } from '@/hooks/useMagicWordAuth';
 
 const AuthPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signIn, signUp } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState("signin"); // Track current tab
+  const [tab, setTab] = useState("signin");
   const [magicInput, setMagicInput] = useState('');
   const { loading: magicLoading, error: magicError, loginWithMagicWord } = useMagicWordAuth();
-
-  // Nouveau: état et logique pour reset password
-  const [resetRequested, setResetRequested] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-        },
-        emailRedirectTo: `${window.location.origin}/`,
-      },
-    });
+    const { error } = await signUp(email, password, fullName);
 
     if (error) {
       toast({ title: 'Erreur d\'inscription', description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: 'Inscription réussie!', description: 'Veuillez vérifier votre e-mail pour confirmer votre compte.' });
-      // Clear fields
-      setEmail('');
-      setPassword('');
-      setFullName('');
+      toast({ title: 'Inscription réussie!', description: 'Compte créé avec succès.' });
+      navigate('/dashboard');
     }
     setLoading(false);
   };
@@ -53,10 +39,7 @@ const AuthPage = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await signIn(email, password);
 
     if (error) {
       toast({ title: 'Erreur de connexion', description: error.message, variant: 'destructive' });
@@ -67,19 +50,8 @@ const AuthPage = () => {
     setLoading(false);
   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail || email, {
-      redirectTo: window.location.origin + '/auth'
-    });
-    if (error) {
-      toast({ title: 'Échec', description: error.message, variant: 'destructive' });
-    } else {
-      setResetRequested(true);
-      toast({ title: 'Lien envoyé', description: 'Un e-mail a été envoyé pour réinitialiser votre mot de passe.' });
-    }
-    setLoading(false);
+  const handleQuickAccess = () => {
+    navigate('/dashboard');
   };
 
   return (
@@ -89,69 +61,29 @@ const AuthPage = () => {
           <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
             Bienvenue sur JOURM
           </h1>
-          <CardDescription>Connectez-vous, créez un compte ou utilisez un mot magique !</CardDescription>
+          <CardDescription>Connectez-vous, créez un compte ou accédez directement !</CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Extensible tab navigation */}
           <Tabs value={tab} onValueChange={setTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="signin">Se connecter</TabsTrigger>
               <TabsTrigger value="signup">S'inscrire</TabsTrigger>
-              <TabsTrigger value="magic">Accès par mot magique</TabsTrigger>
+              <TabsTrigger value="magic">Accès rapide</TabsTrigger>
             </TabsList>
             <TabsContent value="signin">
-              {resetRequested ? (
-                <div className="py-8">
-                  <p className="text-center text-green-700">Vérifiez votre boîte mail pour changer votre mot de passe.</p>
+              <form onSubmit={handleSignIn} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email-signin">Email</Label>
+                  <Input id="email-signin" type="email" placeholder="m@exemple.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
-              ) : (
-                <form onSubmit={handleSignIn} className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email-signin">Email</Label>
-                    <Input id="email-signin" type="email" placeholder="m@exemple.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password-signin">Mot de passe</Label>
-                    <Input id="password-signin" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-pink-600" disabled={loading}>
-                      {loading ? 'Connexion...' : 'Se connecter'}
-                    </Button>
-                  </div>
-                  <div className="text-xs text-right mt-2">
-                    <button
-                      type="button"
-                      className="text-purple-600 hover:underline"
-                      onClick={() => setResetRequested(true)}
-                    >
-                      Mot de passe oublié&nbsp;?
-                    </button>
-                  </div>
-                </form>
-              )}
-              {resetRequested && (
-                <form onSubmit={handleForgotPassword} className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="forgot-email">Votre email</Label>
-                    <Input
-                      id="forgot-email"
-                      type="email"
-                      value={resetEmail}
-                      onChange={(e) => setResetEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-pink-600" disabled={loading}>
-                    Envoyer le lien de réinitialisation
-                  </Button>
-                  <div className="text-center">
-                    <button type="button" className="text-stone-600 hover:underline text-xs mt-2" onClick={() => setResetRequested(false)}>
-                      Retour à la connexion
-                    </button>
-                  </div>
-                </form>
-              )}
+                <div className="space-y-2">
+                  <Label htmlFor="password-signin">Mot de passe</Label>
+                  <Input id="password-signin" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                </div>
+                <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-pink-600" disabled={loading}>
+                  {loading ? 'Connexion...' : 'Se connecter'}
+                </Button>
+              </form>
             </TabsContent>
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4 pt-4">
@@ -173,39 +105,55 @@ const AuthPage = () => {
               </form>
             </TabsContent>
             <TabsContent value="magic">
-              <form
-                className="space-y-4 pt-8"
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  await loginWithMagicWord(magicInput.trim().toUpperCase());
-                }}>
-                <div className="space-y-2">
-                  <Label htmlFor="magic-input">Mot magique</Label>
-                  <Input
-                    id="magic-input"
-                    value={magicInput}
-                    onChange={e => setMagicInput(e.target.value)}
-                    autoFocus
-                    required
-                    placeholder="Ex: INVITEROSES24"
-                    className="font-mono tracking-wider uppercase"
-                  />
-                </div>
-                <Button type="submit"
-                     disabled={magicInput.length < 3 || magicLoading}
-                     className="w-full bg-gradient-to-r from-purple-700 to-pink-600"
-                >
-                  {magicLoading ? "Connexion..." : "Accéder"}
-                </Button>
-                {magicError &&
-                  <p className="text-xs text-red-600">{magicError}</p>
-                }
+              <div className="space-y-4 pt-8">
                 <div className="text-center">
-                  <Button type="button" variant="link" size="sm" onClick={() => setTab("signin")}>
-                    Retour à la connexion classique
+                  <p className="text-sm text-gray-600 mb-4">Accédez directement à l'application sans inscription</p>
+                  <Button 
+                    onClick={handleQuickAccess}
+                    className="w-full bg-gradient-to-r from-purple-700 to-pink-600"
+                  >
+                    Accès rapide
                   </Button>
                 </div>
-              </form>
+                
+                <div className="text-center">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white px-2 text-muted-foreground">ou</span>
+                    </div>
+                  </div>
+                </div>
+
+                <form
+                  className="space-y-4"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    await loginWithMagicWord(magicInput.trim().toUpperCase());
+                  }}>
+                  <div className="space-y-2">
+                    <Label htmlFor="magic-input">Mot magique</Label>
+                    <Input
+                      id="magic-input"
+                      value={magicInput}
+                      onChange={e => setMagicInput(e.target.value)}
+                      placeholder="Ex: MAGIC2025"
+                      className="font-mono tracking-wider uppercase"
+                    />
+                  </div>
+                  <Button type="submit"
+                       disabled={magicInput.length < 3 || magicLoading}
+                       className="w-full bg-gradient-to-r from-purple-700 to-pink-600"
+                  >
+                    {magicLoading ? "Connexion..." : "Accéder avec le mot magique"}
+                  </Button>
+                  {magicError &&
+                    <p className="text-xs text-red-600">{magicError}</p>
+                  }
+                </form>
+              </div>
               <div className="text-xs text-center mt-5 text-stone-500">
                 Si vous avez reçu un "mot magique", entrez-le ici pour accéder à l'événement associé.
               </div>

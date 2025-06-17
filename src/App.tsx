@@ -1,11 +1,12 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { CurrentEventProvider } from "@/contexts/CurrentEventContext";
-import { EventDataProvider } from "@/contexts/EventDataContext";
+import { LocalCurrentEventProvider } from "@/contexts/LocalCurrentEventContext";
+import { LocalEventDataProvider } from "@/contexts/LocalEventDataContext";
 import Home from "./pages/Home";
 import Index from "./pages/Index";
 import AdminPortal from "./pages/AdminPortal";
@@ -27,8 +28,8 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       <AuthProvider>
-        <CurrentEventProvider>
-          <EventDataProvider>
+        <LocalCurrentEventProvider>
+          <LocalEventDataProvider>
             <TooltipProvider>
               <Toaster />
               <Sonner />
@@ -53,8 +54,8 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </TooltipProvider>
-          </EventDataProvider>
-        </CurrentEventProvider>
+          </LocalEventDataProvider>
+        </LocalCurrentEventProvider>
       </AuthProvider>
     </BrowserRouter>
   </QueryClientProvider>

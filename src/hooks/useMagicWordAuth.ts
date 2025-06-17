@@ -1,32 +1,23 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useEventStore } from "@/stores/eventStore";
 
 export function useMagicWordAuth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { events, setCurrentEventId } = useEventStore();
 
   const loginWithMagicWord = async (magic: string) => {
     setLoading(true);
     setError(null);
     
     try {
-      // Check for event with this magic_word
-      const { data, error: err } = await supabase
-        .from("events")
-        .select("*")
-        .eq("magic_word", magic)
-        .maybeSingle();
+      // Check for event with this magic_word in local storage
+      const event = events.find(e => e.magic_word === magic);
 
-      if (err) {
-        setError("Erreur lors de la vérification.");
-        setLoading(false);
-        return false;
-      }
-
-      if (!data) {
+      if (!event) {
         setError("Code d'accès invalide.");
         setLoading(false);
         return false;
@@ -34,14 +25,16 @@ export function useMagicWordAuth() {
 
       // Store context for magic login
       localStorage.setItem("eventPortalMagicLogin", JSON.stringify({
-        eventId: data.id,
-        tenantId: data.tenant_id,
-        eventName: data.name,
+        eventId: event.id,
+        eventName: event.name,
         magicWord: magic
       }));
 
+      // Set current event
+      setCurrentEventId(event.id);
+
       // Redirect to team dashboard with magic access flag
-      navigate(`/team-dashboard?magic_access=true&event_id=${data.id}`, { replace: true });
+      navigate(`/team-dashboard?magic_access=true&event_id=${event.id}`, { replace: true });
       setLoading(false);
       return true;
     } catch (error) {
