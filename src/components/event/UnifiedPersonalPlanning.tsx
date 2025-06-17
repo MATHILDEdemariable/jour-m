@@ -4,7 +4,7 @@ import { Clock, Calendar, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useTimelineItems } from '@/hooks/useTimelineItems';
-import { useCurrentEvent } from '@/contexts/CurrentEventContext';
+import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
 import { usePeople } from '@/hooks/usePeople';
 import { useVendors } from '@/hooks/useVendors';
 
@@ -36,7 +36,7 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
   onViewModeChange
 }) => {
   const { timelineItems, loading } = useTimelineItems();
-  const { currentEventId } = useCurrentEvent();
+  const { currentEventId } = useLocalCurrentEvent();
   const { people } = usePeople();
   const { vendors } = useVendors();
 
@@ -48,7 +48,7 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
   if (viewMode === 'personal') {
     filteredTimelineItems = timelineItems.filter(item => {
       if (userType === 'person') {
-        // Utilisateur type personne : filter by assigned_person_ids OU assigned_person_id
+        // Utilisateur type personne : filter by assigned_person_ids OU assigned_person_id
         return (item.assigned_person_id === userId)
           || (item.assigned_person_ids && item.assigned_person_ids.includes(userId));
       } else {
@@ -57,7 +57,7 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
       }
     });
   } else {
-    // Global view : on montre tout
+    // Global view : on montre tout
     filteredTimelineItems = timelineItems.filter(item => item.event_id === currentEventId);
   }
 
