@@ -1,7 +1,8 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useCurrentEvent } from '@/contexts/CurrentEventContext';
+import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
 import { useCurrentTenant } from './useCurrentTenant';
 
 export interface Person {
@@ -19,7 +20,7 @@ export interface Person {
 
 export const usePeople = () => {
   const { toast } = useToast();
-  const { currentEventId } = useCurrentEvent();
+  const { currentEventId } = useLocalCurrentEvent();
   const [people, setPeople] = useState<Person[]>([]);
   const [loading, setLoading] = useState(false);
   const subscriptionRef = useRef<any>(null);
