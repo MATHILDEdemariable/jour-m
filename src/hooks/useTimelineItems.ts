@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useCurrentEvent } from '@/contexts/CurrentEventContext';
+import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
 import { useCurrentTenant } from './useCurrentTenant';
 
 export interface TimelineItem {
@@ -58,7 +59,7 @@ const mapSupabaseToTimelineItem = (item: SupabaseTimelineItem): TimelineItem => 
 
 export const useTimelineItems = () => {
   const { toast } = useToast();
-  const { currentEventId } = useCurrentEvent();
+  const { currentEventId } = useLocalCurrentEvent();
   const { data: currentTenant } = useCurrentTenant();
   const [timelineItems, setTimelineItems] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(false);
