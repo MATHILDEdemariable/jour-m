@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Phone, Mail, User, Loader2 } from 'lucide-react';
-import { usePeople, Person } from '@/hooks/usePeople';
+import { useLocalPeople, Person } from '@/hooks/useLocalPeople';
 import { PersonModal } from './PersonModal';
 import {
   AlertDialog,
@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export const PeopleManagement = () => {
-  const { people, loading, addPerson, updatePerson, deletePerson } = usePeople();
+  const { people, loading, addPerson, updatePerson, deletePerson } = useLocalPeople();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
 
@@ -102,8 +102,6 @@ export const PeopleManagement = () => {
           Ajouter une personne
         </Button>
       </div>
-
-      {/* Plus de stats ni de catégorisation, juste la liste triée alphabetiquement */}
 
       {/* People List */}
       <div className="grid gap-4">
