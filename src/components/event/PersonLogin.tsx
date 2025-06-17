@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,20 +32,42 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
   const { people, vendors, loading, refreshData } = useSharedEventData();
   const { currentEventId } = useCurrentEvent();
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<any>({});
 
-  // Debug logs pour diagnostiquer la synchronisation
-  console.log('=== PersonLogin Debug - Jour-J ===');
-  console.log('Current Event ID:', currentEventId);
-  console.log('Loading state:', loading);
-  console.log('All people for this event:', people);
-  console.log('All vendors for this event:', vendors);
-  console.log('=== End PersonLogin Debug ===');
+  // Debug logs détaillés pour diagnostiquer les problèmes
+  useEffect(() => {
+    const info = {
+      currentEventId,
+      loadingState: loading,
+      totalPeople: people.length,
+      totalVendors: vendors.length,
+      peopleForThisEvent: people.filter(p => p.event_id === currentEventId).length,
+      vendorsForThisEvent: vendors.filter(v => v.event_id === currentEventId).length,
+      allPeopleEventIds: people.map(p => ({ id: p.id, name: p.name, event_id: p.event_id })),
+      allVendorsEventIds: vendors.map(v => ({ id: v.id, name: v.name, event_id: v.event_id }))
+    };
+    
+    setDebugInfo(info);
+    
+    console.log('=== PersonLogin Debug - Complete Analysis ===');
+    console.log('Current Event ID:', info.currentEventId);
+    console.log('Loading state:', info.loadingState);
+    console.log('Total people loaded:', info.totalPeople);
+    console.log('Total vendors loaded:', info.totalVendors);
+    console.log('People for this specific event:', info.peopleForThisEvent);
+    console.log('Vendors for this specific event:', info.vendorsForThisEvent);
+    console.log('All people with their event_ids:', info.allPeopleEventIds);
+    console.log('All vendors with their event_ids:', info.allVendorsEventIds);
+    console.log('=== End PersonLogin Debug ===');
+  }, [currentEventId, loading, people, vendors]);
 
-  // Force refresh au chargement initial
+  // Force refresh au chargement initial avec un délai pour s'assurer que currentEventId est défini
   useEffect(() => {
     if (currentEventId) {
       console.log('PersonLogin - Initial load, forcing data refresh for event:', currentEventId);
-      handleRefresh();
+      setTimeout(() => {
+        handleRefresh();
+      }, 100);
     }
   }, [currentEventId]);
 
@@ -73,6 +96,15 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
       await refreshData();
       setSelectedUserId(''); // Reset selection after refresh
       console.log('PersonLogin - Refresh completed');
+      
+      // Log post-refresh pour vérifier les résultats
+      setTimeout(() => {
+        console.log('PersonLogin - Post-refresh check:');
+        console.log('People available after refresh:', people.length);
+        console.log('Vendors available after refresh:', vendors.length);
+        console.log('People for current event after refresh:', people.filter(p => p.event_id === currentEventId).length);
+        console.log('Vendors for current event after refresh:', vendors.filter(v => v.event_id === currentEventId).length);
+      }, 200);
     } finally {
       setIsManualRefreshing(false);
     }
@@ -80,7 +112,11 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
 
   const currentList = selectedUserType === 'person' ? people : vendors;
   const hasData = people.length > 0 || vendors.length > 0;
+  const hasFilteredData = people.filter(p => p.event_id === currentEventId).length > 0 || vendors.filter(v => v.event_id === currentEventId).length > 0;
   const isDataLoading = loading || isManualRefreshing;
+
+  // Afficher un message d'erreur spécifique si les données sont chargées mais pas pour le bon événement
+  const dataIssueDetected = hasData && !hasFilteredData && !isDataLoading;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center p-4">
@@ -149,6 +185,29 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
             </Button>
           </div>
 
+          {/* Diagnostic d'erreur amélioré */}
+          {dataIssueDetected && (
+            <div className="text-center py-4 bg-orange-50 rounded-lg border border-orange-200">
+              <AlertCircle className="w-6 h-6 mx-auto mb-2 text-orange-600" />
+              <p className="text-orange-700 font-medium">Problème de synchronisation</p>
+              <p className="text-orange-600 text-sm mb-3">
+                Données chargées ({people.length + vendors.length} total) mais aucune ne correspond à cet événement
+              </p>
+              <p className="text-xs text-orange-500 mb-2">
+                Event ID attendu: {currentEventId}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                className="text-orange-600 border-orange-200"
+              >
+                <RefreshCw className="w-4 h-4 mr-1" />
+                Forcer la resynchronisation
+              </Button>
+            </div>
+          )}
+
           {/* État de chargement ou données */}
           {isDataLoading ? (
             <div className="text-center py-4">
@@ -175,7 +234,7 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
                 Réessayer
               </Button>
             </div>
-          ) : (
+          ) : hasFilteredData ? (
             <>
               {/* User Selection */}
               <div className="space-y-2">
@@ -187,12 +246,12 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
                     <SelectValue placeholder={`Choisir ${selectedUserType === 'person' ? 'une personne' : 'un prestataire'}...`} />
                   </SelectTrigger>
                   <SelectContent className="bg-white border border-gray-200 shadow-lg z-50 max-h-60 overflow-y-auto">
-                    {currentList.length === 0 ? (
+                    {currentList.filter(user => user.event_id === currentEventId).length === 0 ? (
                       <div className="p-4 text-center text-gray-500">
-                        Aucun {selectedUserType === 'person' ? 'membre' : 'prestataire'} trouvé
+                        Aucun {selectedUserType === 'person' ? 'membre' : 'prestataire'} trouvé pour cet événement
                       </div>
                     ) : (
-                      currentList.map((user) => (
+                      currentList.filter(user => user.event_id === currentEventId).map((user) => (
                         <SelectItem key={user.id} value={user.id} className="cursor-pointer hover:bg-purple-50">
                           <div className="flex flex-col w-full">
                             <span className="font-medium text-gray-900">{user.name}</span>
@@ -219,40 +278,53 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
                 Se connecter
               </Button>
             </>
-          )}
+          ) : null}
 
-          {/* Stats Preview - Mis à jour en temps réel */}
+          {/* Stats Preview - Données filtrées pour l'événement actuel */}
           <div className="grid grid-cols-2 gap-3 mt-6 p-4 bg-gray-50 rounded-lg">
             <div className="text-center">
-              <div className="text-lg font-bold text-purple-600">{people.length}</div>
+              <div className="text-lg font-bold text-purple-600">
+                {people.filter(p => p.event_id === currentEventId).length}
+              </div>
               <div className="text-xs text-gray-600">Membres</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold text-pink-600">{vendors.length}</div>
+              <div className="text-lg font-bold text-pink-600">
+                {vendors.filter(v => v.event_id === currentEventId).length}
+              </div>
               <div className="text-xs text-gray-600">Prestataires</div>
             </div>
           </div>
 
           {/* Status indicator */}
-          {hasData && (
+          {hasFilteredData && (
             <div className="text-center">
               <Badge className="bg-green-100 text-green-800 text-xs">
-                Données synchronisées
+                Données synchronisées pour cet événement
               </Badge>
             </div>
           )}
 
-          {/* Debug info (visible seulement en développement) */}
+          {/* Debug info détaillé (visible seulement en développement) */}
           {process.env.NODE_ENV === 'development' && (
             <details className="text-xs text-gray-500 bg-gray-100 rounded p-2">
-              <summary className="cursor-pointer">Debug Info</summary>
+              <summary className="cursor-pointer">Debug Info Complet</summary>
               <div className="mt-2 space-y-1">
-                <div>Event ID: {currentEventId}</div>
-                <div>Total People: {people.length}</div>
-                <div>Total Vendors: {vendors.length}</div>
-                <div>People with event_id: {people.filter(p => p.event_id === currentEventId).length}</div>
-                <div>Vendors with event_id: {vendors.filter(v => v.event_id === currentEventId).length}</div>
+                <div>Event ID: {debugInfo.currentEventId}</div>
+                <div>Total People: {debugInfo.totalPeople}</div>
+                <div>Total Vendors: {debugInfo.totalVendors}</div>
+                <div>People for this event: {debugInfo.peopleForThisEvent}</div>
+                <div>Vendors for this event: {debugInfo.vendorsForThisEvent}</div>
+                <div>Loading: {String(debugInfo.loadingState)}</div>
                 <div>Last refresh: {new Date().toLocaleTimeString()}</div>
+                <details>
+                  <summary>All People Event IDs</summary>
+                  <pre className="text-xs mt-1">{JSON.stringify(debugInfo.allPeopleEventIds, null, 2)}</pre>
+                </details>
+                <details>
+                  <summary>All Vendors Event IDs</summary>
+                  <pre className="text-xs mt-1">{JSON.stringify(debugInfo.allVendorsEventIds, null, 2)}</pre>
+                </details>
               </div>
             </details>
           )}

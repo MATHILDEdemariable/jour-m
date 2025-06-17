@@ -1,3 +1,4 @@
+
 import { useEventData } from '@/contexts/EventDataContext';
 import { useTimelineItems } from '@/hooks/useTimelineItems';
 import { useCurrentEvent } from '@/contexts/CurrentEventContext';
@@ -18,10 +19,12 @@ export const useSharedEventData = () => {
   const { timelineItems, loadTimelineItems } = useTimelineItems();
   const { currentEventId } = useCurrentEvent();
 
-  // Logs de debug pour le filtrage
+  // Logs de debug améliorés pour le magic access
   console.log('useSharedEventData - Current Event ID:', currentEventId);
-  console.log('useSharedEventData - All people:', people.length);
-  console.log('useSharedEventData - All vendors:', vendors.length);
+  console.log('useSharedEventData - All people loaded:', people.length);
+  console.log('useSharedEventData - All vendors loaded:', vendors.length);
+  console.log('useSharedEventData - People with current event_id:', people.filter(p => p.event_id === currentEventId).length);
+  console.log('useSharedEventData - Vendors with current event_id:', vendors.filter(v => v.event_id === currentEventId).length);
   
   const eventFilteredTasks = tasks.filter(task => task.event_id === currentEventId);
   const eventFilteredPeople = people.filter(person => person.event_id === currentEventId);
@@ -29,19 +32,36 @@ export const useSharedEventData = () => {
   const eventFilteredPlanningItems = planningItems.filter(item => item.event_id === currentEventId);
   const eventFilteredDocuments = documents.filter(doc => doc.event_id === currentEventId);
 
-  console.log('useSharedEventData - Filtered people for event', currentEventId, ':', eventFilteredPeople.length);
-  console.log('useSharedEventData - Filtered vendors for event', currentEventId, ':', eventFilteredVendors.length);
-  console.log('useSharedEventData - Filtered documents for event', currentEventId, ':', eventFilteredDocuments.length);
+  console.log('useSharedEventData - Filtered results for event', currentEventId, ':');
+  console.log('  - People:', eventFilteredPeople.length, eventFilteredPeople.map(p => ({ id: p.id, name: p.name, event_id: p.event_id })));
+  console.log('  - Vendors:', eventFilteredVendors.length, eventFilteredVendors.map(v => ({ id: v.id, name: v.name, event_id: v.event_id })));
+  console.log('  - Documents:', eventFilteredDocuments.length);
 
-  // Enhanced refresh avec logs
+  // Enhanced refresh avec logs détaillés
   const enhancedRefreshData = async () => {
     console.log('useSharedEventData - Enhanced refresh triggered for event:', currentEventId);
+    
+    if (!currentEventId) {
+      console.log('useSharedEventData - No currentEventId, aborting refresh');
+      return;
+    }
+    
     try {
+      console.log('useSharedEventData - Starting data refresh...');
       await Promise.all([
         refreshData(),
         loadTimelineItems()
       ]);
       console.log('useSharedEventData - Enhanced refresh completed successfully');
+      
+      // Logs post-refresh
+      setTimeout(() => {
+        console.log('useSharedEventData - Post-refresh data check:');
+        console.log('  - Current event ID:', currentEventId);
+        console.log('  - People available:', people.length);
+        console.log('  - Vendors available:', vendors.length);
+      }, 100);
+      
     } catch (error) {
       console.error('useSharedEventData - Enhanced refresh error:', error);
     }

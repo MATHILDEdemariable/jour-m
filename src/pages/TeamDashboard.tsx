@@ -71,7 +71,8 @@ const TeamDashboard = () => {
   const handleAccessTeam = () => {
     if (!eventInfo) return;
     
-    // Rediriger vers l'EventPortal avec les paramètres magic access
+    // Rediriger vers l'EventPortal avec les paramètres magic access corrects
+    console.log('TeamDashboard - Redirecting to EventPortal with magic access for event:', eventInfo.id);
     navigate(`/event-portal?magic_access=true&event_id=${eventInfo.id}`, { replace: true });
   };
 

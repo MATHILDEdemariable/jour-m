@@ -15,6 +15,7 @@ import { GuestEventView } from '@/components/event/GuestEventView';
 import { EventPortalHeader } from '@/components/event/EventPortalHeader';
 import { EventPortalContent } from '@/components/event/EventPortalContent';
 import { EventPortalLoading } from '@/components/event/EventPortalLoading';
+import { EventPortalSelectionModal } from '@/components/event/EventPortalSelectionModal';
 
 const EventPortal = () => {
   const navigate = useNavigate();
@@ -34,6 +35,7 @@ const EventPortal = () => {
   const [guestLoading, setGuestLoading] = useState(true);
   const [hasInitialRefreshed, setHasInitialRefreshed] = useState(false);
   const [isMagicAccess, setIsMagicAccess] = useState(false);
+  const [showSelectionModal, setShowSelectionModal] = useState(false);
   
   const daysUntilEvent = getDaysUntilEvent();
 
@@ -43,10 +45,11 @@ const EventPortal = () => {
     const eventIdParam = searchParams.get('event_id');
     
     if (magicAccess && eventIdParam) {
+      console.log('EventPortal - Magic access detected for event:', eventIdParam);
       setIsMagicAccess(true);
       setCurrentEventId(eventIdParam);
       
-      // Charger les informations de l'événement
+      // Charger les informations de l'événement et forcer le refresh des données
       const fetchEventForMagic = async () => {
         setGuestLoading(true);
         const { data, error } = await supabase
@@ -63,6 +66,10 @@ const EventPortal = () => {
         
         setGuestEvent(data);
         setGuestLoading(false);
+        
+        // Forcer le chargement des données après avoir défini l'event
+        console.log('EventPortal - Forcing data refresh for magic access');
+        await handleFullDataRefresh();
       };
       
       fetchEventForMagic();
@@ -95,11 +102,11 @@ const EventPortal = () => {
   }, [searchParams, setCurrentEventId, navigate]);
 
   useEffect(() => {
-    if (currentEventId && !hasInitialRefreshed) {
+    if (currentEventId && !hasInitialRefreshed && !isMagicAccess) {
       handleFullDataRefresh();
       setHasInitialRefreshed(true);
     }
-  }, [currentEventId, hasInitialRefreshed]);
+  }, [currentEventId, hasInitialRefreshed, isMagicAccess]);
 
   useEffect(() => {
     const userType = searchParams.get('user_type') as 'person' | 'vendor' | null;
@@ -176,7 +183,12 @@ const EventPortal = () => {
   }, [searchParams, people, vendors, isGuestMode]);
 
   const handleFullDataRefresh = async () => {
-    if (!currentEventId) return;
+    if (!currentEventId) {
+      console.log('EventPortal - No current event ID, skipping refresh');
+      return;
+    }
+    
+    console.log('EventPortal - Starting full data refresh for event:', currentEventId);
     setIsRefreshing(true);
     try {
       await Promise.all([
@@ -184,6 +196,7 @@ const EventPortal = () => {
         loadPeople(),
         loadVendors()
       ]);
+      console.log('EventPortal - Data refresh completed successfully');
       toast({
         title: 'Synchronisation terminée',
         description: 'Toutes les données ont été actualisées',
@@ -216,14 +229,35 @@ const EventPortal = () => {
     navigate('/', { replace: true });
   };
 
+  // Gestion spéciale pour magic access
+  const handleMagicAccessUserSelect = (userId: string, userType: 'person' | 'vendor', userName: string) => {
+    console.log('EventPortal - Magic access user selected:', { userId, userType, userName });
+    const user = { id: userId, name: userName, type: userType };
+    setLoggedInUser(user);
+    localStorage.setItem('eventPortalUser', JSON.stringify(user));
+    setShowSelectionModal(false);
+  };
+
   const isDataLoading = loading || peopleLoading || vendorsLoading || isRefreshing;
 
   if (guestLoading) {
     return <EventPortalLoading fullScreen message="Chargement de l'événement..." details={null} />;
   }
 
-  if ((isGuestMode && guestEvent) || (isMagicAccess && guestEvent)) {
-    if (loggedInUser) {
+  // Gestion spéciale pour l'accès magic
+  if (isMagicAccess && guestEvent) {
+    if (!loggedInUser) {
+      // Afficher la modal de sélection d'équipe pour magic access
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
+          <PersonLogin onLogin={handleLogin} />
+          <EventPortalSelectionModal
+            open={showSelectionModal}
+            onOpenChange={setShowSelectionModal}
+          />
+        </div>
+      );
+    } else {
       // Utilisateur connecté via magic access, afficher l'interface normale
       return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
@@ -262,10 +296,12 @@ const EventPortal = () => {
           )}
         </div>
       );
-    } else {
-      // Pas encore connecté, afficher la sélection d'utilisateur
-      return <PersonLogin onLogin={handleLogin} />;
     }
+  }
+
+  // Code existant pour les autres modes
+  if ((isGuestMode && guestEvent)) {
+    return <GuestEventView event={guestEvent} />;
   }
   
   if (!loggedInUser) {
