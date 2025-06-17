@@ -6,7 +6,7 @@ import { useMagicAccessData } from '@/hooks/useMagicAccessData';
 import { PersonLogin } from '@/components/event/PersonLogin';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useCurrentEvent } from '@/contexts/CurrentEventContext';
+import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
 import { usePeople } from '@/hooks/usePeople';
 import { useVendors } from '@/hooks/useVendors';
 import { useToast } from '@/hooks/use-toast';
@@ -22,7 +22,7 @@ const EventPortal = () => {
   const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const { loading, refreshData, getDaysUntilEvent } = useSharedEventData();
-  const { currentEventId, setCurrentEventId } = useCurrentEvent();
+  const { currentEventId, setCurrentEventId } = useLocalCurrentEvent();
   const { people, loadPeople, loading: peopleLoading } = usePeople();
   const { vendors, loadVendors, loading: vendorsLoading } = useVendors();
   const { toast } = useToast();
