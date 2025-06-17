@@ -74,6 +74,7 @@ export interface Document {
   id: string;
   name: string;
   file_url: string;
+  file_path?: string; // Add file_path as optional since some documents might not have it
   file_type: string | null;
   mime_type: string | null;
   file_size: number | null;
@@ -85,6 +86,7 @@ export interface Document {
   preview_url: string | null;
   uploaded_by: string | null;
   is_shared: boolean | null;
+  assigned_to?: string[]; // Add assigned_to as optional array of person IDs
   event_id: string | null;
   vendor_id: string | null;
   created_at: string;

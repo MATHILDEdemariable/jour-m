@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -53,7 +52,7 @@ export const PersonalDocuments: React.FC<PersonalDocumentsProps> = ({
   const handleDownload = (document: any) => {
     // Pour le mode local, on simule le téléchargement
     const link = document.createElement('a');
-    link.href = document.file_path || '#';
+    link.href = document.file_path || document.file_url || '#';
     link.download = document.name;
     link.click();
   };
@@ -139,7 +138,7 @@ export const PersonalDocuments: React.FC<PersonalDocumentsProps> = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => window.open(document.file_path || '#', '_blank')}
+                    onClick={() => window.open(document.file_path || document.file_url || '#', '_blank')}
                     className="h-8 w-8 p-0"
                   >
                     <ExternalLink className="w-3 h-3" />
