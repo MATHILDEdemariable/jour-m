@@ -7,7 +7,6 @@ import type { Vendor } from '@/stores/eventStore';
 export const useLocalVendors = () => {
   const {
     vendors,
-    currentEventId,
     addVendor: addVendorToStore,
     updateVendor: updateVendorInStore,
     deleteVendor: deleteVendorFromStore,
@@ -34,15 +33,17 @@ export const useLocalVendors = () => {
 
   const addVendor = async (newVendor: Omit<Vendor, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      const currentEventId = localStorage.getItem('currentEventId') || 'default-event';
+      
       const vendor: Vendor = {
         ...newVendor,
         id: generateId(),
-        event_id: currentEventId || newVendor.event_id,
+        event_id: currentEventId, // ESSENTIEL - utiliser l'event_id actuel
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
-      console.log('useLocalVendors - Adding vendor with event_id:', vendor);
+      console.log('useLocalVendors - Adding vendor with event_id:', currentEventId, vendor);
       addVendorToStore(vendor);
       return vendor;
     } catch (error) {

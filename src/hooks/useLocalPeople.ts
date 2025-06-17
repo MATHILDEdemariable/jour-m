@@ -7,7 +7,6 @@ import type { Person } from '@/stores/eventStore';
 export const useLocalPeople = () => {
   const {
     people,
-    currentEventId,
     addPerson: addPersonToStore,
     updatePerson: updatePersonInStore,
     deletePerson: deletePersonFromStore,
@@ -28,15 +27,17 @@ export const useLocalPeople = () => {
 
   const addPerson = async (newPerson: Omit<Person, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      const currentEventId = localStorage.getItem('currentEventId') || 'default-event';
+      
       const person: Person = {
         ...newPerson,
         id: generateId(),
-        event_id: currentEventId || newPerson.event_id,
+        event_id: currentEventId, // ESSENTIEL - utiliser l'event_id actuel
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
-      console.log('useLocalPeople - Adding person with event_id:', person);
+      console.log('useLocalPeople - Adding person with event_id:', currentEventId, person);
       addPersonToStore(person);
       return person;
     } catch (error) {
