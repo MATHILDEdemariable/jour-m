@@ -281,7 +281,8 @@ export const UnifiedPlanningManagement = () => {
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  const categories = ['all', ...Array.from(new Set(timelineItems.map(item => item.category)))];
+  // Filter categories and statuses to ensure no empty strings
+  const categories = ['all', ...Array.from(new Set(timelineItems.map(item => item.category).filter(cat => cat && cat.trim() !== '')))];
   const statuses = ['all', 'scheduled', 'in_progress', 'completed', 'delayed'];
 
   const getStatusLabel = (status: string) => {
