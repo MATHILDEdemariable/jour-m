@@ -1,12 +1,11 @@
-
 import { useEffect, useState } from 'react';
-import { useCurrentEvent } from '@/contexts/CurrentEventContext';
+import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
 import { usePeople } from '@/hooks/usePeople';
 import { useVendors } from '@/hooks/useVendors';
 import { useSharedEventData } from '@/hooks/useSharedEventData';
 
 export const useMagicAccessData = (eventId: string) => {
-  const { setCurrentEventId } = useCurrentEvent();
+  const { setCurrentEventId } = useLocalCurrentEvent();
   const { loadPeople } = usePeople();
   const { loadVendors } = useVendors();
   const { refreshData } = useSharedEventData();
