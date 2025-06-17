@@ -13,7 +13,6 @@ import AdminPortal from "./pages/AdminPortal";
 import EventPortal from "./pages/EventPortal";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
-import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import './i18n';
 import Dashboard from "./pages/Dashboard";
 import PublicAccessPage from "./pages/PublicAccessPage";
@@ -37,20 +36,15 @@ const App = () => (
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/event-portal" element={<EventPortal />} />
-                {/* --- Route test simple --- */}
                 <Route path="/test-simple" element={<div className="p-8 text-center"><h1 className="text-2xl font-bold text-green-600">✅ Test route OK</h1></div>} />
-                {/* --- Routes publiques (AVANT les routes protégées) --- */}
                 <Route path="/public-access" element={<PublicAccessPage />} />
                 <Route path="/guest-dashboard" element={<GuestDashboard />} />
                 <Route path="/magic-access" element={<MagicAccess />} />
                 <Route path="/team-dashboard" element={<TeamDashboard />} />
-                {/* --- Routes protégées --- */}
-                <Route element={<ProtectedRoute />}>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/event" element={<Index />} />
-                  <Route path="/admin" element={<AdminPortal />} />
-                  <Route path="/home" element={<Home />} />
-                </Route>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/event" element={<Index />} />
+                <Route path="/admin" element={<AdminPortal />} />
+                <Route path="/home" element={<Home />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </TooltipProvider>

@@ -123,6 +123,10 @@ interface EventStore {
   // Loading states
   loading: boolean;
   
+  // Offline mode
+  isOffline: boolean;
+  lastSyncAt: string | null;
+  
   // Actions
   setCurrentEventId: (id: string) => void;
   setPeople: (people: Person[]) => void;
@@ -133,6 +137,7 @@ interface EventStore {
   setEvents: (events: EventData[]) => void;
   setPlanningItems: (items: any[]) => void;
   setLoading: (loading: boolean) => void;
+  setOfflineMode: (offline: boolean) => void;
   
   // Data manipulation
   addPerson: (person: Person) => void;
@@ -155,11 +160,18 @@ interface EventStore {
   updateDocument: (id: string, updates: Partial<Document>) => void;
   deleteDocument: (id: string) => void;
   
+  addEvent: (event: EventData) => void;
+  updateEvent: (id: string, updates: Partial<EventData>) => void;
+  deleteEvent: (id: string) => void;
+  
   // Utility
   refreshData: () => void;
   resetAllData: () => void;
   exportData: () => string;
   importData: (jsonData: string) => void;
+  createBackup: () => string;
+  restoreFromBackup: (backupData: string) => boolean;
+  getStorageSize: () => number;
 }
 
 // Default event ID
@@ -171,7 +183,7 @@ const initialSampleData = {
     id: DEFAULT_EVENT_ID,
     name: 'Mon Événement',
     event_type: 'wedding',
-    event_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+    event_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     slug: 'mon-evenement',
     start_time: '14:00',
     location: 'Lieu de réception',
@@ -284,6 +296,8 @@ export const useEventStore = create<EventStore>()(
       events: initialSampleData.events,
       planningItems: initialSampleData.planningItems,
       loading: false,
+      isOffline: !navigator.onLine,
+      lastSyncAt: new Date().toISOString(),
 
       // Basic setters
       setCurrentEventId: (id) => set({ currentEventId: id }),
@@ -295,66 +309,96 @@ export const useEventStore = create<EventStore>()(
       setEvents: (events) => set({ events }),
       setPlanningItems: (planningItems) => set({ planningItems }),
       setLoading: (loading) => set({ loading }),
+      setOfflineMode: (isOffline) => set({ isOffline }),
 
       // People actions
       addPerson: (person) => set((state) => ({ 
-        people: [person, ...state.people] 
+        people: [person, ...state.people],
+        lastSyncAt: new Date().toISOString()
       })),
       updatePerson: (id, updates) => set((state) => ({
-        people: state.people.map(p => p.id === id ? { ...p, ...updates } : p)
+        people: state.people.map(p => p.id === id ? { ...p, ...updates } : p),
+        lastSyncAt: new Date().toISOString()
       })),
       deletePerson: (id) => set((state) => ({
-        people: state.people.filter(p => p.id !== id)
+        people: state.people.filter(p => p.id !== id),
+        lastSyncAt: new Date().toISOString()
       })),
 
       // Vendors actions
       addVendor: (vendor) => set((state) => ({ 
-        vendors: [vendor, ...state.vendors] 
+        vendors: [vendor, ...state.vendors],
+        lastSyncAt: new Date().toISOString()
       })),
       updateVendor: (id, updates) => set((state) => ({
-        vendors: state.vendors.map(v => v.id === id ? { ...v, ...updates } : v)
+        vendors: state.vendors.map(v => v.id === id ? { ...v, ...updates } : v),
+        lastSyncAt: new Date().toISOString()
       })),
       deleteVendor: (id) => set((state) => ({
-        vendors: state.vendors.filter(v => v.id !== id)
+        vendors: state.vendors.filter(v => v.id !== id),
+        lastSyncAt: new Date().toISOString()
       })),
 
       // Tasks actions
       addTask: (task) => set((state) => ({ 
-        tasks: [task, ...state.tasks] 
+        tasks: [task, ...state.tasks],
+        lastSyncAt: new Date().toISOString()
       })),
       updateTask: (id, updates) => set((state) => ({
-        tasks: state.tasks.map(t => t.id === id ? { ...t, ...updates } : t)
+        tasks: state.tasks.map(t => t.id === id ? { ...t, ...updates } : t),
+        lastSyncAt: new Date().toISOString()
       })),
       deleteTask: (id) => set((state) => ({
-        tasks: state.tasks.filter(t => t.id !== id)
+        tasks: state.tasks.filter(t => t.id !== id),
+        lastSyncAt: new Date().toISOString()
       })),
 
       // Timeline actions
       addTimelineItem: (item) => set((state) => ({ 
-        timelineItems: [...state.timelineItems, item] 
+        timelineItems: [...state.timelineItems, item],
+        lastSyncAt: new Date().toISOString()
       })),
       updateTimelineItem: (id, updates) => set((state) => ({
-        timelineItems: state.timelineItems.map(t => t.id === id ? { ...t, ...updates } : t)
+        timelineItems: state.timelineItems.map(t => t.id === id ? { ...t, ...updates } : t),
+        lastSyncAt: new Date().toISOString()
       })),
       deleteTimelineItem: (id) => set((state) => ({
-        timelineItems: state.timelineItems.filter(t => t.id !== id)
+        timelineItems: state.timelineItems.filter(t => t.id !== id),
+        lastSyncAt: new Date().toISOString()
       })),
 
       // Documents actions
       addDocument: (document) => set((state) => ({ 
-        documents: [document, ...state.documents] 
+        documents: [document, ...state.documents],
+        lastSyncAt: new Date().toISOString()
       })),
       updateDocument: (id, updates) => set((state) => ({
-        documents: state.documents.map(d => d.id === id ? { ...d, ...updates } : d)
+        documents: state.documents.map(d => d.id === id ? { ...d, ...updates } : d),
+        lastSyncAt: new Date().toISOString()
       })),
       deleteDocument: (id) => set((state) => ({
-        documents: state.documents.filter(d => d.id !== id)
+        documents: state.documents.filter(d => d.id !== id),
+        lastSyncAt: new Date().toISOString()
+      })),
+
+      // Events actions
+      addEvent: (event) => set((state) => ({ 
+        events: [event, ...state.events],
+        lastSyncAt: new Date().toISOString()
+      })),
+      updateEvent: (id, updates) => set((state) => ({
+        events: state.events.map(e => e.id === id ? { ...e, ...updates } : e),
+        lastSyncAt: new Date().toISOString()
+      })),
+      deleteEvent: (id) => set((state) => ({
+        events: state.events.filter(e => e.id !== id),
+        lastSyncAt: new Date().toISOString()
       })),
 
       // Utility functions
       refreshData: () => {
-        // In localStorage version, this is a no-op since data is always fresh
         console.log('Data refreshed from localStorage');
+        set({ lastSyncAt: new Date().toISOString() });
       },
       
       resetAllData: () => {
@@ -366,7 +410,8 @@ export const useEventStore = create<EventStore>()(
           documents: initialSampleData.documents,
           events: initialSampleData.events,
           planningItems: initialSampleData.planningItems,
-          currentEventId: DEFAULT_EVENT_ID
+          currentEventId: DEFAULT_EVENT_ID,
+          lastSyncAt: new Date().toISOString()
         });
       },
 
@@ -381,7 +426,9 @@ export const useEventStore = create<EventStore>()(
           events: state.events,
           planningItems: state.planningItems,
           currentEventId: state.currentEventId,
-          exportedAt: new Date().toISOString()
+          lastSyncAt: state.lastSyncAt,
+          exportedAt: new Date().toISOString(),
+          version: '1.0.0'
         };
         return JSON.stringify(exportData, null, 2);
       },
@@ -397,16 +444,59 @@ export const useEventStore = create<EventStore>()(
             documents: data.documents || [],
             events: data.events || [],
             planningItems: data.planningItems || [],
-            currentEventId: data.currentEventId || DEFAULT_EVENT_ID
+            currentEventId: data.currentEventId || DEFAULT_EVENT_ID,
+            lastSyncAt: new Date().toISOString()
           });
         } catch (error) {
           console.error('Error importing data:', error);
+          throw error;
         }
+      },
+
+      createBackup: () => {
+        const state = get();
+        const backupData = {
+          ...state,
+          backupCreatedAt: new Date().toISOString(),
+          version: '1.0.0'
+        };
+        return JSON.stringify(backupData, null, 2);
+      },
+
+      restoreFromBackup: (backupData) => {
+        try {
+          const data = JSON.parse(backupData);
+          const { backupCreatedAt, version, isOffline, loading, ...restoreState } = data;
+          set({
+            ...restoreState,
+            lastSyncAt: new Date().toISOString()
+          });
+          return true;
+        } catch (error) {
+          console.error('Error restoring backup:', error);
+          return false;
+        }
+      },
+
+      getStorageSize: () => {
+        const data = get().exportData();
+        return new Blob([data]).size;
       }
     }),
     {
-      name: 'jourj-event-storage',
-      version: 1,
+      name: 'jourm-event-storage',
+      version: 2,
     }
   )
 );
+
+// Detect online/offline status
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    useEventStore.getState().setOfflineMode(false);
+  });
+  
+  window.addEventListener('offline', () => {
+    useEventStore.getState().setOfflineMode(true);
+  });
+}

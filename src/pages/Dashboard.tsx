@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Eye, Settings, LogIn, LogOut, Download, Upload } from 'lucide-react';
+import { Eye, Settings, LogIn, LogOut, Download, Upload, Trash2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -17,18 +17,28 @@ import { useAuth } from '@/contexts/AuthContext';
 import { EventPortalSelectionModal } from '@/components/event/EventPortalSelectionModal';
 import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
 import { useEventStore } from '@/stores/eventStore';
+import { OfflineManager } from '@/components/OfflineManager';
 
-const Home: React.FC = () => {
+const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, signOut } = useAuth();
   const { currentEventId } = useLocalCurrentEvent();
-  const { resetAllData, exportData, importData } = useEventStore();
+  const { 
+    resetAllData, 
+    exportData, 
+    importData, 
+    createBackup, 
+    restoreFromBackup,
+    getStorageSize 
+  } = useEventStore();
   const [showEventPortalSelection, setShowEventPortalSelection] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState('');
   const [importText, setImportText] = useState('');
+  const [restoreText, setRestoreText] = useState('');
   const [isResetting, setIsResetting] = useState(false);
 
   const handleAdminAccess = () => {
@@ -114,63 +124,143 @@ const Home: React.FC = () => {
     }
   };
 
+  const handleCreateBackup = () => {
+    try {
+      const backup = createBackup();
+      const blob = new Blob([backup], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `jourm-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: 'Sauvegarde créée',
+        description: 'La sauvegarde complète a été téléchargée.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Erreur de sauvegarde',
+        description: 'Impossible de créer la sauvegarde.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleRestore = () => {
+    try {
+      const success = restoreFromBackup(restoreText);
+      if (success) {
+        toast({
+          title: 'Restauration réussie',
+          description: 'Les données ont été restaurées.',
+        });
+        setRestoreText('');
+        setShowRestoreDialog(false);
+      } else {
+        throw new Error('Invalid backup format');
+      }
+    } catch (error) {
+      toast({
+        title: 'Erreur de restauration',
+        description: 'Impossible de restaurer les données. Vérifiez le format de sauvegarde.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-sage-50 to-yellow-50 flex flex-col">
       {/* Hero Section */}
-      <div className="flex-grow flex items-center justify-center">
-        <div className="text-center">
+      <div className="flex-grow flex items-center justify-center p-4">
+        <div className="text-center max-w-4xl mx-auto">
           <h1 className="text-5xl font-extrabold text-stone-800 mb-4 tracking-tight">
             JOURM - <span className="text-purple-600">par Mariable</span>
           </h1>
           <p className="text-stone-500 text-lg mb-8">
-            Une appli, une équipe, une journée parfaite.
+            Une appli autonome, une équipe, une journée parfaite.
           </p>
 
-          {/* Boutons d'action */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
-            <Button
-              onClick={handleEventPortalAccess}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center gap-2"
-              size="lg"
-            >
-              <Eye className="w-5 h-5" />
-              Equipe
-            </Button>
-            
-            <Button
-              onClick={handleAdminAccess}
-              variant="outline"
-              className="border-purple-200 text-purple-700 hover:bg-purple-50 flex items-center gap-2"
-              size="lg"
-            >
-              <Settings className="w-5 h-5" />
-              Admin
-            </Button>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {/* Navigation principale */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-stone-700">Navigation</h3>
+              <div className="flex flex-col gap-2">
+                <Button
+                  onClick={handleEventPortalAccess}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center gap-2"
+                >
+                  <Eye className="w-5 h-5" />
+                  Équipe
+                </Button>
+                
+                <Button
+                  onClick={handleAdminAccess}
+                  variant="outline"
+                  className="border-purple-200 text-purple-700 hover:bg-purple-50 flex items-center gap-2"
+                >
+                  <Settings className="w-5 h-5" />
+                  Admin
+                </Button>
+              </div>
+            </div>
+
+            {/* Gestion des données */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-stone-700">Données</h3>
+              <div className="flex flex-col gap-2">
+                <Button
+                  onClick={handleExport}
+                  variant="outline"
+                  size="sm"
+                  className="text-gray-600 border-gray-200"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Exporter JSON
+                </Button>
+                
+                <Button
+                  onClick={() => setShowImportDialog(true)}
+                  variant="outline"
+                  size="sm"
+                  className="text-gray-600 border-gray-200"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Importer JSON
+                </Button>
+
+                <Button
+                  onClick={handleCreateBackup}
+                  variant="outline"
+                  size="sm"
+                  className="text-blue-600 border-blue-200"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Sauvegarde complète
+                </Button>
+
+                <Button
+                  onClick={() => setShowRestoreDialog(true)}
+                  variant="outline"
+                  size="sm"
+                  className="text-blue-600 border-blue-200"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Restaurer sauvegarde
+                </Button>
+              </div>
+            </div>
+
+            {/* Gestionnaire hors-ligne */}
+            <div className="flex justify-center">
+              <OfflineManager />
+            </div>
           </div>
 
-          {/* Boutons d'export/import */}
-          <div className="flex flex-col sm:flex-row gap-2 justify-center max-w-md mx-auto mt-4">
-            <Button
-              onClick={handleExport}
-              variant="outline"
-              size="sm"
-              className="text-gray-600 border-gray-200"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Exporter
-            </Button>
-            
-            <Button
-              onClick={() => setShowImportDialog(true)}
-              variant="outline"
-              size="sm"
-              className="text-gray-600 border-gray-200"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              Importer
-            </Button>
-          </div>
-
+          {/* Section utilisateur */}
           {user ? (
             <div className="mt-4 flex flex-col items-center gap-2">
               <p className="text-sm text-gray-600">Connecté en tant que: {user.email}</p>
@@ -213,13 +303,14 @@ const Home: React.FC = () => {
               variant="link"
               className="text-white h-auto p-0 text-xs opacity-70 hover:opacity-100"
             >
-              Réinitialiser les données
+              <Trash2 className="w-3 h-3 mr-1" />
+              Réinitialiser
             </Button>
           </div>
         </div>
       </footer>
 
-      {/* Reset Confirmation Dialog */}
+      {/* Reset Dialog */}
       <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
         <DialogContent>
           <DialogHeader>
@@ -278,6 +369,35 @@ const Home: React.FC = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Restore Dialog */}
+      <Dialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Restaurer une sauvegarde</DialogTitle>
+            <DialogDescription>
+              Collez ici le contenu d'une sauvegarde complète pour restaurer toutes vos données.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <textarea
+              value={restoreText}
+              onChange={(e) => setRestoreText(e.target.value)}
+              placeholder='Collez la sauvegarde ici...'
+              className="w-full h-32 p-2 border rounded-md resize-none font-mono text-xs"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRestoreDialog(false)}>Annuler</Button>
+            <Button
+              disabled={!restoreText.trim()}
+              onClick={handleRestore}
+            >
+              Restaurer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Event Portal Selection Modal */}
       <EventPortalSelectionModal
         open={showEventPortalSelection}
@@ -287,4 +407,4 @@ const Home: React.FC = () => {
   );
 };
 
-export default Home;
+export default Dashboard;
