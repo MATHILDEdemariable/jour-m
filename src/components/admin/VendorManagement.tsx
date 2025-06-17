@@ -6,27 +6,27 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Plus, Edit, Trash2, Phone, Mail, MapPin, FileText, Calendar } from 'lucide-react';
-import { useVendors, Vendor } from '@/hooks/useVendors';
+import { useLocalVendors } from '@/hooks/useLocalVendors';
 import { VendorModal } from './VendorModal';
 import { VendorDetailModal } from './VendorDetailModal';
 
 export const VendorManagement = () => {
-  const { vendors, loading, loadVendors, addVendor, updateVendor, deleteVendor } = useVendors();
+  const { vendors, loading, loadVendors, addVendor, updateVendor, deleteVendor } = useLocalVendors();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
+  const [selectedVendor, setSelectedVendor] = useState<any | null>(null);
 
   useEffect(() => {
     loadVendors();
   }, []);
 
-  const handleCreateVendor = async (vendorData: Partial<Vendor>) => {
-    await addVendor(vendorData as Omit<Vendor, 'id' | 'created_at' | 'updated_at'>);
+  const handleCreateVendor = async (vendorData: any) => {
+    await addVendor(vendorData);
     setIsCreateModalOpen(false);
   };
 
-  const handleEditVendor = async (vendorData: Partial<Vendor>) => {
+  const handleEditVendor = async (vendorData: any) => {
     if (selectedVendor) {
       await updateVendor(selectedVendor.id, vendorData);
       setIsEditModalOpen(false);
@@ -38,12 +38,12 @@ export const VendorManagement = () => {
     await deleteVendor(vendorId);
   };
 
-  const openEditModal = (vendor: Vendor) => {
+  const openEditModal = (vendor: any) => {
     setSelectedVendor(vendor);
     setIsEditModalOpen(true);
   };
 
-  const openDetailModal = (vendor: Vendor) => {
+  const openDetailModal = (vendor: any) => {
     setSelectedVendor(vendor);
     setIsDetailModalOpen(true);
   };

@@ -20,7 +20,6 @@ import { EventConfiguration } from '@/components/admin/EventConfiguration';
 import { AdminBottomNavigation } from '@/components/admin/AdminBottomNavigation';
 import { TutorialModal } from '@/components/admin/TutorialModal';
 import { TUTORIAL_CONTENT } from '@/components/admin/TutorialContent';
-import { ShareManagement } from '@/components/admin/ShareManagement';
 
 export const AdminPortal = () => {
   const [activeTab, setActiveTab] = useState('config'); // Default = Config
@@ -47,8 +46,6 @@ export const AdminPortal = () => {
         return <UnifiedPlanningManagement />;
       case 'documents':
         return <DocumentManagement />;
-      case 'share':
-        return <ShareManagement />;
       default:
         return <EventConfiguration />; // Default to config
     }
@@ -105,11 +102,11 @@ export const AdminPortal = () => {
             </div>
           </div>
 
-          {/* Desktop Navigation Tabs NOUVEL ORDRE */}
+          {/* Desktop Navigation Tabs - SUPPRESSION DE L'ONGLET PARTAGE */}
           {!isMobile && (
             <div className="bg-white border-b">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-6 h-auto p-1">
+                <TabsList className="grid w-full grid-cols-5 h-auto p-1">
                   <TabsTrigger value="config" className="flex flex-col py-3">
                     <span className="text-xs">⚙️</span>
                     <span className="text-xs">{t('config')}</span>
@@ -129,10 +126,6 @@ export const AdminPortal = () => {
                   <TabsTrigger value="documents" className="flex flex-col py-3">
                     <span className="text-xs">📁</span>
                     <span className="text-xs">{t('documents')}</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="share" className="flex flex-col py-3">
-                    <span className="text-xs">🔗</span>
-                    <span className="text-xs">Partage</span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
