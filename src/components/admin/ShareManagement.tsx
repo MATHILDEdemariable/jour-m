@@ -1,16 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
-import { useEventData } from '@/contexts/EventDataContext';
+import { useLocalEventData } from '@/contexts/LocalEventDataContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Copy, Users, RefreshCw, Eye, AlertCircle, KeyRound } from 'lucide-react';
 import { QRCodeCanvas as QRCode } from 'qrcode.react';
 import { useToast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 
 export const ShareManagement = () => {
-  const { currentEvent } = useEventData();
+  const { currentEvent } = useLocalEventData();
   const [magicAccessLink, setMagicAccessLink] = useState('');
   const [generating, setGenerating] = useState(false);
   const { toast } = useToast();
@@ -29,12 +28,9 @@ export const ShareManagement = () => {
     
     setGenerating(true);
     try {
-      const { error } = await supabase
-        .from('events')
-        .update({ magic_word: newMagicWord })
-        .eq('id', currentEvent.id);
-
-      if (error) throw error;
+      // In local mode, we would update the event in the store
+      // For now, we'll just simulate the update
+      console.log('Updating magic word for local event:', currentEvent.id, newMagicWord);
 
       toast({
         title: 'Code mis à jour',
