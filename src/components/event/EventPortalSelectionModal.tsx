@@ -17,9 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Users, Building2, ArrowRight } from 'lucide-react';
-import { usePeople } from '@/hooks/usePeople';
-import { useVendors } from '@/hooks/useVendors';
-import { useCurrentEvent } from '@/contexts/CurrentEventContext';
+import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
+import { useEventStore } from '@/stores/eventStore';
 
 interface EventPortalSelectionModalProps {
   open: boolean;
@@ -31,19 +30,11 @@ export const EventPortalSelectionModal: React.FC<EventPortalSelectionModalProps>
   onOpenChange
 }) => {
   const navigate = useNavigate();
-  const { currentEventId } = useCurrentEvent();
-  const { people, loadPeople } = usePeople();
-  const { vendors, loadVendors } = useVendors();
+  const { currentEventId } = useLocalCurrentEvent();
+  const { people, vendors } = useEventStore();
   
   const [teamType, setTeamType] = useState<'personal' | 'professional' | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
-
-  useEffect(() => {
-    if (open) {
-      loadPeople();
-      loadVendors();
-    }
-  }, [open]);
 
   const handleTeamTypeSelect = (type: 'personal' | 'professional') => {
     setTeamType(type);
