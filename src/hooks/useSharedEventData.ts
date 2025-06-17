@@ -1,7 +1,7 @@
 
-import { useEventData } from '@/contexts/EventDataContext';
+import { useLocalEventData } from '@/contexts/LocalEventDataContext';
 import { useTimelineItems } from '@/hooks/useTimelineItems';
-import { useCurrentEvent } from '@/contexts/CurrentEventContext';
+import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
 
 export const useSharedEventData = () => {
   const {
@@ -14,10 +14,10 @@ export const useSharedEventData = () => {
     refreshData,
     getProgressStats,
     getDaysUntilEvent
-  } = useEventData();
+  } = useLocalEventData();
 
   const { timelineItems, loadTimelineItems } = useTimelineItems();
-  const { currentEventId } = useCurrentEvent();
+  const { currentEventId } = useLocalCurrentEvent();
 
   // Logs de debug améliorés pour le magic access
   console.log('useSharedEventData - Current Event ID:', currentEventId);
@@ -26,11 +26,11 @@ export const useSharedEventData = () => {
   console.log('useSharedEventData - People with current event_id:', people.filter(p => p.event_id === currentEventId).length);
   console.log('useSharedEventData - Vendors with current event_id:', vendors.filter(v => v.event_id === currentEventId).length);
   
-  const eventFilteredTasks = tasks.filter(task => task.event_id === currentEventId);
-  const eventFilteredPeople = people.filter(person => person.event_id === currentEventId);
-  const eventFilteredVendors = vendors.filter(vendor => vendor.event_id === currentEventId);
-  const eventFilteredPlanningItems = planningItems.filter(item => item.event_id === currentEventId);
-  const eventFilteredDocuments = documents.filter(doc => doc.event_id === currentEventId);
+  const eventFilteredTasks = tasks;
+  const eventFilteredPeople = people;
+  const eventFilteredVendors = vendors;
+  const eventFilteredPlanningItems = planningItems;
+  const eventFilteredDocuments = documents;
 
   console.log('useSharedEventData - Filtered results for event', currentEventId, ':');
   console.log('  - People:', eventFilteredPeople.length, eventFilteredPeople.map(p => ({ id: p.id, name: p.name, event_id: p.event_id })));
