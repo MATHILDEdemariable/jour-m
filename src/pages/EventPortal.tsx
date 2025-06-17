@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSharedEventData } from '@/hooks/useSharedEventData';
+import { useMagicAccessData } from '@/hooks/useMagicAccessData';
 import { PersonLogin } from '@/components/event/PersonLogin';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -15,7 +16,6 @@ import { GuestEventView } from '@/components/event/GuestEventView';
 import { EventPortalHeader } from '@/components/event/EventPortalHeader';
 import { EventPortalContent } from '@/components/event/EventPortalContent';
 import { EventPortalLoading } from '@/components/event/EventPortalLoading';
-import { EventPortalSelectionModal } from '@/components/event/EventPortalSelectionModal';
 
 const EventPortal = () => {
   const navigate = useNavigate();
@@ -35,7 +35,10 @@ const EventPortal = () => {
   const [guestLoading, setGuestLoading] = useState(true);
   const [hasInitialRefreshed, setHasInitialRefreshed] = useState(false);
   const [isMagicAccess, setIsMagicAccess] = useState(false);
-  const [showSelectionModal, setShowSelectionModal] = useState(false);
+  const [magicEventId, setMagicEventId] = useState<string | null>(null);
+  
+  // Utiliser le hook magic access si nécessaire
+  const { isInitialized: magicDataInitialized } = useMagicAccessData(magicEventId || '');
   
   const daysUntilEvent = getDaysUntilEvent();
 
@@ -47,9 +50,10 @@ const EventPortal = () => {
     if (magicAccess && eventIdParam) {
       console.log('EventPortal - Magic access detected for event:', eventIdParam);
       setIsMagicAccess(true);
+      setMagicEventId(eventIdParam);
       setCurrentEventId(eventIdParam);
       
-      // Charger les informations de l'événement et forcer le refresh des données
+      // Charger les informations de l'événement pour magic access
       const fetchEventForMagic = async () => {
         setGuestLoading(true);
         const { data, error } = await supabase
@@ -66,10 +70,6 @@ const EventPortal = () => {
         
         setGuestEvent(data);
         setGuestLoading(false);
-        
-        // Forcer le chargement des données après avoir défini l'event
-        console.log('EventPortal - Forcing data refresh for magic access');
-        await handleFullDataRefresh();
       };
       
       fetchEventForMagic();
@@ -229,74 +229,60 @@ const EventPortal = () => {
     navigate('/', { replace: true });
   };
 
-  // Gestion spéciale pour magic access
-  const handleMagicAccessUserSelect = (userId: string, userType: 'person' | 'vendor', userName: string) => {
-    console.log('EventPortal - Magic access user selected:', { userId, userType, userName });
-    const user = { id: userId, name: userName, type: userType };
-    setLoggedInUser(user);
-    localStorage.setItem('eventPortalUser', JSON.stringify(user));
-    setShowSelectionModal(false);
-  };
-
   const isDataLoading = loading || peopleLoading || vendorsLoading || isRefreshing;
 
   if (guestLoading) {
     return <EventPortalLoading fullScreen message="Chargement de l'événement..." details={null} />;
   }
 
-  // Gestion spéciale pour l'accès magic
+  // Gestion spéciale pour l'accès magic - attendre que les données soient initialisées
   if (isMagicAccess && guestEvent) {
+    if (!magicDataInitialized) {
+      return <EventPortalLoading fullScreen message="Synchronisation des données..." details="Chargement des participants et prestataires..." />;
+    }
+
     if (!loggedInUser) {
-      // Afficher la modal de sélection d'équipe pour magic access
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
-          <PersonLogin onLogin={handleLogin} />
-          <EventPortalSelectionModal
-            open={showSelectionModal}
-            onOpenChange={setShowSelectionModal}
-          />
-        </div>
-      );
-    } else {
-      // Utilisateur connecté via magic access, afficher l'interface normale
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
-          <EventPortalHeader
-            userName={loggedInUser.name}
-            daysUntilEvent={daysUntilEvent}
-            isDataLoading={isDataLoading}
-            isRefreshing={isRefreshing}
-            isMobile={isMobile}
-            onBack={() => navigate('/')}
-            onRefresh={handleFullDataRefresh}
-            onLogout={handleLogout}
-            onAdmin={() => navigate('/admin')}
-          />
+      return <PersonLogin onLogin={handleLogin} />;
+    }
 
-          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 lg:py-8 pb-20 lg:pb-8">
-            {isDataLoading ? (
-              <EventPortalLoading isRefreshing={isRefreshing} />
-            ) : (
-              <EventPortalContent
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                isMobile={isMobile}
-                loggedInUser={loggedInUser}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-              />
-            )}
-          </div>
+    // Utilisateur connecté via magic access, afficher l'interface normale
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
+        <EventPortalHeader
+          userName={loggedInUser.name}
+          daysUntilEvent={daysUntilEvent}
+          isDataLoading={isDataLoading}
+          isRefreshing={isRefreshing}
+          isMobile={isMobile}
+          onBack={() => navigate('/team-dashboard?magic_access=true&event_id=' + magicEventId)}
+          onRefresh={handleFullDataRefresh}
+          onLogout={handleLogout}
+          onAdmin={() => navigate('/admin')}
+        />
 
-          {isMobile && (
-            <BottomNavigation 
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 lg:py-8 pb-20 lg:pb-8">
+          {isDataLoading ? (
+            <EventPortalLoading isRefreshing={isRefreshing} />
+          ) : (
+            <EventPortalContent
               activeTab={activeTab}
-              onTabChange={setActiveTab}
+              setActiveTab={setActiveTab}
+              isMobile={isMobile}
+              loggedInUser={loggedInUser}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
             />
           )}
         </div>
-      );
-    }
+
+        {isMobile && (
+          <BottomNavigation 
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
+        )}
+      </div>
+    );
   }
 
   // Code existant pour les autres modes

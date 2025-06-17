@@ -37,9 +37,9 @@ export const useSharedEventData = () => {
   console.log('  - Vendors:', eventFilteredVendors.length, eventFilteredVendors.map(v => ({ id: v.id, name: v.name, event_id: v.event_id })));
   console.log('  - Documents:', eventFilteredDocuments.length);
 
-  // Enhanced refresh avec logs détaillés
-  const enhancedRefreshData = async () => {
-    console.log('useSharedEventData - Enhanced refresh triggered for event:', currentEventId);
+  // Enhanced refresh avec retry automatique pour magic access
+  const enhancedRefreshData = async (retries = 3) => {
+    console.log('useSharedEventData - Enhanced refresh triggered for event:', currentEventId, 'retries left:', retries);
     
     if (!currentEventId) {
       console.log('useSharedEventData - No currentEventId, aborting refresh');
@@ -52,6 +52,17 @@ export const useSharedEventData = () => {
         refreshData(),
         loadTimelineItems()
       ]);
+      
+      // Vérifier si les données sont maintenant disponibles
+      const hasData = people.filter(p => p.event_id === currentEventId).length > 0 || 
+                     vendors.filter(v => v.event_id === currentEventId).length > 0;
+      
+      if (!hasData && retries > 0) {
+        console.log('useSharedEventData - No data found, retrying in 1 second...');
+        setTimeout(() => enhancedRefreshData(retries - 1), 1000);
+        return;
+      }
+      
       console.log('useSharedEventData - Enhanced refresh completed successfully');
       
       // Logs post-refresh
@@ -60,10 +71,16 @@ export const useSharedEventData = () => {
         console.log('  - Current event ID:', currentEventId);
         console.log('  - People available:', people.length);
         console.log('  - Vendors available:', vendors.length);
+        console.log('  - People for this event:', people.filter(p => p.event_id === currentEventId).length);
+        console.log('  - Vendors for this event:', vendors.filter(v => v.event_id === currentEventId).length);
       }, 100);
       
     } catch (error) {
       console.error('useSharedEventData - Enhanced refresh error:', error);
+      if (retries > 0) {
+        console.log('useSharedEventData - Retrying after error...');
+        setTimeout(() => enhancedRefreshData(retries - 1), 2000);
+      }
     }
   };
 
