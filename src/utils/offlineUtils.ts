@@ -37,7 +37,8 @@ export class OfflineUtils {
       if (!backup) return false;
 
       const store = useEventStore.getState();
-      return store.restoreFromBackup(backup);
+      store.restoreFromBackup(backup);
+      return true;
     } catch (error) {
       console.error('Auto-restore failed:', error);
       return false;

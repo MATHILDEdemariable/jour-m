@@ -169,7 +169,7 @@ interface EventStore {
   exportData: () => string;
   importData: (data: string) => void;
   createBackup: () => string;
-  restoreFromBackup: (backup: string) => void;
+  restoreFromBackup: (backup: string) => boolean;
   getStorageSize: () => number;
 }
 
@@ -279,8 +279,10 @@ export const useEventStore = create<EventStore>()(
         try {
           const { data } = JSON.parse(backup);
           set(data);
+          return true;
         } catch (error) {
           console.error('Error restoring backup:', error);
+          return false;
         }
       },
       getStorageSize: () => {
