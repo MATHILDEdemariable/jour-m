@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -54,6 +53,8 @@ export interface Task {
   assigned_person_id: string | null;
   assigned_vendor_id: string | null;
   due_date: string;
+  duration_minutes?: number;
+  notes?: string;
   completed_at?: string;
   created_at: string;
   updated_at: string;
@@ -100,7 +101,20 @@ export interface Document {
   vendor_id: string | null;
   name: string;
   url: string;
+  file_url?: string;
+  file_path?: string;
+  file_type?: string | null;
+  mime_type?: string | null;
+  file_size?: number | null;
   category: string;
+  description?: string | null;
+  source?: 'manual' | 'google_drive';
+  google_drive_id?: string | null;
+  google_drive_url?: string | null;
+  preview_url?: string | null;
+  uploaded_by?: string | null;
+  is_shared?: boolean | null;
+  assigned_to?: string[];
   created_at: string;
   updated_at: string;
 }

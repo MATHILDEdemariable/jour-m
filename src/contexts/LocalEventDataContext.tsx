@@ -13,6 +13,7 @@ interface EventDataContextType {
   events: any[];
   loading: boolean;
   refreshData: () => void;
+  updateEvent: (id: string, updates: any) => void;
   getProgressStats: () => {
     totalTasks: number;
     completedTasks: number;
@@ -41,7 +42,8 @@ export const LocalEventDataProvider: React.FC<{ children: React.ReactNode }> = (
     documents,
     events,
     loading,
-    refreshData
+    refreshData,
+    updateEvent
   } = useEventStore();
 
   const [lastUpdate, setLastUpdate] = useState(Date.now());
@@ -120,6 +122,7 @@ export const LocalEventDataProvider: React.FC<{ children: React.ReactNode }> = (
     events,
     loading,
     refreshData: enhancedRefreshData,
+    updateEvent,
     getProgressStats,
     getDocumentStats,
     getDaysUntilEvent

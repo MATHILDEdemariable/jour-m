@@ -4,28 +4,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useEventStore } from '@/stores/eventStore';
 import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
 
-export interface LocalDocument {
-  id: string;
-  name: string;
-  file_url: string;
-  file_path?: string;
-  file_type: string | null;
-  mime_type: string | null;
-  file_size: number | null;
-  category: string | null;
-  description: string | null;
-  source: 'manual' | 'google_drive';
-  google_drive_id: string | null;
-  google_drive_url: string | null;
-  preview_url: string | null;
-  uploaded_by: string | null;
-  is_shared: boolean | null;
-  assigned_to?: string[];
-  event_id: string | null;
-  vendor_id: string | null;
-  created_at: string;
-}
-
 export interface LocalGoogleDriveConfig {
   id: string;
   event_id: string;
@@ -62,10 +40,11 @@ export const useLocalDocuments = () => {
       // Convert file to base64 for local storage simulation
       const fileUrl = URL.createObjectURL(file);
       
-      const newDocument: LocalDocument = {
+      const newDocument = {
         id: generateId(),
         event_id: currentEventId,
         name: file.name,
+        url: fileUrl,
         file_url: fileUrl,
         file_path: `local/${file.name}`,
         file_type: file.type,
@@ -73,7 +52,7 @@ export const useLocalDocuments = () => {
         file_size: file.size,
         category,
         description,
-        source: 'manual',
+        source: 'manual' as const,
         google_drive_id: null,
         google_drive_url: null,
         preview_url: fileUrl,
@@ -81,7 +60,8 @@ export const useLocalDocuments = () => {
         is_shared: true,
         assigned_to: [],
         vendor_id: null,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
       
       addDocument(newDocument);
@@ -176,10 +156,11 @@ export const useLocalDocuments = () => {
         const existingDoc = eventDocuments.find(doc => doc.google_drive_id === file.id);
 
         if (!existingDoc) {
-          const newDocument: LocalDocument = {
+          const newDocument = {
             id: generateId(),
             event_id: currentEventId!,
             name: file.name,
+            url: file.downloadUrl,
             file_url: file.downloadUrl,
             file_path: `gdrive/${file.name}`,
             file_type: file.mimeType,
@@ -187,7 +168,7 @@ export const useLocalDocuments = () => {
             file_size: file.size,
             category: 'Google Drive',
             description: 'Synchronisé depuis Google Drive',
-            source: 'google_drive',
+            source: 'google_drive' as const,
             google_drive_id: file.id,
             google_drive_url: file.webViewLink,
             preview_url: file.webViewLink,
@@ -195,7 +176,8 @@ export const useLocalDocuments = () => {
             is_shared: true,
             assigned_to: [],
             vendor_id: null,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           };
           
           addDocument(newDocument);
