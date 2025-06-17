@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -171,7 +170,6 @@ export const UnifiedPlanningManagement = () => {
           assigned_person_ids: data.assigned_person_ids || [],
           title: data.title || '',
           description: data.description || null,
-          assigned_person_id: null,
           assigned_vendor_id: data.assigned_vendor_id || null,
           assigned_role: data.assigned_role || null,
           notes: data.notes || null
@@ -207,7 +205,6 @@ export const UnifiedPlanningManagement = () => {
         time: '08:00',
         order_index: timelineItems.length,
         assigned_person_ids: [],
-        assigned_person_id: null,
         assigned_vendor_id: null
       });
       toast({
