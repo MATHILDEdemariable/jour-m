@@ -105,7 +105,7 @@ export const useLocalToggleTaskStatus = () => {
 
   return {
     mutate: async ({ id, completed }: { id: string; completed: boolean }) => {
-      const status = completed ? 'completed' : 'pending';
+      const status: Task['status'] = completed ? 'completed' : 'pending';
       const updatedData = {
         status,
         completed_at: completed ? new Date().toISOString() : null,
