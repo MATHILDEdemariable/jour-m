@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, Building2, ArrowLeft, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
 import { useSharedEventData } from '@/hooks/useSharedEventData';
-import { useCurrentEvent } from '@/contexts/CurrentEventContext';
+import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
 
 interface PersonLoginProps {
   onLogin: (userId: string, userName: string, userType: 'person' | 'vendor') => void;
@@ -30,7 +30,7 @@ export const PersonLogin: React.FC<PersonLoginProps> = ({ onLogin }) => {
   const [selectedUserType, setSelectedUserType] = useState<'person' | 'vendor'>('person');
   const [selectedUserId, setSelectedUserId] = useState('');
   const { people, vendors, loading, refreshData } = useSharedEventData();
-  const { currentEventId } = useCurrentEvent();
+  const { currentEventId } = useLocalCurrentEvent();
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
 
