@@ -17,13 +17,13 @@ export const PersonalDocuments: React.FC<PersonalDocumentsProps> = ({
   personName 
 }) => {
   const { currentEventId } = useLocalCurrentEvent();
-  const { eventDocuments } = useEventStore();
+  const { documents } = useEventStore();
 
   console.log('PersonalDocuments - Current event ID:', currentEventId);
-  console.log('PersonalDocuments - All eventDocuments:', eventDocuments);
+  console.log('PersonalDocuments - All documents:', documents);
 
   // Filtrer les documents par événement actuel et assignés à cette personne
-  const filteredEventDocuments = eventDocuments.filter(doc => doc.event_id === currentEventId);
+  const filteredEventDocuments = documents.filter(doc => doc.event_id === currentEventId);
   const personalDocuments = filteredEventDocuments.filter(doc => 
     doc.assigned_to && doc.assigned_to.includes(personId)
   );
