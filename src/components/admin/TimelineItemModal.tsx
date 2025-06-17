@@ -1,24 +1,39 @@
 
 import React, { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PersonMultiSelect } from './PersonMultiSelect';
+import { VendorMultiSelect } from './VendorMultiSelect';
 import { useLocalEventData } from '@/contexts/LocalEventDataContext';
+
+interface TimelineItem {
+  id: string;
+  event_id: string | null;
+  title: string;
+  description: string | null;
+  time: string;
+  duration: number;
+  category: string;
+  status: 'scheduled' | 'in_progress' | 'completed' | 'delayed';
+  priority: 'high' | 'medium' | 'low';
+  assigned_person_ids: string[];
+  assigned_vendor_id: string | null;
+  assigned_role: string | null;
+  order_index: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 interface TimelineItemModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
-  item?: any | null;
+  onSubmit: (data: Partial<TimelineItem>) => Promise<void>;
+  item?: TimelineItem | null;
 }
 
 export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
@@ -27,33 +42,33 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
   onSubmit,
   item
 }) => {
-  const { people, vendors } = useLocalEventData();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    time: '08:00',
     duration: 60,
     category: 'Préparation',
     priority: 'medium' as 'high' | 'medium' | 'low',
-    status: 'scheduled' as 'scheduled' | 'in_progress' | 'completed' | 'delayed',
-    time: '08:00',
     assigned_person_ids: [] as string[],
-    assigned_vendor_id: '',
+    assigned_vendor_id: null as string | null,
     assigned_role: '',
     notes: ''
   });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { vendors } = useLocalEventData();
 
   useEffect(() => {
     if (item) {
       setFormData({
         title: item.title || '',
         description: item.description || '',
+        time: item.time || '08:00',
         duration: item.duration || 60,
         category: item.category || 'Préparation',
         priority: item.priority || 'medium',
-        status: item.status || 'scheduled',
-        time: item.time || '08:00',
         assigned_person_ids: item.assigned_person_ids || [],
-        assigned_vendor_id: item.assigned_vendor_id || '',
+        assigned_vendor_id: item.assigned_vendor_id || null,
         assigned_role: item.assigned_role || '',
         notes: item.notes || ''
       });
@@ -61,214 +76,207 @@ export const TimelineItemModal: React.FC<TimelineItemModalProps> = ({
       setFormData({
         title: '',
         description: '',
+        time: '08:00',
         duration: 60,
         category: 'Préparation',
         priority: 'medium',
-        status: 'scheduled',
-        time: '08:00',
         assigned_person_ids: [],
-        assigned_vendor_id: '',
+        assigned_vendor_id: null,
         assigned_role: '',
         notes: ''
       });
     }
   }, [item, isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    setIsSubmitting(true);
+    
+    try {
+      await onSubmit(formData);
+      onClose();
+    } catch (error) {
+      console.error('Error submitting timeline item:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handlePersonToggle = (personId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      assigned_person_ids: prev.assigned_person_ids.includes(personId)
-        ? prev.assigned_person_ids.filter(id => id !== personId)
-        : [...prev.assigned_person_ids, personId]
-    }));
+  const handleClose = () => {
+    if (!isSubmitting) {
+      onClose();
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-stone-800">
             {item ? 'Modifier l\'étape' : 'Ajouter une nouvelle étape'}
           </DialogTitle>
-          <DialogDescription>
-            {item ? 'Modifiez les détails de cette étape' : 'Créez une nouvelle étape pour votre planning'}
+          <DialogDescription className="text-stone-600">
+            Configurez les détails de cette étape du planning
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Titre */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Titre de l'étape *</Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Ex: Accueil des invités"
-              required
-            />
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Décrivez cette étape en détail..."
-              rows={3}
-            />
-          </div>
-
-          {/* Heure et Durée */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="time">Heure de début</Label>
-              <Input
-                id="time"
-                type="time"
-                value={formData.time}
-                onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <Label htmlFor="title" className="text-stone-700">Titre *</Label>
+              <Input 
+                id="title"
+                className="border-stone-300 focus:border-purple-500"
+                value={formData.title}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                required
+                placeholder="Nom de l'étape"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="duration">Durée (minutes)</Label>
-              <Input
-                id="duration"
-                type="number"
-                min="1"
-                value={formData.duration}
-                onChange={(e) => setFormData(prev => ({ ...prev, duration: parseInt(e.target.value) || 60 }))}
-              />
-            </div>
-          </div>
 
-          {/* Catégorie et Priorité */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Catégorie</Label>
-              <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Préparation">Préparation</SelectItem>
-                  <SelectItem value="Logistique">Logistique</SelectItem>
-                  <SelectItem value="Cérémonie">Cérémonie</SelectItem>
-                  <SelectItem value="Photos">Photos</SelectItem>
-                  <SelectItem value="Réception">Réception</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Priorité</Label>
-              <Select value={formData.priority} onValueChange={(value: 'high' | 'medium' | 'low') => setFormData(prev => ({ ...prev, priority: value }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="high">🔴 Haute</SelectItem>
-                  <SelectItem value="medium">🟡 Moyenne</SelectItem>
-                  <SelectItem value="low">🟢 Basse</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="time" className="text-stone-700">Heure de début</Label>
+                <Input 
+                  id="time"
+                  type="time"
+                  className="border-stone-300 focus:border-purple-500"
+                  value={formData.time}
+                  onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
+                  required
+                />
+              </div>
 
-          {/* Statut */}
-          <div className="space-y-2">
-            <Label>Statut</Label>
-            <Select value={formData.status} onValueChange={(value: 'scheduled' | 'in_progress' | 'completed' | 'delayed') => setFormData(prev => ({ ...prev, status: value }))}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="scheduled">📅 Planifié</SelectItem>
-                <SelectItem value="in_progress">🔄 En cours</SelectItem>
-                <SelectItem value="completed">✅ Terminé</SelectItem>
-                <SelectItem value="delayed">⚠️ Retardé</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Assignation aux personnes */}
-          {people.length > 0 && (
-            <div className="space-y-2">
-              <Label>Personnes assignées</Label>
-              <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
-                {people.map((person) => (
-                  <label
-                    key={person.id}
-                    className="flex items-center space-x-2 p-2 border rounded-lg cursor-pointer hover:bg-gray-50"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={formData.assigned_person_ids.includes(person.id)}
-                      onChange={() => handlePersonToggle(person.id)}
-                      className="rounded"
-                    />
-                    <span className="text-sm">{person.name}</span>
-                  </label>
-                ))}
+              <div>
+                <Label htmlFor="duration" className="text-stone-700">Durée (minutes) *</Label>
+                <Input 
+                  id="duration"
+                  type="number"
+                  className="border-stone-300 focus:border-purple-500"
+                  value={formData.duration}
+                  onChange={(e) => setFormData(prev => ({ ...prev, duration: parseInt(e.target.value) || 60 }))}
+                  min="1"
+                  required
+                />
               </div>
             </div>
-          )}
 
-          {/* Assignation aux vendors */}
-          {vendors.length > 0 && (
-            <div className="space-y-2">
-              <Label>Prestataire assigné</Label>
-              <Select value={formData.assigned_vendor_id} onValueChange={(value) => setFormData(prev => ({ ...prev, assigned_vendor_id: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un prestataire..." />
+            <div>
+              <Label htmlFor="description" className="text-stone-700">Description</Label>
+              <Textarea 
+                id="description"
+                className="border-stone-300 focus:border-purple-500"
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Description détaillée de l'étape"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="category" className="text-stone-700">Catégorie *</Label>
+                <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
+                  <SelectTrigger className="border-stone-300 focus:border-purple-500">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Préparation">Préparation</SelectItem>
+                    <SelectItem value="Logistique">Logistique</SelectItem>
+                    <SelectItem value="Cérémonie">Cérémonie</SelectItem>
+                    <SelectItem value="Photos">Photos</SelectItem>
+                    <SelectItem value="Réception">Réception</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="priority" className="text-stone-700">Priorité *</Label>
+                <Select value={formData.priority} onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value as 'high' | 'medium' | 'low' }))}>
+                  <SelectTrigger className="border-stone-300 focus:border-purple-500">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="high">🔴 Haute</SelectItem>
+                    <SelectItem value="medium">🟡 Moyenne</SelectItem>
+                    <SelectItem value="low">🟢 Basse</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="assigned_role" className="text-stone-700">Rôle assigné</Label>
+              <Select value={formData.assigned_role || 'none'} onValueChange={(value) => setFormData(prev => ({ ...prev, assigned_role: value === 'none' ? null : value }))}>
+                <SelectTrigger className="border-stone-300 focus:border-purple-500">
+                  <SelectValue placeholder="Sélectionner un rôle" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Aucun prestataire</SelectItem>
-                  {vendors.map((vendor) => (
+                  <SelectItem value="none">Aucun rôle spécifique</SelectItem>
+                  <SelectItem value="wedding-planner">Wedding Planner</SelectItem>
+                  <SelectItem value="bride">Mariée</SelectItem>
+                  <SelectItem value="groom">Marié</SelectItem>
+                  <SelectItem value="maid-of-honor">Demoiselle d'honneur</SelectItem>
+                  <SelectItem value="best-man">Témoin</SelectItem>
+                  <SelectItem value="photographer">Photographe</SelectItem>
+                  <SelectItem value="caterer">Traiteur</SelectItem>
+                  <SelectItem value="florist">Fleuriste</SelectItem>
+                  <SelectItem value="musician">Musicien</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <PersonMultiSelect
+              selectedPersonIds={formData.assigned_person_ids}
+              onSelectionChange={(personIds) => setFormData(prev => ({ ...prev, assigned_person_ids: personIds }))}
+              label="Personnes assignées"
+            />
+
+            <div>
+              <Label className="text-stone-700">Prestataire assigné</Label>
+              <Select value={formData.assigned_vendor_id || 'none'} onValueChange={(value) => setFormData(prev => ({ ...prev, assigned_vendor_id: value === 'none' ? null : value }))}>
+                <SelectTrigger className="border-stone-300 focus:border-purple-500">
+                  <SelectValue placeholder="Sélectionner un prestataire" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Aucun prestataire</SelectItem>
+                  {vendors.filter(vendor => vendor.id && vendor.id.trim() !== '').map(vendor => (
                     <SelectItem key={vendor.id} value={vendor.id}>
-                      {vendor.name}
+                      {vendor.name} ({vendor.service_type || 'Service'})
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          )}
 
-          {/* Rôle assigné */}
-          <div className="space-y-2">
-            <Label htmlFor="assigned_role">Rôle assigné</Label>
-            <Input
-              id="assigned_role"
-              value={formData.assigned_role}
-              onChange={(e) => setFormData(prev => ({ ...prev, assigned_role: e.target.value }))}
-              placeholder="Ex: Coordinateur, Assistant..."
-            />
+            <div>
+              <Label htmlFor="notes" className="text-stone-700">Notes</Label>
+              <Textarea 
+                id="notes"
+                className="border-stone-300 focus:border-purple-500"
+                value={formData.notes}
+                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Notes additionnelles"
+                rows={3}
+              />
+            </div>
           </div>
 
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              placeholder="Notes additionnelles..."
-              rows={2}
-            />
-          </div>
-
-          {/* Boutons */}
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <div className="flex justify-end gap-3 pt-6 border-t border-stone-200">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleClose} 
+              disabled={isSubmitting}
+              className="border-stone-300 text-stone-700 hover:bg-stone-50"
+            >
               Annuler
             </Button>
-            <Button type="submit" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
-              {item ? 'Modifier' : 'Ajouter'}
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium px-6"
+            >
+              {isSubmitting ? 'Sauvegarde...' : item ? 'Modifier' : 'Ajouter'}
             </Button>
           </div>
         </form>
