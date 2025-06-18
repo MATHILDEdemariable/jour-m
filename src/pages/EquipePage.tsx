@@ -3,11 +3,15 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Users, Calendar } from 'lucide-react';
+import { ArrowLeft, Users, Calendar, Settings, Building2, FileText } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLocalEventData } from '@/contexts/LocalEventDataContext';
 import { PlanningView } from '@/components/equipe/PlanningView';
 import { ContactsList } from '@/components/equipe/ContactsList';
+import { ReadOnlyEventConfig } from '@/components/equipe/ReadOnlyEventConfig';
+import { ReadOnlyPeopleList } from '@/components/equipe/ReadOnlyPeopleList';
+import { ReadOnlyVendorList } from '@/components/equipe/ReadOnlyVendorList';
+import { ReadOnlyDocumentsList } from '@/components/equipe/ReadOnlyDocumentsList';
 
 const EquipePage = () => {
   const navigate = useNavigate();
@@ -26,11 +30,11 @@ const EquipePage = () => {
               className="text-gray-600"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Retour
+              Accueil
             </Button>
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                {currentEvent ? currentEvent.name : 'Notre Jour J'}
+                {currentEvent ? currentEvent.name : 'Jour J - Équipe'}
               </h1>
               {currentEvent && (
                 <p className="text-sm text-gray-600">
@@ -48,24 +52,48 @@ const EquipePage = () => {
 
       {/* Content */}
       <div className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="planning" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8">
+        <Tabs defaultValue="config" className="w-full">
+          <TabsList className="grid w-full grid-cols-5 mb-8">
+            <TabsTrigger value="config" className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">Configuration</span>
+            </TabsTrigger>
+            <TabsTrigger value="people" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">Équipe</span>
+            </TabsTrigger>
+            <TabsTrigger value="vendors" className="flex items-center gap-2">
+              <Building2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Prestataires</span>
+            </TabsTrigger>
             <TabsTrigger value="planning" className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              Planning Jour-J
+              <span className="hidden sm:inline">Planning</span>
             </TabsTrigger>
-            <TabsTrigger value="contacts" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Contacts
+            <TabsTrigger value="documents" className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              <span className="hidden sm:inline">Documents</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="config" className="space-y-6">
+            <ReadOnlyEventConfig />
+          </TabsContent>
+
+          <TabsContent value="people" className="space-y-6">
+            <ReadOnlyPeopleList />
+          </TabsContent>
+
+          <TabsContent value="vendors" className="space-y-6">
+            <ReadOnlyVendorList />
+          </TabsContent>
 
           <TabsContent value="planning" className="space-y-6">
             <PlanningView />
           </TabsContent>
 
-          <TabsContent value="contacts" className="space-y-6">
-            <ContactsList />
+          <TabsContent value="documents" className="space-y-6">
+            <ReadOnlyDocumentsList />
           </TabsContent>
         </Tabs>
       </div>

@@ -2,14 +2,12 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Copy, 
   QrCode, 
   Users, 
-  ExternalLink,
   Eye
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -52,7 +50,7 @@ export const ShareManagement = () => {
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Partage Équipe</h2>
         <p className="text-gray-600">
-          Partagez le planning et les contacts avec votre équipe via un lien simple.
+          Partagez toutes les informations de votre événement avec votre équipe via un lien simple.
         </p>
       </div>
 
@@ -61,10 +59,10 @@ export const ShareManagement = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5 text-purple-600" />
-            Page Équipe
+            Page Équipe Complète
           </CardTitle>
           <CardDescription>
-            Lien public pour consulter le planning et les contacts de l'équipe
+            Vue miroir de l'admin avec tous les onglets : Configuration, Équipe, Prestataires, Planning et Documents
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -125,10 +123,13 @@ export const ShareManagement = () => {
             <div className="bg-purple-50 p-4 rounded-lg">
               <h4 className="font-medium text-purple-900 mb-2">Cette page équipe affiche :</h4>
               <ul className="text-sm text-purple-800 space-y-1">
-                <li>• Planning du Jour-J avec filtre par personne</li>
-                <li>• Contacts de l'équipe et des prestataires</li>
+                <li>• <strong>Configuration :</strong> Informations générales de l'événement</li>
+                <li>• <strong>Équipe :</strong> Liste complète des membres avec contacts</li>
+                <li>• <strong>Prestataires :</strong> Tous les prestataires et leurs informations</li>
+                <li>• <strong>Planning :</strong> Timeline du Jour-J avec filtres par personne</li>
+                <li>• <strong>Documents :</strong> Accès à tous les documents partagés</li>
                 <li>• Interface en lecture seule (consultation uniquement)</li>
-                <li>• Design adapté mobile et desktop</li>
+                <li>• Synchronisation temps réel avec vos modifications admin</li>
               </ul>
             </div>
           </div>
@@ -151,7 +152,7 @@ export const ShareManagement = () => {
             <strong>Aperçu :</strong> Testez l'affichage avant de partager avec votre équipe
           </p>
           <p>
-            <strong>Mise à jour :</strong> Les modifications dans l'admin sont immédiatement visibles sur la page équipe
+            <strong>Mise à jour temps réel :</strong> Toutes vos modifications sont immédiatement visibles sur la page équipe
           </p>
         </CardContent>
       </Card>

@@ -1,20 +1,11 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Calendar, 
-  Users, 
-  CheckSquare, 
-  FileText, 
-  Shield, 
-  UserCheck,
   ArrowRight,
   Sparkles,
-  Key
+  Heart
 } from 'lucide-react';
 
 interface HeroSectionProps {
@@ -23,131 +14,45 @@ interface HeroSectionProps {
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
-  onAdminClick,
-  onEventClick
+  onAdminClick
 }) => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-
   return (
     <div className="flex-1 min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50">
-      {/* Hero Content */}
       <div className="container mx-auto px-4 py-12 lg:py-20">
-        <div className="text-center max-w-4xl mx-auto mb-16">
-          <Badge className="mb-6 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border-purple-200">
-            <Sparkles className="w-4 h-4 mr-1" />
-            Organisez votre événement en toute sérénité
+        <div className="text-center max-w-4xl mx-auto">
+          <Badge className="mb-8 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border-purple-200">
+            <Heart className="w-4 h-4 mr-1" />
+            Organisez votre mariage en toute sérénité
           </Badge>
           
-          <h1 className="text-4xl lg:text-6xl font-bold mb-6">
+          <h1 className="text-5xl lg:text-7xl font-bold mb-8">
             <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 bg-clip-text text-transparent">
               Jour J
             </span>
           </h1>
           
-          <p className="text-xl lg:text-2xl text-gray-600 mb-8 leading-relaxed">
-            La plateforme tout-en-un pour orchestrer parfaitement votre événement.
-            <br />
-            <span className="text-lg text-gray-500 mt-2 block">
-              Planning, tâches, contacts et documents centralisés en un seul endroit.
-            </span>
+          <p className="text-2xl lg:text-3xl text-gray-700 mb-6 font-medium">
+            La plateforme tout-en-un pour votre mariage parfait
+          </p>
+          
+          <p className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
+            Planning intelligent, gestion des invités, coordination des prestataires et bien plus.
+            Tout ce dont vous avez besoin pour organiser le plus beau jour de votre vie.
           </p>
 
-          {/* Main CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Button
-              onClick={onAdminClick}
-              size="lg"
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-lg px-8 py-4 h-auto"
-            >
-              <Shield className="w-5 h-5 mr-2" />
-              Accéder au Portail
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-            
-            <Button
-              onClick={onEventClick}
-              size="lg"
-              variant="outline"
-              className="border-2 border-purple-200 text-purple-700 hover:bg-purple-50 text-lg px-8 py-4 h-auto"
-            >
-              <Key className="w-5 h-5 mr-2" />
-              Rejoindre une Équipe
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-          </div>
-        </div>
+          <Button
+            onClick={onAdminClick}
+            size="lg"
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xl px-12 py-6 h-auto rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
+          >
+            <Sparkles className="w-6 h-6 mr-3" />
+            Créer mon Jour-J
+            <ArrowRight className="w-6 h-6 ml-3" />
+          </Button>
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="text-center pb-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Calendar className="w-6 h-6 text-white" />
-              </div>
-              <CardTitle className="text-lg">Planning Intelligent</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center">
-              <CardDescription>
-                Timeline détaillée avec assignation automatique et gestion des conflits
-              </CardDescription>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="text-center pb-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                <CheckSquare className="w-6 h-6 text-white" />
-              </div>
-              <CardTitle className="text-lg">Gestion des Tâches</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center">
-              <CardDescription>
-                Suivi en temps réel avec priorisation et délégation intelligente
-              </CardDescription>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="text-center pb-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-              <CardTitle className="text-lg">Équipe Connectée</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center">
-              <CardDescription>
-                Coordination parfaite entre équipe personnelle et prestataires
-              </CardDescription>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="text-center pb-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                <FileText className="w-6 h-6 text-white" />
-              </div>
-              <CardTitle className="text-lg">Documents Centralisés</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center">
-              <CardDescription>
-                Tous vos contrats, photos et documents accessibles instantanément
-              </CardDescription>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Additional Info */}
-        <div className="text-center mt-16 max-w-2xl mx-auto">
-          <p className="text-gray-600 mb-4">
-            <strong>Portal unifié :</strong> Interface adaptée automatiquement selon votre rôle et permissions
+          <p className="text-sm text-gray-500 mt-6">
+            Gratuit • Aucune installation requise • Partage avec votre équipe
           </p>
-          <div className="flex flex-wrap justify-center gap-2">
-            <Badge variant="outline" className="bg-white/50">👑 Admin complet</Badge>
-            <Badge variant="outline" className="bg-white/50">👥 Vue équipe</Badge>
-            <Badge variant="outline" className="bg-white/50">🏢 Espace prestataires</Badge>
-            <Badge variant="outline" className="bg-white/50">🔗 Liens personnalisés</Badge>
-          </div>
         </div>
       </div>
     </div>
