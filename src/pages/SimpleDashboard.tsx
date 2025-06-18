@@ -362,12 +362,6 @@ const SimpleDashboard: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Event Portal Selection Modal */}
-      <EventPortalSelectionModal
-        open={showEventPortalSelection}
-        onOpenChange={setShowEventPortalSelection}
-      />
     </div>
   );
 };
