@@ -7,10 +7,24 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Plus, Edit, Trash2, Clock, Users, Search, Filter, Building } from 'lucide-react';
-import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useToggleTaskStatus, Task, CreateTaskData } from '@/hooks/useTasks';
+import { useLocalTasks, useLocalCreateTask, useLocalUpdateTask, useLocalDeleteTask, useLocalToggleTaskStatus } from '@/hooks/useLocalTasks';
 import { TaskModal } from './TaskModal';
 import { TaskSuggestions } from './TaskSuggestions';
-import { useVendors } from '@/hooks/useVendors';
+import { useLocalVendors } from '@/hooks/useLocalVendors';
+import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
+import type { Task } from '@/stores/eventStore';
+
+interface CreateTaskData {
+  title: string;
+  description?: string;
+  priority: 'high' | 'medium' | 'low';
+  assigned_person_id?: string;
+  assigned_vendor_id?: string;
+  assigned_role?: string;
+  duration_minutes: number;
+  due_date: string;
+  notes?: string;
+}
 
 export const TaskManagement = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -20,17 +34,33 @@ export const TaskManagement = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
 
-  const { data: tasks = [], isLoading } = useTasks();
-  const { vendors } = useVendors();
-  const createTaskMutation = useCreateTask();
-  const updateTaskMutation = useUpdateTask();
-  const deleteTaskMutation = useDeleteTask();
-  const toggleStatusMutation = useToggleTaskStatus();
+  // CORRECTION: Utiliser les hooks locaux avec event_id
+  const { data: tasks = [], isLoading } = useLocalTasks();
+  const { vendors } = useLocalVendors();
+  const { currentEventId } = useLocalCurrentEvent();
+  const createTaskMutation = useLocalCreateTask();
+  const updateTaskMutation = useLocalUpdateTask();
+  const deleteTaskMutation = useLocalDeleteTask();
+  const toggleStatusMutation = useLocalToggleTaskStatus();
+
+  // DEBUG: Log pour vérifier la synchronisation
+  console.log('TaskManagement - Current event ID:', currentEventId);
+  console.log('TaskManagement - Tasks count:', tasks.length);
+  console.log('TaskManagement - Vendors count:', vendors.length);
 
   const handleCreateTask = (data: CreateTaskData) => {
-    createTaskMutation.mutate(data, {
+    // S'assurer que l'event_id est inclus
+    const taskData = {
+      ...data,
+      event_id: currentEventId
+    };
+    
+    console.log('TaskManagement - Creating task with event_id:', currentEventId, taskData);
+    
+    createTaskMutation.mutate(taskData, {
       onSuccess: () => {
         setIsCreateModalOpen(false);
+        console.log('TaskManagement - Task created successfully');
       }
     });
   };
@@ -38,32 +68,43 @@ export const TaskManagement = () => {
   const handleUpdateTask = (data: CreateTaskData) => {
     if (!editingTask) return;
     
+    console.log('TaskManagement - Updating task:', editingTask.id, data);
+    
     updateTaskMutation.mutate(
       { id: editingTask.id, data },
       {
         onSuccess: () => {
           setIsEditModalOpen(false);
           setEditingTask(null);
+          console.log('TaskManagement - Task updated successfully');
         }
       }
     );
   };
 
   const handleEditTask = (task: Task) => {
+    console.log('TaskManagement - Editing task:', task.id);
     setEditingTask(task);
     setIsEditModalOpen(true);
   };
 
   const handleDeleteTask = (taskId: string) => {
+    console.log('TaskManagement - Deleting task:', taskId);
     deleteTaskMutation.mutate(taskId);
   };
 
   const handleToggleStatus = (taskId: string, completed: boolean) => {
+    console.log('TaskManagement - Toggling task status:', taskId, completed);
     toggleStatusMutation.mutate({ id: taskId, completed });
   };
 
   const handleAddSuggestion = (taskData: CreateTaskData) => {
-    createTaskMutation.mutate(taskData);
+    const taskDataWithEvent = {
+      ...taskData,
+      event_id: currentEventId
+    };
+    console.log('TaskManagement - Adding suggested task:', taskDataWithEvent);
+    createTaskMutation.mutate(taskDataWithEvent);
   };
 
   // Filtrage des tâches
@@ -121,6 +162,17 @@ export const TaskManagement = () => {
 
   return (
     <div className="space-y-6">
+      {/* DEBUG INFO - Visible pour vérifier la synchronisation */}
+      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+        <h4 className="font-medium text-blue-900 mb-2">Debug - Synchronisation</h4>
+        <div className="text-sm text-blue-800 space-y-1">
+          <p>Event ID actuel: {currentEventId}</p>
+          <p>Nombre de tâches: {tasks.length}</p>
+          <p>Nombre de prestataires: {vendors.length}</p>
+          <p>Tâches filtrées: {filteredTasks.length}</p>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold text-stone-900">Gestion des Tâches</h2>

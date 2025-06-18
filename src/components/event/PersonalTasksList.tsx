@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,27 +16,52 @@ export const PersonalTasksList: React.FC<PersonalTasksListProps> = ({
   personId, 
   personName 
 }) => {
-  const { tasks, people, vendors } = useEventStore();
+  const { tasks, people, vendors, loadFromStorage } = useEventStore();
   const { currentEventId } = useLocalCurrentEvent();
   const toggleTaskStatus = useLocalToggleTaskStatus();
 
+  // FORCER la synchronisation des données à chaque rendu
+  useEffect(() => {
+    console.log('PersonalTasksList - Loading data for person:', personName);
+    loadFromStorage();
+  }, [loadFromStorage, personName]);
+
   // Filtrer les tâches par événement actuel
-  const eventTasks = tasks.filter(task => task.event_id === currentEventId);
+  const eventTasks = tasks.filter(task => {
+    const match = task.event_id === currentEventId;
+    console.log(`Task ${task.title} - event_id: ${task.event_id}, current: ${currentEventId}, matches: ${match}`);
+    return match;
+  });
   
   const isPerson = people.some(p => p.id === personId);
 
   // Filtrer les tâches assignées à cette personne ou ce prestataire
   const personalTasks = eventTasks.filter(task => {
     if (isPerson) {
-      return task.assigned_person_id === personId;
+      const match = task.assigned_person_id === personId;
+      console.log(`Task ${task.title} - assigned_person_id: ${task.assigned_person_id}, personId: ${personId}, matches: ${match}`);
+      return match;
     } else {
       // Si ce n'est pas une personne, on suppose que c'est un prestataire
-      return task.assigned_vendor_id === personId;
+      const match = task.assigned_vendor_id === personId;
+      console.log(`Task ${task.title} - assigned_vendor_id: ${task.assigned_vendor_id}, vendorId: ${personId}, matches: ${match}`);
+      return match;
     }
+  });
+
+  console.log('PersonalTasksList - Debug info:', {
+    personId,
+    personName,
+    currentEventId,
+    totalTasks: tasks.length,
+    eventTasks: eventTasks.length,
+    personalTasks: personalTasks.length,
+    isPerson
   });
 
   const handleToggleTask = async (taskId: string, completed: boolean) => {
     try {
+      console.log('PersonalTasksList - Toggling task:', taskId, completed);
       await toggleTaskStatus.mutateAsync({ id: taskId, completed });
     } catch (error) {
       console.error('Error toggling task:', error);
@@ -56,7 +80,7 @@ export const PersonalTasksList: React.FC<PersonalTasksListProps> = ({
   const getStatusConfig = (status: string) => {
     switch (status) {
       case 'pending': return { color: 'bg-gray-100 text-gray-800', label: 'En attente' };
-      case 'in-progress': return { color: 'bg-blue-100 text-blue-800', label: 'En cours' };
+      case 'in_progress': return { color: 'bg-blue-100 text-blue-800', label: 'En cours' };
       case 'completed': return { color: 'bg-green-100 text-green-800', label: 'Terminé' };
       case 'delayed': return { color: 'bg-red-100 text-red-800', label: 'Retardé' };
       default: return { color: 'bg-gray-100 text-gray-800', label: status };
@@ -92,6 +116,16 @@ export const PersonalTasksList: React.FC<PersonalTasksListProps> = ({
         </div>
       </CardHeader>
       <CardContent>
+        {/* DEBUG INFO - Visible pour diagnostic */}
+        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <h5 className="font-medium text-blue-900 text-sm mb-1">Debug - Synchronisation Tâches</h5>
+          <div className="text-xs text-blue-800 space-y-1">
+            <p>Event ID: {currentEventId}</p>
+            <p>Person ID: {personId} ({isPerson ? 'Person' : 'Vendor'})</p>
+            <p>Total tasks: {tasks.length}, Event tasks: {eventTasks.length}, Personal: {personalTasks.length}</p>
+          </div>
+        </div>
+
         {/* Progress Bar */}
         <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
           <div className="flex items-center justify-between mb-2">
@@ -112,6 +146,9 @@ export const PersonalTasksList: React.FC<PersonalTasksListProps> = ({
           <div className="text-center py-8 text-gray-500">
             <CheckSquare className="w-12 h-12 mx-auto mb-4 text-gray-300" />
             <p>Aucune tâche ne vous est assignée pour le moment</p>
+            <p className="text-xs text-gray-400 mt-2">
+              Vérifiez que vous êtes bien connecté à l'événement: {currentEventId}
+            </p>
           </div>
         ) : (
           <div className="space-y-3">

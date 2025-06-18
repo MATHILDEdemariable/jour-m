@@ -6,23 +6,25 @@ import type { Task } from '@/stores/eventStore';
 export const useLocalTasks = () => {
   const {
     tasks,
-    currentEventId,
-    addTask: addTaskToStore,
-    updateTask: updateTaskInStore,
-    deleteTask: deleteTaskFromStore,
     loading
   } = useEventStore();
 
+  // RÉCUPÉRER l'event_id actuel
+  const currentEventId = localStorage.getItem('currentEventId') || 'default-event';
+
+  // FILTRER les tâches par événement actuel
+  const filteredTasks = tasks.filter(task => task.event_id === currentEventId);
+
   console.log('useLocalTasks - Current event ID:', currentEventId);
   console.log('useLocalTasks - All tasks:', tasks.length);
-  console.log('useLocalTasks - Filtered tasks:', tasks.filter(t => t.event_id === currentEventId).length);
+  console.log('useLocalTasks - Filtered tasks:', filteredTasks.length);
 
   return {
-    data: tasks.filter(task => task.event_id === currentEventId),
+    data: filteredTasks,
     isLoading: loading,
     refetch: async () => {
       console.log('useLocalTasks - Tasks refetched from localStorage');
-      return { data: tasks.filter(task => task.event_id === currentEventId) };
+      return { data: filteredTasks };
     }
   };
 };
@@ -30,36 +32,41 @@ export const useLocalTasks = () => {
 // Hook pour créer une tâche
 export const useLocalCreateTask = () => {
   const { addTask } = useEventStore();
-  const { currentEventId } = useEventStore();
 
   const generateId = () => `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   return {
     mutate: async (data: any) => {
+      const currentEventId = localStorage.getItem('currentEventId') || 'default-event';
+      
       const task: Task = {
         ...data,
         id: generateId(),
-        event_id: currentEventId || data.event_id,
+        event_id: currentEventId, // ESSENTIEL - utiliser l'event_id actuel
         status: data.status || 'pending',
         completed_at: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
+      
+      console.log('useLocalCreateTask - Creating task with event_id:', currentEventId, task);
       addTask(task);
-      console.log('useLocalCreateTask - Task created:', task);
     },
     mutateAsync: async (data: any) => {
+      const currentEventId = localStorage.getItem('currentEventId') || 'default-event';
+      
       const task: Task = {
         ...data,
         id: generateId(),
-        event_id: currentEventId || data.event_id,
+        event_id: currentEventId, // ESSENTIEL - utiliser l'event_id actuel
         status: data.status || 'pending',
         completed_at: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
+      
+      console.log('useLocalCreateTask - Creating task async with event_id:', currentEventId, task);
       addTask(task);
-      console.log('useLocalCreateTask - Task created async:', task);
       return task;
     },
     isPending: false,
