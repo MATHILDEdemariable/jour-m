@@ -1,20 +1,14 @@
 
-import React, { useState } from 'react';
-import { useLocalEventData } from '@/contexts/LocalEventDataContext';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Copy, 
   QrCode, 
-  RefreshCw, 
   Users, 
-  Building2, 
-  Shield, 
   ExternalLink,
   Eye
 } from 'lucide-react';
@@ -29,42 +23,16 @@ import {
 } from "@/components/ui/dialog";
 
 export const ShareManagement = () => {
-  const { currentEvent, people, vendors } = useLocalEventData();
   const { toast } = useToast();
-  const [tokens, setTokens] = useState<{[key: string]: string}>({});
-  const [showQR, setShowQR] = useState<string | null>(null);
 
-  const generateToken = (userId: string) => {
-    if (!tokens[userId]) {
-      const newToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      setTokens(prev => ({ ...prev, [userId]: newToken }));
-      return newToken;
-    }
-    return tokens[userId];
-  };
-
-  const regenerateToken = (userId: string) => {
-    const newToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    setTokens(prev => ({ ...prev, [userId]: newToken }));
-    toast({
-      title: 'Token régénéré',
-      description: 'Un nouveau lien de sécurité a été généré.',
-    });
-  };
-
-  const generateShareLink = (userId: string, userType: 'person' | 'vendor', withToken = true) => {
-    const baseUrl = window.location.origin;
-    const token = withToken ? generateToken(userId) : '';
-    const tokenParam = withToken ? `&token=${token}` : '';
-    return `${baseUrl}/portal?user_id=${userId}&user_type=${userType}&auto_login=true${tokenParam}`;
-  };
+  const equipeUrl = `${window.location.origin}/equipe`;
 
   const copyToClipboard = async (text: string, label: string) => {
     try {
       await navigator.clipboard.writeText(text);
       toast({
         title: 'Lien copié',
-        description: `Le lien pour ${label} a été copié dans le presse-papiers.`,
+        description: `${label} a été copié dans le presse-papiers.`,
       });
     } catch (error) {
       toast({
@@ -75,212 +43,118 @@ export const ShareManagement = () => {
     }
   };
 
-  const adminLink = `${window.location.origin}/portal`;
-
-  const filteredPeople = people.filter(person => 
-    person.event_id === (currentEvent?.id || 'default-event')
-  );
-  
-  const filteredVendors = vendors.filter(vendor => 
-    vendor.event_id === (currentEvent?.id || 'default-event')
-  );
+  const openPreview = () => {
+    window.open(equipeUrl, '_blank');
+  };
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Partage et Accès</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Partage Équipe</h2>
         <p className="text-gray-600">
-          Générez des liens personnalisés pour donner accès à votre équipe et prestataires.
+          Partagez le planning et les contacts avec votre équipe via un lien simple.
         </p>
       </div>
 
-      {/* Lien Admin */}
+      {/* Page équipe */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-red-600" />
-            Accès Administrateur
+            <Users className="w-5 h-5 text-purple-600" />
+            Page Équipe
           </CardTitle>
           <CardDescription>
-            Lien direct pour l'administration complète (nécessite une authentification)
+            Lien public pour consulter le planning et les contacts de l'équipe
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2">
-            <Input value={adminLink} readOnly className="flex-1" />
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => copyToClipboard(adminLink, 'admin')}
-            >
-              <Copy className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => window.open(adminLink, '_blank')}
-            >
-              <ExternalLink className="w-4 h-4" />
-            </Button>
+          <div className="space-y-4">
+            {/* URL */}
+            <div className="flex items-center gap-2">
+              <Input value={equipeUrl} readOnly className="flex-1" />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => copyToClipboard(equipeUrl, 'Le lien équipe')}
+              >
+                <Copy className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                onClick={openPreview}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center gap-2"
+              >
+                <Eye className="w-4 h-4" />
+                Voir aperçu équipe
+              </Button>
+
+              <Button
+                onClick={() => copyToClipboard(equipeUrl, 'Le lien équipe')}
+                variant="outline"
+                className="border-purple-200 text-purple-700 hover:bg-purple-50 flex items-center gap-2"
+              >
+                <Copy className="w-4 h-4" />
+                Copier le lien
+              </Button>
+
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <QrCode className="w-4 h-4" />
+                    QR Code
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle>QR Code - Page Équipe</DialogTitle>
+                    <DialogDescription>
+                      Scannez ce code pour accéder directement à la page équipe
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex justify-center p-4">
+                    <QRCodeSVG value={equipeUrl} size={200} />
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {/* Informations */}
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <h4 className="font-medium text-purple-900 mb-2">Cette page équipe affiche :</h4>
+              <ul className="text-sm text-purple-800 space-y-1">
+                <li>• Planning du Jour-J avec filtre par personne</li>
+                <li>• Contacts de l'équipe et des prestataires</li>
+                <li>• Interface en lecture seule (consultation uniquement)</li>
+                <li>• Design adapté mobile et desktop</li>
+              </ul>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Équipe */}
-      {filteredPeople.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-purple-600" />
-              Équipe Jour-J ({filteredPeople.length})
-            </CardTitle>
-            <CardDescription>
-              Liens personnalisés pour chaque membre de l'équipe
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {filteredPeople.map((person) => {
-              const shareLink = generateShareLink(person.id, 'person');
-              return (
-                <div key={person.id} className="p-4 border rounded-lg space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">{person.name}</h4>
-                      <p className="text-sm text-gray-500">{person.role || 'Membre de l\'équipe'}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-purple-50 text-purple-700">
-                        <Eye className="w-3 h-3 mr-1" />
-                        Vue personnelle
-                      </Badge>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Input value={shareLink} readOnly className="flex-1 text-xs" />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copyToClipboard(shareLink, person.name)}
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <QrCode className="w-4 h-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-sm">
-                        <DialogHeader>
-                          <DialogTitle>QR Code - {person.name}</DialogTitle>
-                          <DialogDescription>
-                            Scannez ce code pour accéder directement au planning
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="flex justify-center p-4">
-                          <QRCodeSVG value={shareLink} size={200} />
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => regenerateToken(person.id)}
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Prestataires */}
-      {filteredVendors.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-blue-600" />
-              Prestataires ({filteredVendors.length})
-            </CardTitle>
-            <CardDescription>
-              Liens personnalisés pour chaque prestataire
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {filteredVendors.map((vendor) => {
-              const shareLink = generateShareLink(vendor.id, 'vendor');
-              return (
-                <div key={vendor.id} className="p-4 border rounded-lg space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">{vendor.name}</h4>
-                      <p className="text-sm text-gray-500">{vendor.service_type || 'Prestataire'}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                        <Eye className="w-3 h-3 mr-1" />
-                        Vue prestataire
-                      </Badge>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Input value={shareLink} readOnly className="flex-1 text-xs" />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copyToClipboard(shareLink, vendor.name)}
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <QrCode className="w-4 h-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-sm">
-                        <DialogHeader>
-                          <DialogTitle>QR Code - {vendor.name}</DialogTitle>
-                          <DialogDescription>
-                            Scannez ce code pour accéder directement au planning
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="flex justify-center p-4">
-                          <QRCodeSVG value={shareLink} size={200} />
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => regenerateToken(vendor.id)}
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
-
-      {filteredPeople.length === 0 && filteredVendors.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-8">
-            <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune personne ajoutée</h3>
-            <p className="text-gray-500 mb-4">
-              Ajoutez des membres d'équipe et des prestataires pour générer leurs liens d'accès.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      {/* Conseils d'utilisation */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">💡 Conseils d'utilisation</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-gray-600">
+          <p>
+            <strong>Partage simple :</strong> Envoyez directement l'URL par message, email ou réseaux sociaux
+          </p>
+          <p>
+            <strong>QR Code :</strong> Idéal pour l'affichage physique (invitations, panneau d'accueil, etc.)
+          </p>
+          <p>
+            <strong>Aperçu :</strong> Testez l'affichage avant de partager avec votre équipe
+          </p>
+          <p>
+            <strong>Mise à jour :</strong> Les modifications dans l'admin sont immédiatement visibles sur la page équipe
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 };
