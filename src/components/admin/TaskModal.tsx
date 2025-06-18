@@ -7,8 +7,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CreateTaskData, Task } from '@/hooks/useTasks';
-import { useVendors } from '@/hooks/useVendors';
+import { useLocalVendors } from '@/hooks/useLocalVendors';
+import type { Task } from '@/stores/eventStore';
+
+interface CreateTaskData {
+  title: string;
+  description?: string;
+  priority: 'high' | 'medium' | 'low';
+  assigned_person_id?: string;
+  assigned_vendor_id?: string;
+  duration_minutes: number;
+  due_date: string;
+  notes?: string;
+}
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -27,7 +38,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 }) => {
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CreateTaskData>();
   const assignedVendorId = watch('assigned_vendor_id') || 'none';
-  const { vendors, loading: vendorsLoading } = useVendors();
+  const { vendors, loading: vendorsLoading } = useLocalVendors();
 
   useEffect(() => {
     if (task) {
@@ -35,10 +46,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         title: task.title,
         description: task.description || '',
         priority: task.priority,
-        duration_minutes: task.duration_minutes,
-        assigned_role: task.assigned_role || '',
+        duration_minutes: task.duration_minutes || 30,
         notes: task.notes || '',
         assigned_vendor_id: task.assigned_vendor_id || 'none',
+        due_date: task.due_date || new Date().toISOString().split('T')[0],
       });
     } else {
       reset({
@@ -46,9 +57,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         description: '',
         priority: 'medium',
         duration_minutes: 30,
-        assigned_role: '',
         notes: '',
         assigned_vendor_id: 'none',
+        due_date: new Date().toISOString().split('T')[0],
       });
     }
   }, [task, reset]);
@@ -141,23 +152,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             </div>
 
             <div>
-              <Label htmlFor="assigned_role">Assigné à</Label>
-              <Select onValueChange={(value) => setValue('assigned_role', value)}>
-                <SelectTrigger className="border-stone-300 focus:border-emerald-500">
-                  <SelectValue placeholder="Sélectionner une personne" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="wedding-planner">Wedding Planner</SelectItem>
-                  <SelectItem value="bride">Mariée</SelectItem>
-                  <SelectItem value="groom">Marié</SelectItem>
-                  <SelectItem value="maid-of-honor">Demoiselle d'honneur</SelectItem>
-                  <SelectItem value="best-man">Témoin</SelectItem>
-                  <SelectItem value="photographer">Photographe</SelectItem>
-                  <SelectItem value="caterer">Traiteur</SelectItem>
-                  <SelectItem value="florist">Fleuriste</SelectItem>
-                  <SelectItem value="musician">Musicien</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="due_date">Date d'échéance</Label>
+              <Input
+                id="due_date"
+                type="date"
+                {...register('due_date')}
+                className="border-stone-300 focus:border-emerald-500"
+              />
             </div>
             
             {/* Vendor Selector */}

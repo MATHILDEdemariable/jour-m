@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,6 @@ interface CreateTaskData {
   priority: 'high' | 'medium' | 'low';
   assigned_person_id?: string;
   assigned_vendor_id?: string;
-  assigned_role?: string;
   duration_minutes: number;
   due_date: string;
   notes?: string;
@@ -57,12 +57,9 @@ export const TaskManagement = () => {
     
     console.log('TaskManagement - Creating task with event_id:', currentEventId, taskData);
     
-    createTaskMutation.mutate(taskData, {
-      onSuccess: () => {
-        setIsCreateModalOpen(false);
-        console.log('TaskManagement - Task created successfully');
-      }
-    });
+    // FIX: Use single argument for mutate
+    createTaskMutation.mutate(taskData);
+    setIsCreateModalOpen(false);
   };
 
   const handleUpdateTask = (data: CreateTaskData) => {
@@ -70,16 +67,10 @@ export const TaskManagement = () => {
     
     console.log('TaskManagement - Updating task:', editingTask.id, data);
     
-    updateTaskMutation.mutate(
-      { id: editingTask.id, data },
-      {
-        onSuccess: () => {
-          setIsEditModalOpen(false);
-          setEditingTask(null);
-          console.log('TaskManagement - Task updated successfully');
-        }
-      }
-    );
+    // FIX: Use single argument for mutate with object format
+    updateTaskMutation.mutate({ id: editingTask.id, data });
+    setIsEditModalOpen(false);
+    setEditingTask(null);
   };
 
   const handleEditTask = (task: Task) => {
@@ -125,9 +116,8 @@ export const TaskManagement = () => {
 
   const statusColors = {
     completed: 'bg-emerald-100 text-emerald-800',
-    'in-progress': 'bg-blue-100 text-blue-800',
-    pending: 'bg-stone-100 text-stone-800',
-    delayed: 'bg-red-100 text-red-800'
+    in_progress: 'bg-blue-100 text-blue-800', // FIX: Use in_progress instead of in-progress
+    pending: 'bg-stone-100 text-stone-800'
   };
 
   const getPriorityLabel = (priority: string) => {
@@ -142,9 +132,8 @@ export const TaskManagement = () => {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'completed': return '✅ Terminée';
-      case 'in-progress': return '🔄 En cours';
+      case 'in_progress': return '🔄 En cours'; // FIX: Use in_progress
       case 'pending': return '⏳ En attente';
-      case 'delayed': return '⚠️ Retardée';
       default: return status;
     }
   };
@@ -213,9 +202,8 @@ export const TaskManagement = () => {
                 <SelectContent>
                   <SelectItem value="all">Tous les statuts</SelectItem>
                   <SelectItem value="pending">En attente</SelectItem>
-                  <SelectItem value="in-progress">En cours</SelectItem>
+                  <SelectItem value="in_progress">En cours</SelectItem>
                   <SelectItem value="completed">Terminées</SelectItem>
-                  <SelectItem value="delayed">Retardées</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={priorityFilter} onValueChange={setPriorityFilter}>
@@ -235,7 +223,7 @@ export const TaskManagement = () => {
       </Card>
 
       {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-stone-200">
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-emerald-700">
@@ -247,7 +235,7 @@ export const TaskManagement = () => {
         <Card className="border-stone-200">
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-blue-600">
-              {tasks.filter(t => t.status === 'in-progress').length}
+              {tasks.filter(t => t.status === 'in_progress').length}
             </div>
             <p className="text-stone-600 text-sm">En cours</p>
           </CardContent>
@@ -258,14 +246,6 @@ export const TaskManagement = () => {
               {tasks.filter(t => t.status === 'pending').length}
             </div>
             <p className="text-stone-600 text-sm">En attente</p>
-          </CardContent>
-        </Card>
-        <Card className="border-stone-200">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-red-600">
-              {tasks.filter(t => t.status === 'delayed').length}
-            </div>
-            <p className="text-stone-600 text-sm">Retardées</p>
           </CardContent>
         </Card>
       </div>
@@ -328,13 +308,7 @@ export const TaskManagement = () => {
                             <Clock className="w-3 h-3" />
                             <span>{task.duration_minutes}min</span>
                           </div>
-                          {task.assigned_role && (
-                            <div className="flex items-center gap-1 text-stone-500">
-                              <Users className="w-3 h-3" />
-                              <span>{task.assigned_role.replace('-', ' ')}</span>
-                            </div>
-                          )}
-                           {assignedVendor && (
+                          {assignedVendor && (
                             <div className="flex items-center gap-1 text-sky-600 font-medium">
                                <Building className="w-3 h-3" />
                                <span>{assignedVendor.name}</span>
