@@ -22,63 +22,36 @@ import { useEventStore } from '@/stores/eventStore';
 interface EventPortalSelectionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onUserSelect: (userId: string, userType: 'person' | 'vendor') => void;
 }
 
 export const EventPortalSelectionModal: React.FC<EventPortalSelectionModalProps> = ({
   open,
-  onOpenChange
+  onOpenChange,
+  onUserSelect
 }) => {
-  const navigate = useNavigate();
-  
-  // UTILISER EventStore comme source unique
   const { people, vendors, loadFromStorage } = useEventStore();
-  
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedUserType, setSelectedUserType] = useState<'person' | 'vendor' | ''>('');
 
-  // FORCER le rechargement des données à l'ouverture du modal
   useEffect(() => {
     if (open) {
       console.log('EventPortalSelectionModal - Modal opened, loading data...');
       loadFromStorage();
-      
-      // Debug immédiat
-      setTimeout(() => {
-        console.log('EventPortalSelectionModal - All people:', people);
-        console.log('EventPortalSelectionModal - All vendors:', vendors);
-      }, 100);
     }
   }, [open, loadFromStorage]);
 
-  // RÉCUPÉRER l'événement actuel
   const currentEventId = localStorage.getItem('currentEventId') || 'default-event';
-  console.log('EventPortalSelectionModal - Current event ID:', currentEventId);
 
-  // FILTRER par événement actuel
-  const filteredPeople = people.filter(person => {
-    const match = person.event_id === currentEventId;
-    console.log(`Person ${person.name} - event_id: ${person.event_id}, matches: ${match}`);
-    return match;
-  });
-  
-  const filteredVendors = vendors.filter(vendor => {
-    const match = vendor.event_id === currentEventId;
-    console.log(`Vendor ${vendor.name} - event_id: ${vendor.event_id}, matches: ${match}`);
-    return match;
-  });
-
-  console.log('EventPortalSelectionModal - Filtered people:', filteredPeople.length);
-  console.log('EventPortalSelectionModal - Filtered vendors:', filteredVendors.length);
+  const filteredPeople = people.filter(person => person.event_id === currentEventId);
+  const filteredVendors = vendors.filter(vendor => vendor.event_id === currentEventId);
 
   const handleContinue = () => {
     if (!selectedUserId || !selectedUserType) return;
 
-    const url = `/event-portal?user_type=${selectedUserType}&user_id=${selectedUserId}&auto_login=true`;
-    
-    navigate(url);
+    onUserSelect(selectedUserId, selectedUserType);
     onOpenChange(false);
     
-    // Reset state
     setSelectedUserId('');
     setSelectedUserType('');
   };
@@ -86,20 +59,16 @@ export const EventPortalSelectionModal: React.FC<EventPortalSelectionModalProps>
   const handleUserSelect = (value: string) => {
     setSelectedUserId(value);
     
-    // Déterminer automatiquement le type d'utilisateur
     const isPerson = filteredPeople.some(p => p.id === value);
     const isVendor = filteredVendors.some(v => v.id === value);
     
     if (isPerson) {
       setSelectedUserType('person');
-      console.log('Selected person:', value);
     } else if (isVendor) {
       setSelectedUserType('vendor');
-      console.log('Selected vendor:', value);
     }
   };
 
-  // COMBINER toutes les options
   const allUsers = [
     ...filteredPeople.map(person => ({
       id: person.id,
@@ -117,8 +86,6 @@ export const EventPortalSelectionModal: React.FC<EventPortalSelectionModalProps>
     }))
   ];
 
-  console.log('EventPortalSelectionModal - All users for selection:', allUsers);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -128,7 +95,7 @@ export const EventPortalSelectionModal: React.FC<EventPortalSelectionModalProps>
             Accès Jour-J
           </DialogTitle>
           <DialogDescription>
-            Sélectionnez votre profil pour accéder directement à votre planning personnalisé du jour J
+            Sélectionnez votre profil pour accéder directement à votre planning personnalisé
           </DialogDescription>
         </DialogHeader>
 
@@ -175,12 +142,6 @@ export const EventPortalSelectionModal: React.FC<EventPortalSelectionModalProps>
               <ArrowRight className="w-4 h-4 mr-2" />
               Accéder à mon planning
             </Button>
-          </div>
-          
-          {/* DEBUG INFO - À supprimer en production */}
-          <div className="text-xs text-gray-400 space-y-1">
-            <p>Debug: Event ID = {currentEventId}</p>
-            <p>Debug: People = {filteredPeople.length}, Vendors = {filteredVendors.length}</p>
           </div>
         </div>
       </DialogContent>

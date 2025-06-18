@@ -1,43 +1,53 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { LocalCurrentEventProvider } from "@/contexts/LocalCurrentEventContext";
-import { LocalEventDataProvider } from "@/contexts/LocalEventDataContext";
-import SimpleDashboard from "./pages/SimpleDashboard";
-import AdminPortal from "./pages/AdminPortal";
-import EventPortal from "./pages/EventPortal";
-import NotFound from "./pages/NotFound";
-import TeamDashboard from "./pages/TeamDashboard";
-import './i18n';
+import { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from '@/components/ui/toaster';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { LocalEventDataProvider } from '@/contexts/LocalEventDataContext';
+import { LocalCurrentEventProvider } from '@/contexts/LocalCurrentEventContext';
+import { OfflineManager } from '@/components/OfflineManager';
+
+// Pages
+import Index from '@/pages/Index';
+import UnifiedPortal from '@/pages/UnifiedPortal';
+import { PublicPortal } from '@/pages/PublicPortal';
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <BrowserRouter>
+function App() {
+  useEffect(() => {
+    // Auto-detect system theme
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
         <LocalCurrentEventProvider>
           <LocalEventDataProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <Routes>
-                <Route path="/" element={<SimpleDashboard />} />
-                <Route path="/admin" element={<AdminPortal />} />
-                <Route path="/event-portal" element={<EventPortal />} />
-                <Route path="/team-dashboard" element={<TeamDashboard />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </TooltipProvider>
+            <Router>
+              <div className="min-h-screen bg-background">
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/portal" element={<UnifiedPortal />} />
+                  <Route path="/public-portal" element={<PublicPortal />} />
+                  
+                  {/* Redirect old routes to new unified portal */}
+                  <Route path="/admin-portal" element={<Navigate to="/portal" replace />} />
+                  <Route path="/event-portal" element={<Navigate to="/portal" replace />} />
+                </Routes>
+                <OfflineManager />
+                <Toaster />
+              </div>
+            </Router>
           </LocalEventDataProvider>
         </LocalCurrentEventProvider>
-      </BrowserRouter>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
