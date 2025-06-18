@@ -8,6 +8,14 @@ import { Users, LogIn } from 'lucide-react';
 const LandingPage = () => {
   const navigate = useNavigate();
 
+  const handleAdminClick = () => {
+    navigate('/portal');
+  };
+
+  const handleEventClick = () => {
+    navigate('/portal');
+  };
+
   return (
     <div className="bg-white text-stone-800">
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b">
@@ -32,7 +40,10 @@ const LandingPage = () => {
         </div>
       </header>
       <main>
-        <HeroSection />
+        <HeroSection 
+          onAdminClick={handleAdminClick}
+          onEventClick={handleEventClick}
+        />
       </main>
       <footer className="bg-stone-100 border-t">
         <div className="container mx-auto p-8 text-center text-stone-500">
