@@ -22,7 +22,7 @@ import { useEventStore } from '@/stores/eventStore';
 interface EventPortalSelectionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUserSelect: (userId: string, userType: 'person' | 'vendor') => void;
+  onUserSelect?: (userId: string, userType: 'person' | 'vendor') => void;
 }
 
 export const EventPortalSelectionModal: React.FC<EventPortalSelectionModalProps> = ({
@@ -30,6 +30,7 @@ export const EventPortalSelectionModal: React.FC<EventPortalSelectionModalProps>
   onOpenChange,
   onUserSelect
 }) => {
+  const navigate = useNavigate();
   const { people, vendors, loadFromStorage } = useEventStore();
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedUserType, setSelectedUserType] = useState<'person' | 'vendor' | ''>('');
@@ -49,7 +50,14 @@ export const EventPortalSelectionModal: React.FC<EventPortalSelectionModalProps>
   const handleContinue = () => {
     if (!selectedUserId || !selectedUserType) return;
 
-    onUserSelect(selectedUserId, selectedUserType);
+    if (onUserSelect) {
+      onUserSelect(selectedUserId, selectedUserType);
+    } else {
+      // Default behavior: navigate to portal with user info
+      const url = `/portal?user_id=${selectedUserId}&user_type=${selectedUserType}&auto_login=true`;
+      navigate(url);
+    }
+    
     onOpenChange(false);
     
     setSelectedUserId('');

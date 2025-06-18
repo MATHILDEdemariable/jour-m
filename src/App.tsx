@@ -11,7 +11,6 @@ import { OfflineManager } from '@/components/OfflineManager';
 // Pages
 import Index from '@/pages/Index';
 import UnifiedPortal from '@/pages/UnifiedPortal';
-import { PublicPortal } from '@/pages/PublicPortal';
 
 const queryClient = new QueryClient();
 
@@ -33,11 +32,11 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/portal" element={<UnifiedPortal />} />
-                  <Route path="/public-portal" element={<PublicPortal />} />
                   
                   {/* Redirect old routes to new unified portal */}
                   <Route path="/admin-portal" element={<Navigate to="/portal" replace />} />
                   <Route path="/event-portal" element={<Navigate to="/portal" replace />} />
+                  <Route path="/public-portal" element={<Navigate to="/portal" replace />} />
                 </Routes>
                 <OfflineManager />
                 <Toaster />

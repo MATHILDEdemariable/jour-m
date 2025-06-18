@@ -1,6 +1,6 @@
 
 import React from 'react';
-import HeroSection from '@/components/marketing/HeroSection';
+import { HeroSection } from '@/components/marketing/HeroSection';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Users, LogIn } from 'lucide-react';
