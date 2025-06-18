@@ -6,6 +6,7 @@ import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
 interface EventDataContextType {
   tasks: any[];
   planningItems: any[];
+  timelineItems: any[]; // Ajout de timelineItems
   people: any[];
   vendors: any[];
   documents: any[];
@@ -37,6 +38,7 @@ export const LocalEventDataProvider: React.FC<{ children: React.ReactNode }> = (
   const {
     tasks,
     planningItems,
+    timelineItems, // Ajout de timelineItems depuis le store
     people,
     vendors,
     documents,
@@ -68,6 +70,7 @@ export const LocalEventDataProvider: React.FC<{ children: React.ReactNode }> = (
   const eventFilteredPeople = people.filter(person => person.event_id === currentEventId);
   const eventFilteredVendors = vendors.filter(vendor => vendor.event_id === currentEventId);
   const eventFilteredPlanningItems = planningItems.filter(item => item.event_id === currentEventId);
+  const eventFilteredTimelineItems = timelineItems.filter(item => item.event_id === currentEventId); // Filtrage des timeline items
   const eventFilteredDocuments = documents.filter(doc => doc.event_id === currentEventId);
   const currentEvent = events.find(event => event.id === currentEventId);
 
@@ -115,6 +118,7 @@ export const LocalEventDataProvider: React.FC<{ children: React.ReactNode }> = (
   const value = {
     tasks: eventFilteredTasks,
     planningItems: eventFilteredPlanningItems,
+    timelineItems: eventFilteredTimelineItems, // Ajout de timelineItems dans la valeur retournée
     people: eventFilteredPeople,
     vendors: eventFilteredVendors,
     documents: eventFilteredDocuments,
