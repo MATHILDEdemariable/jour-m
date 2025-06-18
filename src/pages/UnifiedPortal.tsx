@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, LogOut, HelpCircle, Users, Building2, Shield, Eye } from 'lucide-react';
+import { ArrowLeft, LogOut, HelpCircle, Users, Building2, Shield, Eye, Share } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { useLocalEventData } from '@/contexts/LocalEventDataContext';
@@ -17,6 +17,7 @@ import { PeopleManagement } from '@/components/admin/PeopleManagement';
 import { VendorManagement } from '@/components/admin/VendorManagement';
 import { UnifiedPlanningManagement } from '@/components/admin/UnifiedPlanningManagement';
 import { DocumentManagement } from '@/components/admin/DocumentManagement';
+import { ShareManagement } from '@/components/admin/ShareManagement';
 import { UnifiedPersonalPlanning } from '@/components/event/UnifiedPersonalPlanning';
 import { ContactsTab } from '@/components/event/ContactsTab';
 import { PersonalDocuments } from '@/components/event/PersonalDocuments';
@@ -29,11 +30,13 @@ interface UserInfo {
   name: string;
   role: UserRole;
   type: 'person' | 'vendor';
+  token?: string;
 }
 
 export const UnifiedPortal = () => {
   const [activeTab, setActiveTab] = useState('planning');
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [isTokenValid, setIsTokenValid] = useState(true);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -41,14 +44,25 @@ export const UnifiedPortal = () => {
   const { signOut, user } = useAuth();
   const { currentEvent, people, vendors } = useLocalEventData();
 
-  // Auto-detect user role and info from URL parameters
+  // Validation des tokens (simulation - en production, cela serait côté serveur)
+  const validateToken = (userId: string, userType: 'person' | 'vendor', token: string) => {
+    // Pour la démo, on accepte tous les tokens non vides
+    // En production, on vérifierait avec la base de données
+    return token && token.length > 0;
+  };
+
+  // Auto-détection du rôle et des informations utilisateur
   useEffect(() => {
     const userId = searchParams.get('user_id');
     const userType = searchParams.get('user_type') as 'person' | 'vendor';
     const autoLogin = searchParams.get('auto_login');
+    const token = searchParams.get('token');
+
+    console.log('UnifiedPortal - URL params:', { userId, userType, autoLogin, token });
 
     if (user && !userId) {
-      // Admin user logged in
+      // Utilisateur admin connecté
+      console.log('UnifiedPortal - Admin user detected');
       setUserInfo({
         id: user.id,
         name: user.email || 'Admin',
@@ -56,23 +70,47 @@ export const UnifiedPortal = () => {
         type: 'person'
       });
       setActiveTab('config');
+      setIsTokenValid(true);
     } else if (userId && userType && autoLogin) {
-      // Auto-login from URL
+      // Accès via lien personnalisé
+      console.log('UnifiedPortal - Personal link access detected');
+
       const userData = userType === 'person' 
         ? people.find(p => p.id === userId)
         : vendors.find(v => v.id === userId);
 
       if (userData) {
+        // Validation du token si présent
+        if (token) {
+          const isValid = validateToken(userId, userType, token);
+          setIsTokenValid(isValid);
+          
+          if (!isValid) {
+            console.log('UnifiedPortal - Invalid token');
+            return;
+          }
+        }
+
+        console.log('UnifiedPortal - User data found:', userData.name);
         setUserInfo({
           id: userId,
           name: userData.name,
           role: userType as UserRole,
-          type: userType
+          type: userType,
+          token
         });
         setActiveTab('planning');
+        setIsTokenValid(true);
+      } else {
+        console.log('UnifiedPortal - User data not found');
+        setIsTokenValid(false);
       }
+    } else if (!user) {
+      // Pas d'utilisateur connecté et pas de paramètres valides
+      console.log('UnifiedPortal - No valid access method, redirecting to home');
+      navigate('/');
     }
-  }, [searchParams, user, people, vendors]);
+  }, [searchParams, user, people, vendors, navigate]);
 
   const getRoleConfig = (role: UserRole) => {
     switch (role) {
@@ -82,7 +120,7 @@ export const UnifiedPortal = () => {
           icon: Shield,
           color: 'bg-red-100 text-red-800',
           canEdit: true,
-          availableTabs: ['config', 'people', 'vendors', 'planning', 'documents']
+          availableTabs: ['config', 'people', 'vendors', 'planning', 'share', 'documents']
         };
       case 'person':
         return {
@@ -135,6 +173,8 @@ export const UnifiedPortal = () => {
             onViewModeChange={() => {}}
           />
         );
+      case 'share':
+        return roleConfig.canEdit ? <ShareManagement /> : null;
       case 'contacts':
         return userInfo.role !== 'admin' ? (
           <ContactsTab 
@@ -155,6 +195,27 @@ export const UnifiedPortal = () => {
         return null;
     }
   };
+
+  // Gestion des erreurs d'accès
+  if (!isTokenValid) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Shield className="w-8 h-8 text-red-600" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Accès non autorisé</h2>
+          <p className="text-gray-600 mb-6">
+            Le lien d'accès est invalide ou a expiré. Veuillez contacter l'organisateur pour obtenir un nouveau lien.
+          </p>
+          <Button onClick={() => navigate('/')} variant="outline">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Retour à l'accueil
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!userInfo) {
     return (
@@ -201,6 +262,11 @@ export const UnifiedPortal = () => {
               <IconComponent className="w-3 h-3" />
               {roleConfig.label}
             </Badge>
+            {userInfo.token && (
+              <Badge variant="outline" className="text-xs text-green-600 border-green-200">
+                Lien sécurisé
+              </Badge>
+            )}
             {userInfo.role === 'admin' && (
               <Button 
                 variant="outline" 
@@ -252,6 +318,12 @@ export const UnifiedPortal = () => {
                 <TabsTrigger value="planning" className="flex flex-col py-3">
                   <span className="text-xs">⏰</span>
                   <span className="text-xs">Planning</span>
+                </TabsTrigger>
+              )}
+              {roleConfig.availableTabs.includes('share') && (
+                <TabsTrigger value="share" className="flex flex-col py-3">
+                  <span className="text-xs">🔗</span>
+                  <span className="text-xs">Partage</span>
                 </TabsTrigger>
               )}
               {roleConfig.availableTabs.includes('contacts') && (

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,8 @@ import {
   Shield, 
   UserCheck,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Key
 } from 'lucide-react';
 
 interface HeroSectionProps {
@@ -60,7 +61,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-lg px-8 py-4 h-auto"
             >
               <Shield className="w-5 h-5 mr-2" />
-              {user ? 'Accéder au Portail Admin' : 'Connexion Admin'}
+              Accéder au Portail
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
             
@@ -70,8 +71,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               variant="outline"
               className="border-2 border-purple-200 text-purple-700 hover:bg-purple-50 text-lg px-8 py-4 h-auto"
             >
-              <UserCheck className="w-5 h-5 mr-2" />
-              Accès Équipe Jour-J
+              <Key className="w-5 h-5 mr-2" />
+              Rejoindre une Équipe
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </div>
@@ -139,13 +140,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         {/* Additional Info */}
         <div className="text-center mt-16 max-w-2xl mx-auto">
           <p className="text-gray-600 mb-4">
-            <strong>Nouveau :</strong> Un seul portail unifié qui s'adapte automatiquement à votre rôle
+            <strong>Portal unifié :</strong> Interface adaptée automatiquement selon votre rôle et permissions
           </p>
           <div className="flex flex-wrap justify-center gap-2">
             <Badge variant="outline" className="bg-white/50">👑 Admin complet</Badge>
             <Badge variant="outline" className="bg-white/50">👥 Vue équipe</Badge>
             <Badge variant="outline" className="bg-white/50">🏢 Espace prestataires</Badge>
-            <Badge variant="outline" className="bg-white/50">👀 Accès invités</Badge>
+            <Badge variant="outline" className="bg-white/50">🔗 Liens personnalisés</Badge>
           </div>
         </div>
       </div>
