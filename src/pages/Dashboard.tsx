@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -14,7 +13,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from '@/contexts/AuthContext';
-import { EventPortalSelectionModal } from '@/components/event/EventPortalSelectionModal';
 import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
 import { useEventStore } from '@/stores/eventStore';
 import { OfflineManager } from '@/components/OfflineManager';
@@ -32,7 +30,6 @@ const Dashboard: React.FC = () => {
     restoreFromBackup,
     getStorageSize 
   } = useEventStore();
-  const [showEventPortalSelection, setShowEventPortalSelection] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
@@ -45,8 +42,8 @@ const Dashboard: React.FC = () => {
     navigate('/admin');
   };
 
-  const handleEventPortalAccess = () => {
-    setShowEventPortalSelection(true);
+  const handlePortalAccess = () => {
+    navigate('/portal');
   };
 
   const handleConfirmReset = async () => {
@@ -190,11 +187,11 @@ const Dashboard: React.FC = () => {
               <h3 className="text-lg font-semibold text-stone-700">Navigation</h3>
               <div className="flex flex-col gap-2">
                 <Button
-                  onClick={handleEventPortalAccess}
+                  onClick={handlePortalAccess}
                   className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center gap-2"
                 >
                   <Eye className="w-5 h-5" />
-                  Équipe
+                  Accéder au Portal
                 </Button>
                 
                 <Button
@@ -397,12 +394,6 @@ const Dashboard: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Event Portal Selection Modal */}
-      <EventPortalSelectionModal
-        open={showEventPortalSelection}
-        onOpenChange={setShowEventPortalSelection}
-      />
     </div>
   );
 };

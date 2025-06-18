@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,6 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast"
-import { EventPortalSelectionModal } from '@/components/event/EventPortalSelectionModal';
 import { useEventStore } from '@/stores/eventStore';
 import { OfflineManager } from '@/components/OfflineManager';
 
@@ -27,7 +25,6 @@ const SimpleDashboard: React.FC = () => {
     createBackup, 
     restoreFromBackup
   } = useEventStore();
-  const [showEventPortalSelection, setShowEventPortalSelection] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
@@ -40,8 +37,8 @@ const SimpleDashboard: React.FC = () => {
     navigate('/admin');
   };
 
-  const handleEventPortalAccess = () => {
-    setShowEventPortalSelection(true);
+  const handlePortalAccess = () => {
+    navigate('/portal');
   };
 
   const handleConfirmReset = async () => {
@@ -182,12 +179,12 @@ const SimpleDashboard: React.FC = () => {
           {/* Navigation principale - Seulement 2 boutons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-12">
             <Button
-              onClick={handleEventPortalAccess}
+              onClick={handlePortalAccess}
               size="lg"
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center gap-3 px-8 py-4 text-lg"
             >
               <Eye className="w-6 h-6" />
-              Équipe
+              Accéder au Portal
             </Button>
             
             <Button
