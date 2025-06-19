@@ -36,6 +36,8 @@ export const useLocalTimelineItems = () => {
         priority: itemData.priority || 'medium',
         assigned_person_ids: itemData.assigned_person_ids || [],
         assigned_vendor_ids: itemData.assigned_vendor_ids || [],
+        assigned_person_id: null, // Added for compatibility
+        assigned_vendor_id: null, // Added for compatibility
         assigned_role: itemData.assigned_role || null,
         order_index: itemData.order_index || currentEventTimelineItems.length,
         notes: itemData.notes || null,
