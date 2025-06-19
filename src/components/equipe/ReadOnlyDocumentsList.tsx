@@ -49,9 +49,9 @@ export const ReadOnlyDocumentsList = () => {
         </CardContent>
       </Card>
     );
-  }
+  };
 
-  // Grouper par catégorie
+  // Grouper par catégorie avec un typage correct
   const documentsByCategory = documents.reduce((acc, doc) => {
     const category = doc.category || 'autre';
     if (!acc[category]) acc[category] = [];
@@ -99,7 +99,7 @@ export const ReadOnlyDocumentsList = () => {
 
       {/* Documents par catégorie */}
       <div className="space-y-6">
-        {Object.entries(documentsByCategory).map(([category, categoryDocs]) => (
+        {Object.entries(documentsByCategory).map(([category, categoryDocs]: [string, any[]]) => (
           <Card key={category}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
