@@ -23,8 +23,8 @@ export const PlanningView = () => {
       category: item.category,
       status: item.status,
       location: '', // timeline items n'ont pas de location par défaut
-      assigned_people: item.assigned_person_ids || [],
-      assigned_vendors: [],
+      assigned_people: item.assigned_person_ids || (item.assigned_person_id ? [item.assigned_person_id] : []),
+      assigned_vendors: item.assigned_vendor_id ? [item.assigned_vendor_id] : [],
       type: 'timeline' as const
     }));
 
@@ -50,10 +50,11 @@ export const PlanningView = () => {
       return allPlanningItems;
     }
 
-    return allPlanningItems.filter(item => 
-      item.assigned_people?.includes(selectedPerson) || 
-      item.assigned_vendors?.includes(selectedPerson)
-    );
+    return allPlanningItems.filter(item => {
+      const isAssignedToPerson = item.assigned_people?.includes(selectedPerson);
+      const isAssignedToVendor = item.assigned_vendors?.includes(selectedPerson);
+      return isAssignedToPerson || isAssignedToVendor;
+    });
   }, [allPlanningItems, selectedPerson]);
 
   const allPersons = useMemo(() => {
@@ -68,7 +69,11 @@ export const PlanningView = () => {
 
   const getPersonName = (personId: string) => {
     const person = allPersons.find(p => p.id === personId);
-    return person?.name || personId;
+    if (!person) {
+      console.warn('PlanningView - Person not found for ID:', personId, 'Available persons:', allPersons.map(p => ({ id: p.id, name: p.name })));
+      return `ID: ${personId}`;
+    }
+    return person.name;
   };
 
   const getPersonType = (personId: string) => {
@@ -110,12 +115,16 @@ export const PlanningView = () => {
     return timeA - timeB;
   });
 
-  console.log('PlanningView - Data debug:', {
+  console.log('PlanningView - Debug data:', {
     timelineItems: timelineItems.length,
     planningItems: planningItems.length,
     allPlanningItems: allPlanningItems.length,
     filteredItems: filteredPlanningItems.length,
-    currentEventId: currentEvent?.id
+    selectedPerson,
+    allPersons: allPersons.length,
+    currentEventId: currentEvent?.id,
+    sampleItem: allPlanningItems[0],
+    samplePersons: allPersons.slice(0, 3)
   });
 
   return (
@@ -210,24 +219,26 @@ export const PlanningView = () => {
                 
                 {(item.assigned_people?.length || item.assigned_vendors?.length) && (
                   <div className="flex flex-wrap gap-2">
+                    {/* Afficher les personnes assignées */}
                     {item.assigned_people?.map((personId) => (
                       <Badge 
-                        key={personId} 
+                        key={`person-${personId}`} 
                         variant="secondary"
-                        className={getPersonType(personId) === 'person' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}
+                        className="bg-purple-100 text-purple-800"
                       >
                         <Users className="w-3 h-3 mr-1" />
                         {getPersonName(personId)}
                       </Badge>
                     ))}
+                    {/* Afficher les prestataires assignés */}
                     {item.assigned_vendors?.map((vendorId) => (
                       <Badge 
-                        key={vendorId} 
+                        key={`vendor-${vendorId}`} 
                         variant="secondary"
                         className="bg-blue-100 text-blue-800"
                       >
                         <Users className="w-3 h-3 mr-1" />
-                        {getPersonName(vendorId)}
+                        {getPersonName(vendorId)} (Prestataire)
                       </Badge>
                     ))}
                   </div>
