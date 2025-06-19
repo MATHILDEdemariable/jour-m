@@ -6,7 +6,7 @@ import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
 interface EventDataContextType {
   tasks: any[];
   planningItems: any[];
-  timelineItems: any[]; // Ajout de timelineItems
+  timelineItems: any[];
   people: any[];
   vendors: any[];
   documents: any[];
@@ -38,23 +38,35 @@ export const LocalEventDataProvider: React.FC<{ children: React.ReactNode }> = (
   const {
     tasks,
     planningItems,
-    timelineItems, // Ajout de timelineItems depuis le store
+    timelineItems,
     people,
     vendors,
     documents,
     events,
     loading,
-    refreshData,
+    refreshData: storeRefreshData,
     updateEvent
   } = useEventStore();
 
   const [lastUpdate, setLastUpdate] = useState(Date.now());
 
-  // Enhanced refresh function
+  // Enhanced refresh function with better synchronization
   const enhancedRefreshData = async () => {
     console.log('LocalEventDataContext - Enhanced refresh triggered for event:', currentEventId);
-    refreshData();
+    await storeRefreshData();
     setLastUpdate(Date.now());
+    
+    // Force re-render to ensure UI updates
+    setTimeout(() => {
+      console.log('LocalEventDataContext - Post-refresh data check:', {
+        currentEventId,
+        tasksCount: tasks.filter(t => t.event_id === currentEventId).length,
+        peopleCount: people.filter(p => p.event_id === currentEventId).length,
+        vendorsCount: vendors.filter(v => v.event_id === currentEventId).length,
+        timelineItemsCount: timelineItems.filter(t => t.event_id === currentEventId).length,
+        planningItemsCount: planningItems.filter(p => p.event_id === currentEventId).length
+      });
+    }, 100);
   };
 
   // Force refresh when event changes
@@ -65,14 +77,60 @@ export const LocalEventDataProvider: React.FC<{ children: React.ReactNode }> = (
     }
   }, [currentEventId]);
 
-  // Filter data by current event
-  const eventFilteredTasks = tasks.filter(task => task.event_id === currentEventId);
-  const eventFilteredPeople = people.filter(person => person.event_id === currentEventId);
-  const eventFilteredVendors = vendors.filter(vendor => vendor.event_id === currentEventId);
-  const eventFilteredPlanningItems = planningItems.filter(item => item.event_id === currentEventId);
-  const eventFilteredTimelineItems = timelineItems.filter(item => item.event_id === currentEventId); // Filtrage des timeline items
-  const eventFilteredDocuments = documents.filter(doc => doc.event_id === currentEventId);
-  const currentEvent = events.find(event => event.id === currentEventId);
+  // Auto-refresh every 30 seconds to catch changes from other tabs/windows
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log('LocalEventDataContext - Auto-refresh triggered');
+      enhancedRefreshData();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [currentEventId]);
+
+  // Filter data by current event with proper fallback
+  const safeCurrentEventId = currentEventId || 'default-event';
+  
+  const eventFilteredTasks = tasks.filter(task => 
+    task.event_id === safeCurrentEventId || 
+    (!task.event_id && safeCurrentEventId === 'default-event')
+  );
+  
+  const eventFilteredPeople = people.filter(person => 
+    person.event_id === safeCurrentEventId || 
+    (!person.event_id && safeCurrentEventId === 'default-event')
+  );
+  
+  const eventFilteredVendors = vendors.filter(vendor => 
+    vendor.event_id === safeCurrentEventId || 
+    (!vendor.event_id && safeCurrentEventId === 'default-event')
+  );
+  
+  const eventFilteredPlanningItems = planningItems.filter(item => 
+    item.event_id === safeCurrentEventId || 
+    (!item.event_id && safeCurrentEventId === 'default-event')
+  );
+  
+  const eventFilteredTimelineItems = timelineItems.filter(item => 
+    item.event_id === safeCurrentEventId || 
+    (!item.event_id && safeCurrentEventId === 'default-event')
+  );
+  
+  const eventFilteredDocuments = documents.filter(doc => 
+    doc.event_id === safeCurrentEventId || 
+    (!doc.event_id && safeCurrentEventId === 'default-event')
+  );
+  
+  const currentEvent = events.find(event => event.id === safeCurrentEventId);
+
+  console.log('LocalEventDataContext - Filtered data:', {
+    currentEventId: safeCurrentEventId,
+    tasks: eventFilteredTasks.length,
+    people: eventFilteredPeople.length,
+    vendors: eventFilteredVendors.length,
+    planningItems: eventFilteredPlanningItems.length,
+    timelineItems: eventFilteredTimelineItems.length,
+    documents: eventFilteredDocuments.length
+  });
 
   const getProgressStats = () => {
     const totalTasks = eventFilteredTasks.length;
@@ -118,7 +176,7 @@ export const LocalEventDataProvider: React.FC<{ children: React.ReactNode }> = (
   const value = {
     tasks: eventFilteredTasks,
     planningItems: eventFilteredPlanningItems,
-    timelineItems: eventFilteredTimelineItems, // Ajout de timelineItems dans la valeur retournée
+    timelineItems: eventFilteredTimelineItems,
     people: eventFilteredPeople,
     vendors: eventFilteredVendors,
     documents: eventFilteredDocuments,

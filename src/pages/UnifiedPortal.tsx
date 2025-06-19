@@ -34,7 +34,7 @@ interface UserInfo {
 }
 
 export const UnifiedPortal = () => {
-  const [activeTab, setActiveTab] = useState('planning');
+  const [activeTab, setActiveTab] = useState('');
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [isTokenValid, setIsTokenValid] = useState(true);
   const [searchParams] = useSearchParams();
@@ -42,7 +42,7 @@ export const UnifiedPortal = () => {
   const isMobile = useIsMobile();
   const { t } = useTranslation();
   const { signOut, user } = useAuth();
-  const { currentEvent, people, vendors } = useLocalEventData();
+  const { currentEvent, people, vendors, refreshData } = useLocalEventData();
 
   // Validation des tokens (simulation - en production, cela serait côté serveur)
   const validateToken = (userId: string, userType: 'person' | 'vendor', token: string) => {
@@ -69,7 +69,10 @@ export const UnifiedPortal = () => {
         role: 'admin',
         type: 'person'
       });
-      setActiveTab('config');
+      // Pour l'admin, commencer par l'onglet config seulement s'il n'y a pas d'onglet déjà sélectionné
+      if (!activeTab) {
+        setActiveTab('config');
+      }
       setIsTokenValid(true);
     } else if (userId && userType && autoLogin) {
       // Accès via lien personnalisé
@@ -99,7 +102,10 @@ export const UnifiedPortal = () => {
           type: userType,
           token
         });
-        setActiveTab('planning');
+        // Pour les utilisateurs personnels, commencer par planning seulement s'il n'y a pas d'onglet déjà sélectionné
+        if (!activeTab) {
+          setActiveTab('planning');
+        }
         setIsTokenValid(true);
       } else {
         console.log('UnifiedPortal - User data not found');
@@ -110,7 +116,15 @@ export const UnifiedPortal = () => {
       console.log('UnifiedPortal - No valid access method, redirecting to home');
       navigate('/');
     }
-  }, [searchParams, user, people, vendors, navigate]);
+  }, [searchParams, user, people, vendors, navigate, activeTab]);
+
+  // Force refresh des données quand nécessaire
+  useEffect(() => {
+    if (userInfo) {
+      console.log('UnifiedPortal - Refreshing data for user:', userInfo.name);
+      refreshData();
+    }
+  }, [userInfo, refreshData]);
 
   const getRoleConfig = (role: UserRole) => {
     switch (role) {
