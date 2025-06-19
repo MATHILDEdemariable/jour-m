@@ -19,8 +19,8 @@ interface CreateTaskData {
   title: string;
   description?: string;
   priority: 'high' | 'medium' | 'low';
-  assigned_person_id?: string;
-  assigned_vendor_id?: string;
+  assigned_person_ids: string[];
+  assigned_vendor_ids: string[];
   duration_minutes: number;
   due_date: string;
   notes?: string;
@@ -272,7 +272,10 @@ export const TaskManagement = () => {
           </Card>
         ) : (
           filteredTasks.map((task) => {
-            const assignedVendor = task.assigned_vendor_id ? vendors.find(v => v.id === task.assigned_vendor_id) : null;
+            // FIX: Use array-based vendor assignment
+            const assignedVendor = task.assigned_vendor_ids.length > 0 
+              ? vendors.find(v => task.assigned_vendor_ids.includes(v.id)) 
+              : null;
             
             return (
               <Card key={task.id} className={`hover:shadow-md transition-shadow border-stone-200 ${assignedVendor ? 'bg-sky-50 border-sky-200' : ''}`}>

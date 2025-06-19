@@ -1,46 +1,51 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useEventStore } from '@/stores/eventStore';
 import type { TimelineItem } from '@/stores/eventStore';
 
 // Hook qui remplace useTimelineItems en gardant exactement la même interface
 export const useLocalTimelineItems = () => {
-  const {
-    timelineItems,
+  const { 
+    timelineItems, 
+    addTimelineItem: storeAddTimelineItem,
+    updateTimelineItem: storeUpdateTimelineItem,
+    deleteTimelineItem: storeDeleteTimelineItem,
+    reorderTimelineItems,
     currentEventId,
-    addTimelineItem: addTimelineItemToStore,
-    updateTimelineItem: updateTimelineItemInStore,
-    deleteTimelineItem: deleteTimelineItemFromStore,
     loading
   } = useEventStore();
 
   const [localLoading, setLocalLoading] = useState(false);
 
-  const generateId = () => `timeline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  // Filter timeline items by current event
+  const currentEventTimelineItems = timelineItems.filter(
+    item => item.event_id === (currentEventId || localStorage.getItem('currentEventId') || 'default-event')
+  );
 
-  const loadTimelineItems = async () => {
+  const addTimelineItem = async (itemData: Partial<TimelineItem>) => {
     setLocalLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 100));
-    setLocalLoading(false);
-    console.log('useLocalTimelineItems - Timeline items loaded from localStorage');
-  };
-
-  const addTimelineItem = async (item: Omit<TimelineItem, 'id' | 'event_id' | 'created_at' | 'updated_at' | 'assigned_person_id'>) => {
     try {
-      const timelineItem: TimelineItem = {
-        ...item,
-        id: generateId(),
-        event_id: currentEventId,
-        assigned_person_id: null, // Pour compatibilité
+      const newItem: TimelineItem = {
+        id: crypto.randomUUID(),
+        event_id: currentEventId || localStorage.getItem('currentEventId') || 'default-event',
+        title: itemData.title || '',
+        description: itemData.description || null,
+        time: itemData.time || '08:00',
+        duration: itemData.duration || 60,
+        category: itemData.category || 'Préparation',
+        status: itemData.status || 'scheduled',
+        priority: itemData.priority || 'medium',
+        assigned_person_ids: itemData.assigned_person_ids || [],
+        assigned_vendor_ids: itemData.assigned_vendor_ids || [],
+        assigned_role: itemData.assigned_role || null,
+        order_index: itemData.order_index || currentEventTimelineItems.length,
+        notes: itemData.notes || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
       
-      addTimelineItemToStore(timelineItem);
-      console.log('useLocalTimelineItems - Timeline item added:', timelineItem);
-    } catch (error) {
-      console.error('Error adding timeline item:', error);
-      throw error;
+      storeAddTimelineItem(newItem);
+    } finally {
+      setLocalLoading(false);
     }
   };
 
@@ -50,7 +55,7 @@ export const useLocalTimelineItems = () => {
         ...updates,
         updated_at: new Date().toISOString()
       };
-      updateTimelineItemInStore(id, updatedData);
+      storeUpdateTimelineItem(id, updatedData);
       console.log('useLocalTimelineItems - Timeline item updated:', id);
     } catch (error) {
       console.error('Error updating timeline item:', error);
@@ -60,7 +65,7 @@ export const useLocalTimelineItems = () => {
 
   const deleteTimelineItem = async (id: string) => {
     try {
-      deleteTimelineItemFromStore(id);
+      storeDeleteTimelineItem(id);
       console.log('useLocalTimelineItems - Timeline item deleted:', id);
     } catch (error) {
       console.error('Error deleting timeline item:', error);
@@ -122,15 +127,14 @@ export const useLocalTimelineItems = () => {
   };
 
   return {
-    timelineItems: timelineItems.filter(item => item.event_id === currentEventId),
-    loading: loading || localLoading,
-    loadTimelineItems,
+    timelineItems: currentEventTimelineItems,
     addTimelineItem,
-    updateTimelineItem,
-    deleteTimelineItem,
-    reorderItems,
+    updateTimelineItem: storeUpdateTimelineItem,
+    deleteTimelineItem: storeDeleteTimelineItem,
+    reorderItems: reorderTimelineItems,
     calculateEndTime,
     getTotalDuration,
     getEndTime,
+    loading: loading || localLoading
   };
 };

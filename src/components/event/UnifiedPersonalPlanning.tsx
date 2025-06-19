@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, Calendar, Users } from 'lucide-react';
@@ -45,12 +44,11 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
   if (viewMode === 'personal') {
     filteredTimelineItems = eventTimelineItems.filter(item => {
       if (userType === 'person') {
-        // Utilisateur type personne : filter by assigned_person_ids OU assigned_person_id
-        return (item.assigned_person_id === userId)
-          || (item.assigned_person_ids && item.assigned_person_ids.includes(userId));
+        // FIX: Use array-based assignment for persons
+        return item.assigned_person_ids && item.assigned_person_ids.includes(userId);
       } else {
-        // Utilisateur type "vendor": filter by assigned_vendor_id
-        return item.assigned_vendor_id === userId;
+        // FIX: Use array-based assignment for vendors
+        return item.assigned_vendor_ids && item.assigned_vendor_ids.includes(userId);
       }
     });
   } else {
@@ -87,9 +85,9 @@ export const UnifiedPersonalPlanning: React.FC<UnifiedPersonalPlanningProps> = (
 
   const isUserItem = (item: any) => {
     if (userType === 'person') {
-      return item.assigned_person_id === userId || (item.assigned_person_ids && item.assigned_person_ids.includes(userId));
+      return item.assigned_person_ids && item.assigned_person_ids.includes(userId);
     } else {
-      return item.assigned_vendor_id === userId;
+      return item.assigned_vendor_ids && item.assigned_vendor_ids.includes(userId);
     }
   };
 

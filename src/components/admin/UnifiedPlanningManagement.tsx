@@ -11,27 +11,7 @@ import { TimelineAISuggestions } from './TimelineAISuggestions';
 import { DraggableTimelineItem } from './DraggableTimelineItem';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
-
-// Type for timeline items compatible with local store
-interface TimelineItem {
-  id: string;
-  event_id: string | null;
-  title: string;
-  description: string | null;
-  time: string;
-  duration: number;
-  category: string;
-  status: 'scheduled' | 'in_progress' | 'completed' | 'delayed';
-  priority: 'high' | 'medium' | 'low';
-  assigned_person_id: string | null;
-  assigned_person_ids: string[];
-  assigned_vendor_id: string | null;
-  assigned_role: string | null;
-  order_index: number;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-}
+import type { TimelineItem } from '@/stores/eventStore';
 
 // Type for preview times during drag and drop
 interface PreviewTime {
@@ -168,9 +148,9 @@ export const UnifiedPlanningManagement = () => {
           order_index: timelineItems.length,
           priority: data.priority || 'medium',
           assigned_person_ids: data.assigned_person_ids || [],
+          assigned_vendor_ids: data.assigned_vendor_ids || [],
           title: data.title || '',
           description: data.description || null,
-          assigned_vendor_id: data.assigned_vendor_id || null,
           assigned_role: data.assigned_role || null,
           notes: data.notes || null
         });
@@ -205,7 +185,7 @@ export const UnifiedPlanningManagement = () => {
         time: '08:00',
         order_index: timelineItems.length,
         assigned_person_ids: [],
-        assigned_vendor_id: null
+        assigned_vendor_ids: []
       });
       toast({
         title: 'Succès',

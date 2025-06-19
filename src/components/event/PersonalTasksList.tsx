@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -38,13 +39,15 @@ export const PersonalTasksList: React.FC<PersonalTasksListProps> = ({
   // Filtrer les tâches assignées à cette personne ou ce prestataire
   const personalTasks = eventTasks.filter(task => {
     if (isPerson) {
-      const match = task.assigned_person_id === personId;
-      console.log(`Task ${task.title} - assigned_person_id: ${task.assigned_person_id}, personId: ${personId}, matches: ${match}`);
+      // FIX: Use array-based assignment
+      const match = task.assigned_person_ids.includes(personId);
+      console.log(`Task ${task.title} - assigned_person_ids: ${task.assigned_person_ids}, personId: ${personId}, matches: ${match}`);
       return match;
     } else {
       // Si ce n'est pas une personne, on suppose que c'est un prestataire
-      const match = task.assigned_vendor_id === personId;
-      console.log(`Task ${task.title} - assigned_vendor_id: ${task.assigned_vendor_id}, vendorId: ${personId}, matches: ${match}`);
+      // FIX: Use array-based assignment
+      const match = task.assigned_vendor_ids.includes(personId);
+      console.log(`Task ${task.title} - assigned_vendor_ids: ${task.assigned_vendor_ids}, vendorId: ${personId}, matches: ${match}`);
       return match;
     }
   });
