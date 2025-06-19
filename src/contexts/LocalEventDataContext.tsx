@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useEventStore } from '@/stores/eventStore';
 import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
 
@@ -48,44 +48,48 @@ export const LocalEventDataProvider: React.FC<{ children: React.ReactNode }> = (
     updateEvent
   } = useEventStore();
 
-  const [lastUpdate, setLastUpdate] = useState(Date.now());
+  // Use ref to prevent recreating the refresh function
+  const refreshInProgress = useRef(false);
 
-  // Enhanced refresh function with better synchronization
-  const enhancedRefreshData = async () => {
+  // Stabilize the refresh function with useCallback
+  const enhancedRefreshData = useCallback(async () => {
+    if (refreshInProgress.current) {
+      console.log('LocalEventDataContext - Refresh already in progress, skipping');
+      return;
+    }
+
+    refreshInProgress.current = true;
     console.log('LocalEventDataContext - Enhanced refresh triggered for event:', currentEventId);
-    await storeRefreshData();
-    setLastUpdate(Date.now());
     
-    // Force re-render to ensure UI updates
-    setTimeout(() => {
-      console.log('LocalEventDataContext - Post-refresh data check:', {
-        currentEventId,
-        tasksCount: tasks.filter(t => t.event_id === currentEventId).length,
-        peopleCount: people.filter(p => p.event_id === currentEventId).length,
-        vendorsCount: vendors.filter(v => v.event_id === currentEventId).length,
-        timelineItemsCount: timelineItems.filter(t => t.event_id === currentEventId).length,
-        planningItemsCount: planningItems.filter(p => p.event_id === currentEventId).length
-      });
-    }, 100);
-  };
+    try {
+      await storeRefreshData();
+      console.log('LocalEventDataContext - Refresh completed for event:', currentEventId);
+    } catch (error) {
+      console.error('LocalEventDataContext - Refresh error:', error);
+    } finally {
+      refreshInProgress.current = false;
+    }
+  }, [storeRefreshData, currentEventId]);
 
-  // Force refresh when event changes
+  // Force refresh when event changes - but only once per event change
   useEffect(() => {
-    if (currentEventId) {
-      console.log('LocalEventDataContext - Event changed, forcing refresh for:', currentEventId);
+    if (currentEventId && !refreshInProgress.current) {
+      console.log('LocalEventDataContext - Event changed, triggering refresh for:', currentEventId);
       enhancedRefreshData();
     }
-  }, [currentEventId]);
+  }, [currentEventId, enhancedRefreshData]);
 
-  // Auto-refresh every 30 seconds to catch changes from other tabs/windows
+  // Auto-refresh every 30 seconds - stabilized with useCallback
   useEffect(() => {
     const interval = setInterval(() => {
-      console.log('LocalEventDataContext - Auto-refresh triggered');
-      enhancedRefreshData();
+      if (!refreshInProgress.current) {
+        console.log('LocalEventDataContext - Auto-refresh triggered');
+        enhancedRefreshData();
+      }
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [currentEventId]);
+  }, [enhancedRefreshData]);
 
   // Filter data by current event with proper fallback
   const safeCurrentEventId = currentEventId || 'default-event';
@@ -122,17 +126,7 @@ export const LocalEventDataProvider: React.FC<{ children: React.ReactNode }> = (
   
   const currentEvent = events.find(event => event.id === safeCurrentEventId);
 
-  console.log('LocalEventDataContext - Filtered data:', {
-    currentEventId: safeCurrentEventId,
-    tasks: eventFilteredTasks.length,
-    people: eventFilteredPeople.length,
-    vendors: eventFilteredVendors.length,
-    planningItems: eventFilteredPlanningItems.length,
-    timelineItems: eventFilteredTimelineItems.length,
-    documents: eventFilteredDocuments.length
-  });
-
-  const getProgressStats = () => {
+  const getProgressStats = useCallback(() => {
     const totalTasks = eventFilteredTasks.length;
     const completedTasks = eventFilteredTasks.filter(task => task.status === 'completed').length;
     const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
@@ -146,9 +140,9 @@ export const LocalEventDataProvider: React.FC<{ children: React.ReactNode }> = (
       progressPercentage,
       criticalTasks
     };
-  };
+  }, [eventFilteredTasks]);
 
-  const getDocumentStats = () => {
+  const getDocumentStats = useCallback(() => {
     const totalSize = eventFilteredDocuments.reduce((sum, doc) => sum + (doc.file_size || 0), 0);
     const categories = [...new Set(eventFilteredDocuments.map(doc => doc.category).filter(Boolean))];
     const googleDriveCount = eventFilteredDocuments.filter(doc => doc.source === 'google_drive').length;
@@ -161,9 +155,9 @@ export const LocalEventDataProvider: React.FC<{ children: React.ReactNode }> = (
       googleDriveCount,
       manualCount
     };
-  };
+  }, [eventFilteredDocuments]);
 
-  const getDaysUntilEvent = () => {
+  const getDaysUntilEvent = useCallback(() => {
     if (!currentEvent?.event_date) return 0;
     
     const eventDate = new Date(currentEvent.event_date);
@@ -171,9 +165,10 @@ export const LocalEventDataProvider: React.FC<{ children: React.ReactNode }> = (
     const diffTime = eventDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return Math.max(0, diffDays);
-  };
+  }, [currentEvent?.event_date]);
 
-  const value = {
+  // Memoize the context value to prevent unnecessary re-renders
+  const value = React.useMemo(() => ({
     tasks: eventFilteredTasks,
     planningItems: eventFilteredPlanningItems,
     timelineItems: eventFilteredTimelineItems,
@@ -188,7 +183,22 @@ export const LocalEventDataProvider: React.FC<{ children: React.ReactNode }> = (
     getProgressStats,
     getDocumentStats,
     getDaysUntilEvent
-  };
+  }), [
+    eventFilteredTasks,
+    eventFilteredPlanningItems,
+    eventFilteredTimelineItems,
+    eventFilteredPeople,
+    eventFilteredVendors,
+    eventFilteredDocuments,
+    currentEvent,
+    events,
+    loading,
+    enhancedRefreshData,
+    updateEvent,
+    getProgressStats,
+    getDocumentStats,
+    getDaysUntilEvent
+  ]);
 
   return (
     <LocalEventDataContext.Provider value={value}>
