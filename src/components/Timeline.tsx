@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -53,7 +52,6 @@ export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole, userId }
         
         console.log('Timeline - Filtering item:', item.title, {
           assigned_person_ids: item.assigned_person_ids,
-          assigned_person_id: item.assigned_person_id,
           assigned_role: item.assigned_role,
           currentUserId,
           userRole
@@ -64,8 +62,8 @@ export const Timeline: React.FC<TimelineProps> = ({ viewMode, userRole, userId }
           return item.assigned_person_ids.includes(currentUserId);
         }
         
-        // Fallback sur l'ancien système pour compatibilité
-        return item.assigned_person_id === currentUserId || item.assigned_role === userRole;
+        // Fallback sur le rôle assigné pour compatibilité
+        return item.assigned_role === userRole;
       })
     : timelineItems;
 

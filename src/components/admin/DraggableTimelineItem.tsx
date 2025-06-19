@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -87,7 +88,9 @@ export const DraggableTimelineItem: React.FC<DraggableTimelineItemProps> = ({
   };
 
   // Ajout: Si assigné à un prestataire, on le récupère
-  const vendorName = item.assigned_vendor_id && getVendorName ? getVendorName(item.assigned_vendor_id) : null;
+  const vendorName = item.assigned_vendor_ids && item.assigned_vendor_ids.length > 0 && getVendorName 
+    ? getVendorName(item.assigned_vendor_ids[0]) 
+    : null;
 
   // Coloration de la carte pour les items avec prestataire
   const mainCardClass = `transition-all duration-200 hover:shadow-lg border-stone-200 cursor-move ${
