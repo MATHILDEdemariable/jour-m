@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,9 +14,8 @@ export interface TimelineItem {
   category: string;
   status: 'scheduled' | 'in_progress' | 'completed' | 'delayed';
   priority: 'high' | 'medium' | 'low';
-  assigned_person_id: string | null; // Garder pour compatibilité descendante
-  assigned_person_ids: string[]; // Nouvelle propriété pour multi-assignation
-  assigned_vendor_id: string | null;
+  assigned_person_ids: string[]; // Mis à jour pour utiliser le format array
+  assigned_vendor_ids: string[]; // Mis à jour pour utiliser le format array
   assigned_role: string | null;
   order_index: number;
   notes: string | null;
@@ -36,9 +34,10 @@ type SupabaseTimelineItem = {
   category: string | null;
   status: string | null;
   priority: string | null;
-  assigned_person_id: string | null;
+  assigned_person_id: string | null; // Garder pour compatibilité avec Supabase
   assigned_person_ids: string[] | null;
-  assigned_vendor_id: string | null;
+  assigned_vendor_id: string | null; // Garder pour compatibilité avec Supabase
+  assigned_vendor_ids: string[] | null;
   assigned_role: string | null;
   order_index: number;
   notes: string | null;
@@ -51,8 +50,8 @@ const mapSupabaseToTimelineItem = (item: SupabaseTimelineItem): TimelineItem => 
   category: item.category || 'Préparation',
   status: (item.status as TimelineItem['status']) || 'scheduled',
   priority: (item.priority as TimelineItem['priority']) || 'medium',
-  assigned_person_ids: item.assigned_person_ids || [],
-  assigned_vendor_id: item.assigned_vendor_id || null,
+  assigned_person_ids: item.assigned_person_ids || (item.assigned_person_id ? [item.assigned_person_id] : []),
+  assigned_vendor_ids: item.assigned_vendor_ids || (item.assigned_vendor_id ? [item.assigned_vendor_id] : []),
   created_at: item.created_at || new Date().toISOString(),
   updated_at: item.updated_at || new Date().toISOString(),
 });
@@ -91,7 +90,7 @@ export const useTimelineItems = () => {
     }
   };
 
-  const addTimelineItem = async (item: Omit<TimelineItem, 'id' | 'event_id' | 'created_at' | 'updated_at' | 'assigned_person_id'>) => {
+  const addTimelineItem = async (item: Omit<TimelineItem, 'id' | 'event_id' | 'created_at' | 'updated_at'>) => {
     if (!currentEventId || !currentTenant) return;
 
     try {
@@ -102,6 +101,7 @@ export const useTimelineItems = () => {
           event_id: currentEventId,
           tenant_id: currentTenant.id,
           assigned_person_ids: item.assigned_person_ids || [],
+          assigned_vendor_ids: item.assigned_vendor_ids || [],
         })
         .select()
         .single();
@@ -128,9 +128,12 @@ export const useTimelineItems = () => {
     try {
       const updateData: any = { ...updates };
       
-      // S'assurer que assigned_person_ids est toujours un tableau
+      // S'assurer que assigned_person_ids et assigned_vendor_ids sont toujours des tableaux
       if (updates.assigned_person_ids !== undefined) {
         updateData.assigned_person_ids = updates.assigned_person_ids;
+      }
+      if (updates.assigned_vendor_ids !== undefined) {
+        updateData.assigned_vendor_ids = updates.assigned_vendor_ids;
       }
 
       const { data, error } = await supabase
