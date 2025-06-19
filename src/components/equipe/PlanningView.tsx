@@ -23,8 +23,8 @@ export const PlanningView = () => {
       category: item.category,
       status: item.status,
       location: '', // timeline items n'ont pas de location par défaut
-      assigned_people: item.assigned_person_ids || (item.assigned_person_id ? [item.assigned_person_id] : []),
-      assigned_vendors: item.assigned_vendor_id ? [item.assigned_vendor_id] : [],
+      assigned_people: item.assigned_person_ids || [],
+      assigned_vendors: item.assigned_vendor_ids || [],
       type: 'timeline' as const
     }));
 
@@ -37,8 +37,8 @@ export const PlanningView = () => {
       category: item.category,
       status: item.status,
       location: '', // planning items n'ont pas de location par défaut
-      assigned_people: item.assigned_person_id ? [item.assigned_person_id] : [],
-      assigned_vendors: item.assigned_vendor_id ? [item.assigned_vendor_id] : [],
+      assigned_people: item.assigned_person_ids || [],
+      assigned_vendors: item.assigned_vendor_ids || [],
       type: 'planning' as const
     }));
 
@@ -57,27 +57,28 @@ export const PlanningView = () => {
     });
   }, [allPlanningItems, selectedPerson]);
 
-  const allPersons = useMemo(() => {
+  // Créer une liste unifiée de toutes les personnes assignables
+  const allAssignablePersons = useMemo(() => {
     const eventPeople = people.filter(p => p.event_id === (currentEvent?.id || 'default-event'));
     const eventVendors = vendors.filter(v => v.event_id === (currentEvent?.id || 'default-event'));
     
     return [
-      ...eventPeople.map(p => ({ id: p.id, name: p.name, type: 'person' as const })),
-      ...eventVendors.map(v => ({ id: v.id, name: v.name, type: 'vendor' as const }))
+      ...eventPeople.map(p => ({ id: p.id, name: p.name, type: 'person' as const, role: p.role })),
+      ...eventVendors.map(v => ({ id: v.id, name: v.name, type: 'vendor' as const, role: v.service_type }))
     ];
   }, [people, vendors, currentEvent?.id]);
 
-  const getPersonName = (personId: string) => {
-    const person = allPersons.find(p => p.id === personId);
+  const getAssignedPersonName = (personId: string) => {
+    const person = allAssignablePersons.find(p => p.id === personId);
     if (!person) {
-      console.warn('PlanningView - Person not found for ID:', personId, 'Available persons:', allPersons.map(p => ({ id: p.id, name: p.name })));
-      return `ID: ${personId}`;
+      console.warn('PlanningView - Person not found for ID:', personId, 'Available persons:', allAssignablePersons.map(p => ({ id: p.id, name: p.name })));
+      return `ID inconnu: ${personId}`;
     }
     return person.name;
   };
 
-  const getPersonType = (personId: string) => {
-    const person = allPersons.find(p => p.id === personId);
+  const getAssignedPersonType = (personId: string) => {
+    const person = allAssignablePersons.find(p => p.id === personId);
     return person?.type || 'person';
   };
 
@@ -121,10 +122,10 @@ export const PlanningView = () => {
     allPlanningItems: allPlanningItems.length,
     filteredItems: filteredPlanningItems.length,
     selectedPerson,
-    allPersons: allPersons.length,
+    allAssignablePersons: allAssignablePersons.length,
     currentEventId: currentEvent?.id,
     sampleItem: allPlanningItems[0],
-    samplePersons: allPersons.slice(0, 3)
+    samplePersons: allAssignablePersons.slice(0, 3)
   });
 
   return (
@@ -146,7 +147,7 @@ export const PlanningView = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toutes les activités</SelectItem>
-              {allPersons.map((person) => (
+              {allAssignablePersons.map((person) => (
                 <SelectItem key={person.id} value={person.id}>
                   {person.name} ({person.type === 'person' ? 'Équipe' : 'Prestataire'})
                 </SelectItem>
@@ -227,7 +228,7 @@ export const PlanningView = () => {
                         className="bg-purple-100 text-purple-800"
                       >
                         <Users className="w-3 h-3 mr-1" />
-                        {getPersonName(personId)}
+                        {getAssignedPersonName(personId)}
                       </Badge>
                     ))}
                     {/* Afficher les prestataires assignés */}
@@ -238,7 +239,7 @@ export const PlanningView = () => {
                         className="bg-blue-100 text-blue-800"
                       >
                         <Users className="w-3 h-3 mr-1" />
-                        {getPersonName(vendorId)} (Prestataire)
+                        {getAssignedPersonName(vendorId)} (Prestataire)
                       </Badge>
                     ))}
                   </div>

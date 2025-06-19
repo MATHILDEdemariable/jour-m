@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -50,8 +51,8 @@ export interface Task {
   description: string;
   status: 'pending' | 'in_progress' | 'completed';
   priority: 'high' | 'medium' | 'low';
-  assigned_person_id: string | null;
-  assigned_vendor_id: string | null;
+  assigned_person_ids: string[];
+  assigned_vendor_ids: string[];
   due_date: string;
   duration_minutes?: number;
   notes?: string;
@@ -69,8 +70,8 @@ export interface PlanningItem {
   duration?: number;
   category: string;
   status: 'scheduled' | 'in_progress' | 'completed';
-  assigned_person_id?: string;
-  assigned_vendor_id?: string;
+  assigned_person_ids: string[];
+  assigned_vendor_ids: string[];
   created_at: string;
   updated_at: string;
 }
@@ -85,9 +86,8 @@ export interface TimelineItem {
   category: string;
   status: 'scheduled' | 'in_progress' | 'completed' | 'delayed';
   priority: 'high' | 'medium' | 'low';
-  assigned_person_id: string | null;
   assigned_person_ids: string[];
-  assigned_vendor_id: string | null;
+  assigned_vendor_ids: string[];
   assigned_role: string | null;
   order_index: number;
   notes: string | null;

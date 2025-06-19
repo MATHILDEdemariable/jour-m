@@ -42,14 +42,16 @@ export const useLocalCreateTask = () => {
       const task: Task = {
         ...data,
         id: generateId(),
-        event_id: currentEventId, // ESSENTIEL - utiliser l'event_id actuel
+        event_id: currentEventId,
         status: data.status || 'pending',
+        assigned_person_ids: data.assigned_person_ids || [],
+        assigned_vendor_ids: data.assigned_vendor_ids || [],
         completed_at: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
       
-      console.log('useLocalCreateTask - Creating task with event_id:', currentEventId, task);
+      console.log('useLocalCreateTask - Creating task with unified structure:', task);
       addTask(task);
     },
     mutateAsync: async (data: any) => {
@@ -58,14 +60,16 @@ export const useLocalCreateTask = () => {
       const task: Task = {
         ...data,
         id: generateId(),
-        event_id: currentEventId, // ESSENTIEL - utiliser l'event_id actuel
+        event_id: currentEventId,
         status: data.status || 'pending',
+        assigned_person_ids: data.assigned_person_ids || [],
+        assigned_vendor_ids: data.assigned_vendor_ids || [],
         completed_at: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
       
-      console.log('useLocalCreateTask - Creating task async with event_id:', currentEventId, task);
+      console.log('useLocalCreateTask - Creating task async with unified structure:', task);
       addTask(task);
       return task;
     },
