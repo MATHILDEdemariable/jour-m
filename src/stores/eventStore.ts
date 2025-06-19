@@ -88,6 +88,8 @@ export interface TimelineItem {
   priority: 'high' | 'medium' | 'low';
   assigned_person_ids: string[];
   assigned_vendor_ids: string[];
+  assigned_person_id: string | null; // Added for compatibility
+  assigned_vendor_id: string | null; // Added for compatibility
   assigned_role: string | null;
   order_index: number;
   notes: string | null;
