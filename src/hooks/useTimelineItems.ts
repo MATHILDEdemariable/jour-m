@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,8 +14,8 @@ export interface TimelineItem {
   category: string;
   status: 'scheduled' | 'in_progress' | 'completed' | 'delayed';
   priority: 'high' | 'medium' | 'low';
-  assigned_person_ids: string[]; // Mis à jour pour utiliser le format array
-  assigned_vendor_ids: string[]; // Mis à jour pour utiliser le format array
+  assigned_person_ids: string[];
+  assigned_vendor_ids: string[];
   assigned_role: string | null;
   order_index: number;
   notes: string | null;
@@ -77,7 +76,7 @@ export const useTimelineItems = () => {
 
       if (error) throw error;
       
-      const mappedData = data ? (data as unknown as SupabaseTimelineItem[]).map(mapSupabaseToTimelineItem) : [];
+      const mappedData = data ? data.map((item: any) => mapSupabaseToTimelineItem(item as SupabaseTimelineItem)) : [];
       setTimelineItems(mappedData);
     } catch (error) {
       console.error('Error loading timeline items:', error);
@@ -109,7 +108,7 @@ export const useTimelineItems = () => {
 
       if (error) throw error;
       
-      const mappedData = mapSupabaseToTimelineItem(data as unknown as SupabaseTimelineItem);
+      const mappedData = mapSupabaseToTimelineItem(data as any as SupabaseTimelineItem);
       setTimelineItems(prev => [...prev, mappedData]);
       toast({
         title: 'Succès',
@@ -146,7 +145,7 @@ export const useTimelineItems = () => {
 
       if (error) throw error;
       
-      const mappedData = mapSupabaseToTimelineItem(data as unknown as SupabaseTimelineItem);
+      const mappedData = mapSupabaseToTimelineItem(data as any as SupabaseTimelineItem);
       setTimelineItems(prev => prev.map(item => 
         item.id === id ? { ...item, ...mappedData } : item
       ));
