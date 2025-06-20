@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       documents: {
         Row: {
+          assigned_to: string[] | null
           category: string | null
           created_at: string
           description: string | null
@@ -31,6 +32,7 @@ export type Database = {
           vendor_id: string | null
         }
         Insert: {
+          assigned_to?: string[] | null
           category?: string | null
           created_at?: string
           description?: string | null
@@ -51,6 +53,7 @@ export type Database = {
           vendor_id?: string | null
         }
         Update: {
+          assigned_to?: string[] | null
           category?: string | null
           created_at?: string
           description?: string | null
@@ -90,6 +93,111 @@ export type Database = {
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_configurations: {
+        Row: {
+          auto_backup_enabled: boolean
+          created_at: string
+          event_id: string
+          guest_access_enabled: boolean
+          id: string
+          logo_url: string | null
+          notifications_enabled: boolean
+          realtime_sync_enabled: boolean
+          tenant_id: string
+          theme_color: string
+          updated_at: string
+        }
+        Insert: {
+          auto_backup_enabled?: boolean
+          created_at?: string
+          event_id: string
+          guest_access_enabled?: boolean
+          id?: string
+          logo_url?: string | null
+          notifications_enabled?: boolean
+          realtime_sync_enabled?: boolean
+          tenant_id: string
+          theme_color?: string
+          updated_at?: string
+        }
+        Update: {
+          auto_backup_enabled?: boolean
+          created_at?: string
+          event_id?: string
+          guest_access_enabled?: boolean
+          id?: string
+          logo_url?: string | null
+          notifications_enabled?: boolean
+          realtime_sync_enabled?: boolean
+          tenant_id?: string
+          theme_color?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_configurations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_configurations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_roles: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          is_active: boolean
+          is_default: boolean
+          role_name: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          role_name: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          role_name?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_roles_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_roles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]

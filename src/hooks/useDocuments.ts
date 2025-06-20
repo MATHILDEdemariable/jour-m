@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +22,7 @@ export interface Document {
   is_shared: boolean | null;
   event_id: string | null;
   vendor_id: string | null;
+  assigned_to: string[] | null;
   created_at: string;
 }
 
@@ -99,7 +101,7 @@ export const useDocuments = () => {
 
   // Upload manuel d'un document
   const uploadDocument = async (file: File, category: string, description?: string) => {
-    if (!currentEventId) return;
+    if (!currentEventId || !currentTenant) return;
 
     try {
       setLoading(true);
@@ -111,6 +113,7 @@ export const useDocuments = () => {
         .from('documents')
         .insert({
           event_id: currentEventId,
+          tenant_id: currentTenant.id,
           name: file.name,
           file_url: fileUrl,
           file_type: file.type,
@@ -120,7 +123,8 @@ export const useDocuments = () => {
           description,
           source: 'manual',
           uploaded_by: 'Admin',
-          is_shared: true
+          is_shared: true,
+          assigned_to: []
         })
         .select()
         .single();
@@ -192,7 +196,7 @@ export const useDocuments = () => {
 
   // Synchroniser avec Google Drive
   const syncGoogleDrive = async () => {
-    if (!googleDriveConfig?.is_connected) return;
+    if (!googleDriveConfig?.is_connected || !currentTenant) return;
 
     setSyncing(true);
     try {
@@ -231,6 +235,7 @@ export const useDocuments = () => {
             .from('documents')
             .insert({
               event_id: currentEventId,
+              tenant_id: currentTenant.id,
               name: file.name,
               file_url: file.downloadUrl,
               file_type: file.mimeType,
@@ -242,7 +247,8 @@ export const useDocuments = () => {
               google_drive_url: file.webViewLink,
               preview_url: file.webViewLink,
               uploaded_by: 'Google Drive',
-              is_shared: true
+              is_shared: true,
+              assigned_to: []
             })
             .select()
             .single();

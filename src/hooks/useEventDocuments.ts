@@ -8,7 +8,7 @@ export interface EventDocument {
   id: string;
   event_id: string;
   name: string;
-  file_path: string;
+  file_url: string;
   file_size: number | null;
   mime_type: string | null;
   source: string;
@@ -28,13 +28,28 @@ export const useEventDocuments = (eventId: string | null) => {
     
     try {
       const { data, error } = await supabase
-        .from('event_documents')
+        .from('documents')
         .select('*')
         .eq('event_id', eventId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setDocuments(data || []);
+      
+      // Map the data to our interface
+      const mappedDocuments: EventDocument[] = (data || []).map(doc => ({
+        id: doc.id,
+        event_id: doc.event_id || '',
+        name: doc.name,
+        file_url: doc.file_url,
+        file_size: doc.file_size,
+        mime_type: doc.mime_type,
+        source: doc.source || 'manual',
+        assigned_to: doc.assigned_to,
+        created_at: doc.created_at,
+        updated_at: doc.created_at // Use created_at as fallback for updated_at
+      }));
+      
+      setDocuments(mappedDocuments);
     } catch (error) {
       console.error('Error loading documents:', error);
       toast({
@@ -63,22 +78,37 @@ export const useEventDocuments = (eventId: string | null) => {
 
         // Save metadata to database
         const { data, error: dbError } = await supabase
-          .from('event_documents')
+          .from('documents')
           .insert({
             event_id: eventId,
+            tenant_id: currentTenant.id,
             name: file.name,
-            file_path: filePath,
+            file_url: filePath,
             file_size: file.size,
             mime_type: file.type,
             source: 'manual',
             assigned_to: [],
-            tenant_id: currentTenant.id
           })
           .select()
           .single();
 
         if (dbError) throw dbError;
-        return data;
+        
+        // Map to our interface
+        const mappedDocument: EventDocument = {
+          id: data.id,
+          event_id: data.event_id || '',
+          name: data.name,
+          file_url: data.file_url,
+          file_size: data.file_size,
+          mime_type: data.mime_type,
+          source: data.source || 'manual',
+          assigned_to: data.assigned_to,
+          created_at: data.created_at,
+          updated_at: data.created_at
+        };
+        
+        return mappedDocument;
       } catch (error) {
         console.error(`Error uploading ${file.name}:`, error);
         toast({
@@ -92,7 +122,7 @@ export const useEventDocuments = (eventId: string | null) => {
 
     try {
       const results = await Promise.all(uploadPromises);
-      const successfulUploads = results.filter(result => result !== null);
+      const successfulUploads = results.filter(result => result !== null) as EventDocument[];
       
       if (successfulUploads.length > 0) {
         setDocuments(prev => [...successfulUploads, ...prev]);
@@ -111,7 +141,7 @@ export const useEventDocuments = (eventId: string | null) => {
   const updateDocumentAssignment = async (documentId: string, assignedTo: string[]) => {
     try {
       const { data, error } = await supabase
-        .from('event_documents')
+        .from('documents')
         .update({ assigned_to: assignedTo })
         .eq('id', documentId)
         .select()
@@ -145,13 +175,13 @@ export const useEventDocuments = (eventId: string | null) => {
       // Delete from storage
       const { error: storageError } = await supabase.storage
         .from('documents')
-        .remove([document.file_path]);
+        .remove([document.file_url]);
 
       if (storageError) throw storageError;
 
       // Delete from database
       const { error: dbError } = await supabase
-        .from('event_documents')
+        .from('documents')
         .delete()
         .eq('id', documentId);
 
