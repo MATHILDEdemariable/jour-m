@@ -17,7 +17,7 @@ export interface Event {
   created_at: string;
   updated_at: string;
   magic_word?: string | null;
-  share_token?: string | null; // Ajout du share_token
+  share_token?: string | null;
 }
 
 export const useEvents = () => {

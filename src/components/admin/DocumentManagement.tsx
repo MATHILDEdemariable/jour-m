@@ -319,7 +319,7 @@ export const DocumentManagement = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(getDocumentUrl(document.file_path), '_blank')}
+                      onClick={() => window.open(getDocumentUrl(document.file_url), '_blank')}
                       className="flex items-center gap-1"
                     >
                       <Eye className="w-3 h-3" />
@@ -330,7 +330,7 @@ export const DocumentManagement = () => {
                       size="sm"
                       onClick={() => {
                         const link = window.document.createElement('a');
-                        link.href = getDocumentUrl(document.file_path);
+                        link.href = getDocumentUrl(document.file_url);
                         link.download = document.name;
                         link.click();
                       }}

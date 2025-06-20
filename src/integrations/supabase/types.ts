@@ -239,10 +239,16 @@ export type Database = {
           created_at: string
           description: string | null
           event_date: string
+          event_type: string | null
+          google_drive_url: string | null
           id: string
           location: string | null
+          magic_word: string | null
           name: string
+          share_token: string | null
+          slug: string | null
           start_time: string | null
+          status: string | null
           tenant_id: string
           updated_at: string
         }
@@ -250,10 +256,16 @@ export type Database = {
           created_at?: string
           description?: string | null
           event_date: string
+          event_type?: string | null
+          google_drive_url?: string | null
           id?: string
           location?: string | null
+          magic_word?: string | null
           name: string
+          share_token?: string | null
+          slug?: string | null
           start_time?: string | null
+          status?: string | null
           tenant_id: string
           updated_at?: string
         }
@@ -261,10 +273,16 @@ export type Database = {
           created_at?: string
           description?: string | null
           event_date?: string
+          event_type?: string | null
+          google_drive_url?: string | null
           id?: string
           location?: string | null
+          magic_word?: string | null
           name?: string
+          share_token?: string | null
+          slug?: string | null
           start_time?: string | null
+          status?: string | null
           tenant_id?: string
           updated_at?: string
         }

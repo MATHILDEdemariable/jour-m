@@ -1,8 +1,6 @@
-
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
 import { useCurrentTenant } from './useCurrentTenant';
 
 export interface Vendor {
@@ -10,51 +8,32 @@ export interface Vendor {
   name: string;
   service_type: string | null;
   contact_person: string | null;
-  email: string | null;
   phone: string | null;
+  email: string | null;
   address: string | null;
   website: string | null;
-  notes: string | null;
   contract_status: string | null;
+  notes: string | null;
   event_id: string | null;
   created_at: string;
   updated_at: string;
 }
 
-export interface VendorDocument {
-  id: string;
-  vendor_id: string;
-  name: string;
-  file_url: string;
-  file_type: string | null;
-  file_size: number | null;
-  category: string | null;
-  uploaded_by: string | null;
-  created_at: string;
-}
-
 export const useVendors = () => {
   const { toast } = useToast();
-  const { currentEventId } = useLocalCurrentEvent();
   const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [documents, setDocuments] = useState<VendorDocument[]>([]);
   const [loading, setLoading] = useState(false);
-  const subscriptionRef = useRef<any>(null);
   const { data: currentTenant } = useCurrentTenant();
 
   const loadVendors = async () => {
     setLoading(true);
     try {
-      console.log('useVendors - Loading vendors for event ID:', currentEventId);
-      
       const { data, error } = await supabase
         .from('vendors')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      console.log('useVendors - Loaded vendors:', data);
       setVendors(data || []);
     } catch (error) {
       console.error('Error loading vendors:', error);
@@ -68,131 +47,80 @@ export const useVendors = () => {
     }
   };
 
-  // Combined useEffect for loading and realtime subscription
-  useEffect(() => {
-    // Cleanup previous subscription
-    if (subscriptionRef.current) {
-      console.log('useVendors - Cleaning up previous subscription');
-      subscriptionRef.current.unsubscribe();
-      subscriptionRef.current = null;
-    }
-
-    // Load initial data
-    loadVendors();
-
-    // Setup realtime subscription with unique channel name
-    const channelName = `vendors_changes_${currentEventId}_${Date.now()}`;
-    console.log('useVendors - Setting up realtime subscription:', channelName);
-    
-    try {
-      const subscription = supabase
-        .channel(channelName)
-        .on('postgres_changes', 
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'vendors' 
-          }, 
-          (payload) => {
-            console.log('useVendors - Realtime update received:', payload);
-            loadVendors(); // Reload data when changes occur
-          }
-        )
-        .subscribe();
-
-      subscriptionRef.current = subscription;
-    } catch (error) {
-      console.error('useVendors - Error setting up subscription:', error);
-    }
-
-    return () => {
-      if (subscriptionRef.current) {
-        console.log('useVendors - Cleaning up realtime subscription');
-        subscriptionRef.current.unsubscribe();
-        subscriptionRef.current = null;
-      }
-    };
-  }, [currentEventId]);
-
-  const loadDocuments = async (vendorId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('documents')
-        .select('*')
-        .eq('vendor_id', vendorId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setDocuments(data || []);
-    } catch (error) {
-      console.error('Error loading documents:', error);
+  const uploadVendorDocument = async (vendorId: string, file: File, category: string = 'contrat') => {
+    if (!currentTenant) {
       toast({
         title: 'Erreur',
-        description: 'Impossible de charger les documents',
+        description: 'Tenant non trouvé',
         variant: 'destructive',
       });
+      return null;
     }
-  };
 
-  const addVendor = async (newVendor: Omit<Vendor, 'id' | 'created_at' | 'updated_at'>) => {
-    if (!currentTenant) {
-      toast({ title: "Erreur", description: "Tenant non trouvé", variant: "destructive" });
-      throw new Error("Tenant not found");
-    }
     try {
-      // TOUJOURS assigner l'event_id actuel
-      const vendorWithEventId = {
-        ...newVendor,
-        event_id: currentEventId || newVendor.event_id,
-        tenant_id: currentTenant.id
-      };
+      // Upload to Supabase Storage
+      const fileName = `${Date.now()}_${file.name}`;
+      const filePath = `vendors/${vendorId}/documents/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, file);
 
-      console.log('useVendors - Adding vendor with event_id:', vendorWithEventId);
+      if (uploadError) throw uploadError;
 
-      const { data, error } = await supabase
-        .from('vendors')
-        .insert(vendorWithEventId)
+      // Save metadata to database
+      const { data, error: dbError } = await supabase
+        .from('documents')
+        .insert({
+          vendor_id: vendorId,
+          tenant_id: currentTenant.id,
+          name: file.name,
+          file_url: filePath,
+          file_type: file.type,
+          file_size: file.size,
+          category: category,
+          uploaded_by: 'admin',
+        })
         .select()
         .single();
 
-      if (error) throw error;
-      
-      setVendors(prev => [data, ...prev]);
+      if (dbError) throw dbError;
+
       toast({
-        title: 'Succès',
-        description: 'Prestataire ajouté avec succès',
+        title: 'Document uploadé',
+        description: `${file.name} a été ajouté avec succès`,
       });
-      
+
       return data;
     } catch (error) {
-      console.error('Error adding vendor:', error);
+      console.error('Error uploading vendor document:', error);
       toast({
-        title: 'Erreur',
-        description: 'Impossible d\'ajouter le prestataire',
+        title: 'Erreur d\'upload',
+        description: `Impossible d'uploader ${file.name}`,
         variant: 'destructive',
       });
-      throw error;
+      return null;
     }
   };
 
-  const updateVendor = async (id: string, updates: Partial<Vendor>) => {
+  const updateVendor = async (vendorId: string, updates: Partial<Vendor>) => {
     try {
       const { data, error } = await supabase
         .from('vendors')
         .update(updates)
-        .eq('id', id)
+        .eq('id', vendorId)
         .select()
         .single();
 
       if (error) throw error;
-      
-      setVendors(prev => prev.map(vendor => 
-        vendor.id === id ? { ...vendor, ...data } : vendor
-      ));
-      
+
+      setVendors(prev =>
+        prev.map(vendor => (vendor.id === vendorId ? { ...vendor, ...data } : vendor))
+      );
+
       toast({
-        title: 'Succès',
-        description: 'Prestataire mis à jour avec succès',
+        title: 'Prestataire mis à jour',
+        description: 'Les informations du prestataire ont été modifiées avec succès',
       });
     } catch (error) {
       console.error('Error updating vendor:', error);
@@ -204,19 +132,48 @@ export const useVendors = () => {
     }
   };
 
-  const deleteVendor = async (id: string) => {
+  const addVendor = async (vendor: Omit<Vendor, 'id' | 'created_at' | 'updated_at'>) => {
+    if (!currentTenant) {
+      toast({ title: "Erreur", description: "Tenant non trouvé", variant: "destructive" });
+      return;
+    }
+    try {
+      const { data, error } = await supabase
+        .from('vendors')
+        .insert({ ...vendor, tenant_id: currentTenant.id })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setVendors(prev => [...prev, data]);
+      toast({
+        title: 'Prestataire ajouté',
+        description: 'Le nouveau prestataire a été créé avec succès',
+      });
+    } catch (error) {
+      console.error('Error adding vendor:', error);
+      toast({
+        title: 'Erreur',
+        description: "Impossible d'ajouter le prestataire",
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const deleteVendor = async (vendorId: string) => {
     try {
       const { error } = await supabase
         .from('vendors')
         .delete()
-        .eq('id', id);
+        .eq('id', vendorId);
 
       if (error) throw error;
-      
-      setVendors(prev => prev.filter(vendor => vendor.id !== id));
+
+      setVendors(prev => prev.filter(vendor => vendor.id !== vendorId));
       toast({
-        title: 'Succès',
-        description: 'Prestataire supprimé avec succès',
+        title: 'Prestataire supprimé',
+        description: 'Le prestataire a été supprimé avec succès',
       });
     } catch (error) {
       console.error('Error deleting vendor:', error);
@@ -228,76 +185,17 @@ export const useVendors = () => {
     }
   };
 
-  const uploadDocument = async (vendorId: string, file: File, category: string) => {
-    try {
-      // Simulate file upload - in real app, upload to Supabase storage
-      const fileUrl = URL.createObjectURL(file);
-      
-      const { data, error } = await supabase
-        .from('documents')
-        .insert({
-          vendor_id: vendorId,
-          name: file.name,
-          file_url: fileUrl,
-          file_type: file.type,
-          file_size: file.size,
-          category,
-          uploaded_by: 'User'
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      
-      setDocuments(prev => [data, ...prev]);
-      toast({
-        title: 'Succès',
-        description: 'Document uploadé avec succès',
-      });
-    } catch (error) {
-      console.error('Error uploading document:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible d\'uploader le document',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const deleteDocument = async (documentId: string) => {
-    try {
-      const { error } = await supabase
-        .from('documents')
-        .delete()
-        .eq('id', documentId);
-
-      if (error) throw error;
-      
-      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
-      toast({
-        title: 'Succès',
-        description: 'Document supprimé avec succès',
-      });
-    } catch (error) {
-      console.error('Error deleting document:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de supprimer le document',
-        variant: 'destructive',
-      });
-    }
-  };
+  useEffect(() => {
+    loadVendors();
+  }, []);
 
   return {
     vendors,
-    documents,
     loading,
     loadVendors,
-    loadDocuments,
-    addVendor,
+    uploadVendorDocument,
     updateVendor,
+    addVendor,
     deleteVendor,
-    uploadDocument,
-    deleteDocument
   };
 };
