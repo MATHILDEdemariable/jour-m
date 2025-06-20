@@ -64,12 +64,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .from('tenant_users')
         .select('tenant_id')
         .eq('user_id', userId)
-        .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no data
+        .maybeSingle();
 
       if (error) {
         console.error('Error loading user tenant:', error);
-        // Don't show error toast for missing tenant data during initial setup
-        if (error.code !== 'PGRST116') {
+        // Les politiques RLS simplifiées ne devraient plus causer d'erreurs de récursion
+        if (error.message.includes('infinite recursion')) {
+          toast({
+            title: 'Erreur système',
+            description: 'Problème de configuration détecté. Veuillez contacter le support.',
+            variant: 'destructive',
+          });
+        } else if (error.code !== 'PGRST116') {
           toast({
             title: 'Erreur de chargement',
             description: 'Impossible de charger les informations du tenant',
@@ -114,7 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       console.log('Tenant created:', tenant.id);
 
-      // Link user to tenant
+      // Link user to tenant avec les nouvelles politiques RLS simplifiées
       const { error: linkError } = await supabase
         .from('tenant_users')
         .insert({
