@@ -53,7 +53,7 @@ const AuthPage = () => {
       });
     } else {
       // Success handled in context
-      navigate('/dashboard');
+      navigate('/portal');
     }
   };
 
@@ -80,7 +80,7 @@ const AuthPage = () => {
         title: 'Connexion réussie !',
         description: 'Redirection vers votre tableau de bord...',
       });
-      navigate('/dashboard');
+      navigate('/portal');
     }
   };
 

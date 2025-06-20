@@ -7,15 +7,20 @@ import {
   Sparkles,
   Heart
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface HeroSectionProps {
-  onAdminClick: () => void;
-  onEventClick: () => void;
+  onAdminClick?: () => void;
+  onEventClick?: () => void;
 }
 
-export const HeroSection: React.FC<HeroSectionProps> = ({
-  onAdminClick
-}) => {
+export const HeroSection: React.FC<HeroSectionProps> = () => {
+  const navigate = useNavigate();
+
+  const handleCreateEventClick = () => {
+    navigate('/auth');
+  };
+
   return (
     <div className="flex-1 min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50">
       <div className="container mx-auto px-4 py-12 lg:py-20">
@@ -41,7 +46,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           </p>
 
           <Button
-            onClick={onAdminClick}
+            onClick={handleCreateEventClick}
             size="lg"
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xl px-12 py-6 h-auto rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
           >

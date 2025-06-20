@@ -5,10 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, LogOut, HelpCircle, Users, Building2, Shield, Eye, Share } from 'lucide-react';
+import { ArrowLeft, LogOut, HelpCircle, Users, Building2, Shield, Eye } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
-import { useLocalEventData } from '@/contexts/LocalEventDataContext';
+import { useEvents } from '@/hooks/useEvents';
+import { usePeople } from '@/hooks/usePeople';
+import { useVendors } from '@/hooks/useVendors';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 // Import existing components
@@ -42,7 +44,11 @@ export const UnifiedPortal = () => {
   const isMobile = useIsMobile();
   const { t } = useTranslation();
   const { signOut, user } = useAuth();
-  const { currentEvent, people, vendors, refreshData } = useLocalEventData();
+  
+  // Use real Supabase hooks instead of local contexts
+  const { events, currentEvent } = useEvents();
+  const { people } = usePeople();
+  const { vendors } = useVendors();
 
   // Validation des tokens (simulation - en production, cela serait côté serveur)
   const validateToken = (userId: string, userType: 'person' | 'vendor', token: string) => {
@@ -113,18 +119,10 @@ export const UnifiedPortal = () => {
       }
     } else if (!user) {
       // Pas d'utilisateur connecté et pas de paramètres valides
-      console.log('UnifiedPortal - No valid access method, redirecting to home');
-      navigate('/');
+      console.log('UnifiedPortal - No valid access method, redirecting to auth');
+      navigate('/auth');
     }
   }, [searchParams, user, people, vendors, navigate, activeTab]);
-
-  // Force refresh des données quand nécessaire
-  useEffect(() => {
-    if (userInfo) {
-      console.log('UnifiedPortal - Refreshing data for user:', userInfo.name);
-      refreshData();
-    }
-  }, [userInfo, refreshData]);
 
   const getRoleConfig = (role: UserRole) => {
     switch (role) {

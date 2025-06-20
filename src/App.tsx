@@ -7,9 +7,11 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { LocalEventDataProvider } from '@/contexts/LocalEventDataContext';
 import { LocalCurrentEventProvider } from '@/contexts/LocalCurrentEventContext';
 import { OfflineManager } from '@/components/OfflineManager';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 // Pages
 import Index from '@/pages/Index';
+import Auth from '@/pages/Auth';
 import UnifiedPortal from '@/pages/UnifiedPortal';
 import EquipePage from '@/pages/EquipePage';
 
@@ -32,7 +34,13 @@ function App() {
               <div className="min-h-screen bg-background">
                 <Routes>
                   <Route path="/" element={<Index />} />
-                  <Route path="/portal" element={<UnifiedPortal />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/portal" element={
+                    <ProtectedRoute>
+                      <UnifiedPortal />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/dashboard" element={<Navigate to="/portal" replace />} />
                   <Route path="/equipe" element={<EquipePage />} />
                   
                   {/* Redirect old routes to new unified portal */}
