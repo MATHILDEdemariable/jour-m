@@ -59,27 +59,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loadUserTenant = async (userId: string) => {
     try {
+      console.log('Loading tenant for user:', userId);
       const { data, error } = await supabase
         .from('tenant_users')
         .select('tenant_id')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no data
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error loading user tenant:', error);
+        // Don't show error toast for missing tenant data during initial setup
+        if (error.code !== 'PGRST116') {
+          toast({
+            title: 'Erreur de chargement',
+            description: 'Impossible de charger les informations du tenant',
+            variant: 'destructive',
+          });
+        }
         return;
       }
 
       if (data) {
+        console.log('Tenant loaded:', data.tenant_id);
         setCurrentTenantId(data.tenant_id);
+      } else {
+        console.log('No tenant found for user, will be created during signup flow');
+        setCurrentTenantId(null);
       }
     } catch (error) {
       console.error('Error loading user tenant:', error);
+      toast({
+        title: 'Erreur de connexion',
+        description: 'Problème de connexion aux données utilisateur',
+        variant: 'destructive',
+      });
     }
   };
 
   const createTenantForUser = async (userId: string, userName: string) => {
     try {
+      console.log('Creating tenant for user:', userId, userName);
+      
       // Create tenant
       const { data: tenant, error: tenantError } = await supabase
         .from('tenants')
@@ -87,7 +107,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .select()
         .single();
 
-      if (tenantError) throw tenantError;
+      if (tenantError) {
+        console.error('Error creating tenant:', tenantError);
+        throw tenantError;
+      }
+
+      console.log('Tenant created:', tenant.id);
 
       // Link user to tenant
       const { error: linkError } = await supabase
@@ -98,8 +123,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           role: 'admin'
         });
 
-      if (linkError) throw linkError;
+      if (linkError) {
+        console.error('Error linking user to tenant:', linkError);
+        throw linkError;
+      }
 
+      console.log('User linked to tenant successfully');
       setCurrentTenantId(tenant.id);
       return tenant.id;
     } catch (error) {
@@ -148,7 +177,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
       setIsLoading(true);
-      const redirectUrl = 'https://jour-m.lovable.app/';
+      // Use the current URL origin for redirect
+      const redirectUrl = `${window.location.origin}/`;
+      
+      console.log('Signing up with redirect URL:', redirectUrl);
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -170,12 +202,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           description: 'Vérifiez votre email pour confirmer votre compte',
         });
       } else if (data.user && data.session) {
-        // User signed up and logged in
-        await createTenantForUser(data.user.id, fullName || 'Utilisateur');
-        toast({
-          title: 'Compte créé avec succès',
-          description: 'Bienvenue dans votre espace JOURM !',
-        });
+        // User signed up and logged in immediately
+        try {
+          await createTenantForUser(data.user.id, fullName || 'Utilisateur');
+          toast({
+            title: 'Compte créé avec succès',
+            description: 'Bienvenue dans votre espace JOURM !',
+          });
+        } catch (tenantError) {
+          console.error('Error creating tenant during signup:', tenantError);
+          toast({
+            title: 'Compte créé',
+            description: 'Compte créé mais problème lors de l\'initialisation. Reconnectez-vous.',
+            variant: 'destructive',
+          });
+        }
       }
       
       return { error: null };

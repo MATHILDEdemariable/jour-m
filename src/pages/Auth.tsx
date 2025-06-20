@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, CheckCircle } from 'lucide-react';
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -21,6 +21,14 @@ const AuthPage = () => {
   const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [tab, setTab] = useState("signin");
+  const [signupSuccess, setSignupSuccess] = useState(false);
+
+  const resetForm = () => {
+    setEmail('');
+    setPassword('');
+    setFullName('');
+    setSignupSuccess(false);
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +52,8 @@ const AuthPage = () => {
         message = 'Le mot de passe doit contenir au moins 6 caractères';
       } else if (error.message.includes('Invalid email')) {
         message = 'Adresse email invalide';
+      } else if (error.message.includes('signup_disabled')) {
+        message = 'Les inscriptions sont temporairement désactivées';
       }
       
       toast({
@@ -52,8 +62,12 @@ const AuthPage = () => {
         variant: 'destructive'
       });
     } else {
-      // Success handled in context
-      navigate('/portal');
+      // Show success state
+      setSignupSuccess(true);
+      toast({
+        title: 'Inscription réussie !',
+        description: 'Vérifiez votre email pour confirmer votre compte',
+      });
     }
   };
 
@@ -68,6 +82,8 @@ const AuthPage = () => {
         message = 'Veuillez confirmer votre email avant de vous connecter';
       } else if (error.message.includes('Invalid login')) {
         message = 'Email ou mot de passe incorrect';
+      } else if (error.message.includes('Too many requests')) {
+        message = 'Trop de tentatives. Veuillez patienter avant de réessayer.';
       }
       
       toast({
@@ -80,9 +96,66 @@ const AuthPage = () => {
         title: 'Connexion réussie !',
         description: 'Redirection vers votre tableau de bord...',
       });
-      navigate('/portal');
+      // Let the auth context handle the navigation
+      setTimeout(() => {
+        navigate('/portal');
+      }, 1000);
     }
   };
+
+  const handleTabChange = (newTab: string) => {
+    setTab(newTab);
+    resetForm();
+  };
+
+  if (signupSuccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <Card className="bg-white/80 backdrop-blur-sm shadow-xl border-0">
+            <CardHeader className="text-center space-y-4">
+              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center">
+                <CheckCircle className="text-2xl text-white" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl font-bold text-green-600">
+                  Inscription réussie !
+                </CardTitle>
+                <CardDescription className="text-gray-600 mt-2">
+                  Un email de confirmation a été envoyé à {email}
+                </CardDescription>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="text-center space-y-4">
+              <p className="text-sm text-gray-600">
+                Cliquez sur le lien dans l'email pour activer votre compte et accéder à votre espace JOURM.
+              </p>
+              
+              <div className="space-y-2">
+                <Button
+                  onClick={() => setSignupSuccess(false)}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Retour à la connexion
+                </Button>
+                
+                <Button
+                  onClick={() => navigate('/')}
+                  variant="link"
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Retour à l'accueil
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4">
@@ -103,7 +176,7 @@ const AuthPage = () => {
           </CardHeader>
           
           <CardContent>
-            <Tabs value={tab} onValueChange={setTab} className="w-full">
+            <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="signin">Se connecter</TabsTrigger>
                 <TabsTrigger value="signup">S'inscrire</TabsTrigger>
