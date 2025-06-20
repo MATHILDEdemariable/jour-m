@@ -72,7 +72,7 @@ export const usePublicEventData = (eventId: string, shareToken: string) => {
 
       // Charger les documents
       const { data: documents, error: documentsError } = await supabase
-        .from('event_documents')
+        .from('documents')
         .select('*')
         .eq('event_id', eventId);
 

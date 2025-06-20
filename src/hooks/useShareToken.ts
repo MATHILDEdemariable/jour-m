@@ -10,9 +10,15 @@ export const useShareToken = () => {
   const regenerateShareToken = async (eventId: string) => {
     setRegenerating(true);
     try {
-      const { data, error } = await supabase.rpc('regenerate_event_share_token', {
-        event_id: eventId
-      });
+      // Generate a new UUID for the share token
+      const newToken = crypto.randomUUID();
+      
+      const { data, error } = await supabase
+        .from('events')
+        .update({ share_token: newToken })
+        .eq('id', eventId)
+        .select('share_token')
+        .single();
 
       if (error) throw error;
 
@@ -21,7 +27,7 @@ export const useShareToken = () => {
         description: 'Un nouveau lien de partage a été généré. L\'ancien lien ne fonctionne plus.',
       });
 
-      return data;
+      return data.share_token;
     } catch (error) {
       console.error('Error regenerating share token:', error);
       toast({

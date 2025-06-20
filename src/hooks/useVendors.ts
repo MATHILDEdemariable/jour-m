@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,9 +20,21 @@ export interface Vendor {
   updated_at: string;
 }
 
+export interface VendorDocument {
+  id: string;
+  name: string;
+  file_url: string;
+  file_type: string | null;
+  file_size: number | null;
+  category: string | null;
+  vendor_id: string | null;
+  created_at: string;
+}
+
 export const useVendors = () => {
   const { toast } = useToast();
   const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [documents, setDocuments] = useState<VendorDocument[]>([]);
   const [loading, setLoading] = useState(false);
   const { data: currentTenant } = useCurrentTenant();
 
@@ -44,6 +57,26 @@ export const useVendors = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadDocuments = async (vendorId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('vendor_id', vendorId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setDocuments(data || []);
+    } catch (error) {
+      console.error('Error loading vendor documents:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de charger les documents',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -91,6 +124,9 @@ export const useVendors = () => {
         description: `${file.name} a été ajouté avec succès`,
       });
 
+      // Refresh documents
+      loadDocuments(vendorId);
+
       return data;
     } catch (error) {
       console.error('Error uploading vendor document:', error);
@@ -100,6 +136,34 @@ export const useVendors = () => {
         variant: 'destructive',
       });
       return null;
+    }
+  };
+
+  const uploadDocument = async (vendorId: string, file: File, category: string = 'other') => {
+    return uploadVendorDocument(vendorId, file, category);
+  };
+
+  const deleteDocument = async (documentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('documents')
+        .delete()
+        .eq('id', documentId);
+
+      if (error) throw error;
+
+      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+      toast({
+        title: 'Document supprimé',
+        description: 'Le document a été supprimé avec succès',
+      });
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de supprimer le document',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -191,9 +255,13 @@ export const useVendors = () => {
 
   return {
     vendors,
+    documents,
     loading,
     loadVendors,
+    loadDocuments,
     uploadVendorDocument,
+    uploadDocument,
+    deleteDocument,
     updateVendor,
     addVendor,
     deleteVendor,
