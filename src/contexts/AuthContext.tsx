@@ -177,8 +177,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
       setIsLoading(true);
-      // Use the current URL origin for redirect
-      const redirectUrl = `${window.location.origin}/`;
+      // Use the production URL for redirect
+      const redirectUrl = 'https://jour-m.lovable.app/';
       
       console.log('Signing up with redirect URL:', redirectUrl);
       
