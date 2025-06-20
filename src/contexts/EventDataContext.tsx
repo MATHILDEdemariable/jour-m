@@ -1,15 +1,13 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useTasks } from '@/hooks/useTasks';
-import { usePlanningItems } from '@/hooks/usePlanningItems';
-import { usePeople } from '@/hooks/usePeople';
-import { useVendors } from '@/hooks/useVendors';
-import { useEvents } from '@/hooks/useEvents';
-import { useDocuments } from '@/hooks/useDocuments';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { useCurrentEvent } from '@/contexts/CurrentEventContext';
 
 interface EventDataContextType {
   tasks: any[];
-  planningItems: any[];
+  timelineItems: any[];
   people: any[];
   vendors: any[];
   documents: any[];
@@ -36,42 +34,142 @@ interface EventDataContextType {
 const EventDataContext = createContext<EventDataContextType | undefined>(undefined);
 
 export const EventDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { currentTenantId } = useAuth();
   const { currentEventId } = useCurrentEvent();
-  const { data: tasks = [], isLoading: tasksLoading, refetch: refetchTasks } = useTasks();
-  const { planningItems } = usePlanningItems();
-  const { people, loading: peopleLoading, loadPeople } = usePeople();
-  const { vendors, loading: vendorsLoading, loadVendors } = useVendors();
-  const { documents, loading: documentsLoading, loadDocuments, getStats: getDocumentStatsFromHook } = useDocuments();
-  const { currentEvent, events, loading: eventsLoading } = useEvents();
-  
-  const [lastUpdate, setLastUpdate] = useState(Date.now());
-  
-  // Enhanced refresh function with better logging
-  const refreshData = async () => {
-    console.log('EventDataContext - Enhanced refresh triggered for event:', currentEventId);
-    try {
-      await Promise.all([
-        refetchTasks(),
-        loadPeople(),
-        loadVendors(),
-        loadDocuments()
-      ]);
-      console.log('EventDataContext - All data refreshed successfully');
-      setLastUpdate(Date.now());
-    } catch (error) {
-      console.error('EventDataContext - Error during refresh:', error);
-    }
-  };
-  
-  // Force refresh when event changes
-  useEffect(() => {
-    if (currentEventId) {
-      console.log('EventDataContext - Event changed, forcing refresh for:', currentEventId);
-      refreshData();
-    }
-  }, [currentEventId]);
 
-  const loading = tasksLoading || peopleLoading || vendorsLoading || documentsLoading || eventsLoading;
+  // Fetch tasks
+  const { data: tasks = [], isLoading: tasksLoading, refetch: refetchTasks } = useQuery({
+    queryKey: ['tasks', currentTenantId, currentEventId],
+    queryFn: async () => {
+      if (!currentTenantId) return [];
+      const query = supabase
+        .from('tasks')
+        .select('*')
+        .eq('tenant_id', currentTenantId);
+      
+      if (currentEventId) {
+        query.eq('event_id', currentEventId);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!currentTenantId,
+  });
+
+  // Fetch timeline items
+  const { data: timelineItems = [], isLoading: timelineLoading, refetch: refetchTimeline } = useQuery({
+    queryKey: ['timeline_items', currentTenantId, currentEventId],
+    queryFn: async () => {
+      if (!currentTenantId || !currentEventId) return [];
+      const { data, error } = await supabase
+        .from('timeline_items')
+        .select('*')
+        .eq('tenant_id', currentTenantId)
+        .eq('event_id', currentEventId)
+        .order('time', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!(currentTenantId && currentEventId),
+  });
+
+  // Fetch people
+  const { data: people = [], isLoading: peopleLoading, refetch: refetchPeople } = useQuery({
+    queryKey: ['people', currentTenantId, currentEventId],
+    queryFn: async () => {
+      if (!currentTenantId) return [];
+      const query = supabase
+        .from('people')
+        .select('*')
+        .eq('tenant_id', currentTenantId);
+      
+      if (currentEventId) {
+        query.eq('event_id', currentEventId);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!currentTenantId,
+  });
+
+  // Fetch vendors
+  const { data: vendors = [], isLoading: vendorsLoading, refetch: refetchVendors } = useQuery({
+    queryKey: ['vendors', currentTenantId, currentEventId],
+    queryFn: async () => {
+      if (!currentTenantId) return [];
+      const query = supabase
+        .from('vendors')
+        .select('*')
+        .eq('tenant_id', currentTenantId);
+      
+      if (currentEventId) {
+        query.eq('event_id', currentEventId);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!currentTenantId,
+  });
+
+  // Fetch documents
+  const { data: documents = [], isLoading: documentsLoading, refetch: refetchDocuments } = useQuery({
+    queryKey: ['documents', currentTenantId, currentEventId],
+    queryFn: async () => {
+      if (!currentTenantId) return [];
+      const query = supabase
+        .from('documents')
+        .select('*')
+        .eq('tenant_id', currentTenantId);
+      
+      if (currentEventId) {
+        query.eq('event_id', currentEventId);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!currentTenantId,
+  });
+
+  // Fetch events
+  const { data: events = [], isLoading: eventsLoading, refetch: refetchEvents } = useQuery({
+    queryKey: ['events', currentTenantId],
+    queryFn: async () => {
+      if (!currentTenantId) return [];
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('tenant_id', currentTenantId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!currentTenantId,
+  });
+
+  // Get current event
+  const currentEvent = events.find(event => event.id === currentEventId) || null;
+
+  const loading = tasksLoading || timelineLoading || peopleLoading || vendorsLoading || documentsLoading || eventsLoading;
+
+  const refreshData = async () => {
+    console.log('EventDataContext - Refreshing all data');
+    await Promise.all([
+      refetchTasks(),
+      refetchTimeline(),
+      refetchPeople(),
+      refetchVendors(),
+      refetchDocuments(),
+      refetchEvents()
+    ]);
+  };
 
   const getProgressStats = () => {
     const totalTasks = tasks.length;
@@ -90,7 +188,20 @@ export const EventDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const getDocumentStats = () => {
-    return getDocumentStatsFromHook();
+    const totalDocuments = documents.length;
+    const totalSize = documents.reduce((sum, doc) => sum + (doc.file_size || 0), 0);
+    const categories = new Set(documents.map(doc => doc.category).filter(Boolean));
+    const categoriesCount = categories.size;
+    const googleDriveCount = documents.filter(doc => doc.source === 'google_drive').length;
+    const manualCount = documents.filter(doc => doc.source === 'manual').length;
+
+    return {
+      totalDocuments,
+      totalSize,
+      categoriesCount,
+      googleDriveCount,
+      manualCount
+    };
   };
 
   const getDaysUntilEvent = () => {
@@ -105,7 +216,7 @@ export const EventDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const value = {
     tasks,
-    planningItems,
+    timelineItems,
     people,
     vendors,
     documents,

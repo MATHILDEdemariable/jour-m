@@ -9,7 +9,584 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      documents: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          event_id: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          google_drive_id: string | null
+          google_drive_url: string | null
+          id: string
+          is_shared: boolean | null
+          mime_type: string | null
+          name: string
+          preview_url: string | null
+          source: string | null
+          tenant_id: string
+          uploaded_by: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          event_id?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          google_drive_id?: string | null
+          google_drive_url?: string | null
+          id?: string
+          is_shared?: boolean | null
+          mime_type?: string | null
+          name: string
+          preview_url?: string | null
+          source?: string | null
+          tenant_id: string
+          uploaded_by?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          event_id?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          google_drive_id?: string | null
+          google_drive_url?: string | null
+          id?: string
+          is_shared?: boolean | null
+          mime_type?: string | null
+          name?: string
+          preview_url?: string | null
+          source?: string | null
+          tenant_id?: string
+          uploaded_by?: string | null
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_share_tokens: {
+        Row: {
+          created_at: string
+          event_id: string
+          expires_at: string | null
+          id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          expires_at?: string | null
+          id?: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          expires_at?: string | null
+          id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_share_tokens_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_date: string
+          id: string
+          location: string | null
+          name: string
+          start_time: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_date: string
+          id?: string
+          location?: string | null
+          name: string
+          start_time?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_date?: string
+          id?: string
+          location?: string | null
+          name?: string
+          start_time?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_drive_configs: {
+        Row: {
+          access_token: string | null
+          created_at: string
+          event_id: string
+          folder_id: string
+          folder_url: string | null
+          id: string
+          is_connected: boolean | null
+          last_sync_at: string | null
+          refresh_token: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string
+          event_id: string
+          folder_id: string
+          folder_url?: string | null
+          id?: string
+          is_connected?: boolean | null
+          last_sync_at?: string | null
+          refresh_token?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string
+          event_id?: string
+          folder_id?: string
+          folder_url?: string | null
+          id?: string
+          is_connected?: boolean | null
+          last_sync_at?: string | null
+          refresh_token?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_drive_configs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "google_drive_configs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people: {
+        Row: {
+          availability_notes: string | null
+          confirmation_status: string | null
+          created_at: string
+          email: string | null
+          event_id: string | null
+          id: string
+          name: string
+          phone: string | null
+          role: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          availability_notes?: string | null
+          confirmation_status?: string | null
+          created_at?: string
+          email?: string | null
+          event_id?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          role?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          availability_notes?: string | null
+          confirmation_status?: string | null
+          created_at?: string
+          email?: string | null
+          event_id?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          role?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          assigned_person_id: string | null
+          assigned_role: string | null
+          assigned_vendor_id: string | null
+          category_id: string | null
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          event_id: string | null
+          id: string
+          notes: string | null
+          order_index: number | null
+          priority: string | null
+          status: string | null
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_person_id?: string | null
+          assigned_role?: string | null
+          assigned_vendor_id?: string | null
+          category_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          event_id?: string | null
+          id?: string
+          notes?: string | null
+          order_index?: number | null
+          priority?: string | null
+          status?: string | null
+          tenant_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_person_id?: string | null
+          assigned_role?: string | null
+          assigned_vendor_id?: string | null
+          category_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          event_id?: string | null
+          id?: string
+          notes?: string | null
+          order_index?: number | null
+          priority?: string | null
+          status?: string | null
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assigned_person_id_fkey"
+            columns: ["assigned_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_assigned_vendor_id_fkey"
+            columns: ["assigned_vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_users: {
+        Row: {
+          created_at: string
+          id: string
+          role: string | null
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string | null
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string | null
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_users_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      timeline_items: {
+        Row: {
+          assigned_person_id: string | null
+          assigned_person_ids: string[] | null
+          assigned_role: string | null
+          assigned_vendor_id: string | null
+          assigned_vendor_ids: string[] | null
+          category: string | null
+          created_at: string
+          description: string | null
+          duration: number
+          event_id: string
+          id: string
+          notes: string | null
+          order_index: number | null
+          priority: string | null
+          status: string | null
+          tenant_id: string
+          time: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_person_id?: string | null
+          assigned_person_ids?: string[] | null
+          assigned_role?: string | null
+          assigned_vendor_id?: string | null
+          assigned_vendor_ids?: string[] | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          duration?: number
+          event_id: string
+          id?: string
+          notes?: string | null
+          order_index?: number | null
+          priority?: string | null
+          status?: string | null
+          tenant_id: string
+          time: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_person_id?: string | null
+          assigned_person_ids?: string[] | null
+          assigned_role?: string | null
+          assigned_vendor_id?: string | null
+          assigned_vendor_ids?: string[] | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          duration?: number
+          event_id?: string
+          id?: string
+          notes?: string | null
+          order_index?: number | null
+          priority?: string | null
+          status?: string | null
+          tenant_id?: string
+          time?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timeline_items_assigned_person_id_fkey"
+            columns: ["assigned_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timeline_items_assigned_vendor_id_fkey"
+            columns: ["assigned_vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timeline_items_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timeline_items_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendors: {
+        Row: {
+          address: string | null
+          contact_person: string | null
+          contract_status: string | null
+          created_at: string
+          email: string | null
+          event_id: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          service_type: string | null
+          tenant_id: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          contact_person?: string | null
+          contract_status?: string | null
+          created_at?: string
+          email?: string | null
+          event_id?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          service_type?: string | null
+          tenant_id: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          contact_person?: string | null
+          contract_status?: string | null
+          created_at?: string
+          email?: string | null
+          event_id?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          service_type?: string | null
+          tenant_id?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendors_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendors_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
