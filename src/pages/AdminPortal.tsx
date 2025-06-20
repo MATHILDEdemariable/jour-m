@@ -1,16 +1,15 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, LogOut, HelpCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { LanguageToggle } from '@/components/LanguageToggle';
-import { useLocalEventData } from '@/contexts/LocalEventDataContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useLocalEventData } from '@/contexts/LocalEventDataContext';
 
-// Import des composants
+// Import des nouveaux composants améliorés
+import { ImprovedAdminHeader } from '@/components/admin/ImprovedAdminHeader';
+import { ImprovedTabNavigation } from '@/components/admin/ImprovedTabNavigation';
+import { QuickStatsCard } from '@/components/admin/QuickStatsCard';
+
+// Import des composants existants
 import { CompactRecapDashboard } from '@/components/admin/CompactRecapDashboard';
 import { UnifiedPlanningManagement } from '@/components/admin/UnifiedPlanningManagement';
 import { PeopleManagement } from '@/components/admin/PeopleManagement';
@@ -21,14 +20,23 @@ import { AdminBottomNavigation } from '@/components/admin/AdminBottomNavigation'
 import { TutorialModal } from '@/components/admin/TutorialModal';
 import { TUTORIAL_CONTENT } from '@/components/admin/TutorialContent';
 
+// Icons
+import { Users, Building2, Calendar, FileText, Clock } from 'lucide-react';
+
 export const AdminPortal = () => {
-  const [activeTab, setActiveTab] = useState('config'); // Default = Config
+  const [activeTab, setActiveTab] = useState('config');
   const [tutorialOpen, setTutorialOpen] = useState(false);
-  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { t } = useTranslation();
-  const { signOut } = useAuth();
-  const { currentEvent } = useLocalEventData();
+  const { 
+    currentEvent, 
+    people, 
+    vendors, 
+    timelineItems, 
+    planningItems, 
+    documents,
+    getDaysUntilEvent 
+  } = useLocalEventData();
 
   const getCurrentTutorial = () => {
     return TUTORIAL_CONTENT[activeTab as keyof typeof TUTORIAL_CONTENT] || TUTORIAL_CONTENT.planning;
@@ -37,7 +45,46 @@ export const AdminPortal = () => {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'config':
-        return <EventConfiguration />;
+        return (
+          <div className="space-y-6">
+            {/* Quick Stats Row */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              <QuickStatsCard
+                title="Jours restants"
+                value={getDaysUntilEvent()}
+                icon={<Clock className="w-4 h-4 text-purple-600" />}
+                subtitle="jusqu'au jour-J"
+              />
+              <QuickStatsCard
+                title="Équipe"
+                value={people.length}
+                icon={<Users className="w-4 h-4 text-blue-600" />}
+                subtitle="personnes"
+              />
+              <QuickStatsCard
+                title="Prestataires"
+                value={vendors.length}
+                icon={<Building2 className="w-4 h-4 text-green-600" />}
+                subtitle="services"
+              />
+              <QuickStatsCard
+                title="Planning"
+                value={timelineItems.length + planningItems.length}
+                icon={<Calendar className="w-4 h-4 text-orange-600" />}
+                subtitle="activités"
+              />
+              <QuickStatsCard
+                title="Documents"
+                value={documents.length}
+                icon={<FileText className="w-4 h-4 text-pink-600" />}
+                subtitle="fichiers"
+              />
+            </div>
+            
+            {/* Configuration principale */}
+            <EventConfiguration />
+          </div>
+        );
       case 'people':
         return <PeopleManagement />;
       case 'vendors':
@@ -47,113 +94,47 @@ export const AdminPortal = () => {
       case 'documents':
         return <DocumentManagement />;
       default:
-        return <EventConfiguration />; // Default to config
+        return <EventConfiguration />;
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-        <>
-          {/* Header - Responsive */}
-          <div className="bg-white border-b shadow-sm">
-            <div className="flex items-center justify-between p-3 lg:p-4">
-              <div className="flex items-center gap-2 lg:gap-4 overflow-hidden">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => navigate('/')}
-                  className="text-gray-600 px-2 lg:px-3"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-1 lg:mr-2" />
-                  <span className="hidden sm:inline">{t('back')}</span>
-                </Button>
-                <div className="overflow-hidden">
-                  <h1 className="text-lg lg:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent truncate">
-                    {currentEvent ? `${currentEvent.name} - Admin` : 'Jour J - Admin'}
-                  </h1>
-                  {currentEvent && (
-                    <p className="text-xs lg:text-sm text-gray-600 truncate">
-                      {currentEvent.event_type} • {new Date(currentEvent.event_date).toLocaleDateString('fr-FR')}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-1 lg:gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setTutorialOpen(true)}
-                  className="flex items-center gap-1 text-purple-600 border-purple-200 hover:bg-purple-50"
-                >
-                  <HelpCircle className="w-3 h-3" />
-                  {!isMobile && 'Aide'}
-                </Button>
-                {!isMobile && <LanguageToggle />}
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={signOut}
-                  className="flex items-center gap-1 px-2 lg:px-3"
-                >
-                  <LogOut className="w-3 h-3" />
-                  {!isMobile && t('logout')}
-                </Button>
-              </div>
-            </div>
-          </div>
+      {/* Header amélioré */}
+      <ImprovedAdminHeader 
+        onTutorialOpen={() => setTutorialOpen(true)}
+        isMobile={isMobile}
+      />
 
-          {/* Desktop Navigation Tabs - SUPPRESSION DE L'ONGLET PARTAGE */}
-          {!isMobile && (
-            <div className="bg-white border-b">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-5 h-auto p-1">
-                  <TabsTrigger value="config" className="flex flex-col py-3">
-                    <span className="text-xs">⚙️</span>
-                    <span className="text-xs">{t('config')}</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="people" className="flex flex-col py-3">
-                    <span className="text-xs">👥</span>
-                    <span className="text-xs">{t('people')}</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="vendors" className="flex flex-col py-3">
-                    <span className="text-xs">🏢</span>
-                    <span className="text-xs">{t('vendors')}</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="planning" className="flex flex-col py-3">
-                    <span className="text-xs">⏰</span>
-                    <span className="text-xs">Planning & Tâches</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="documents" className="flex flex-col py-3">
-                    <span className="text-xs">📁</span>
-                    <span className="text-xs">{t('documents')}</span>
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-          )}
+      {/* Navigation par onglets améliorée - Desktop uniquement */}
+      {!isMobile && (
+        <ImprovedTabNavigation 
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+      )}
 
-          {/* Content - Responsive */}
-          <div className="p-3 lg:p-6 pb-20 lg:pb-6">
-            {renderTabContent()}
-          </div>
+      {/* Contenu principal */}
+      <div className="max-w-7xl mx-auto p-4 lg:p-6 pb-20 lg:pb-6">
+        {renderTabContent()}
+      </div>
 
-          {/* Mobile Bottom Navigation */}
-          {isMobile && (
-            <AdminBottomNavigation 
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-            />
-          )}
+      {/* Navigation mobile */}
+      {isMobile && (
+        <AdminBottomNavigation 
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+      )}
 
-          {/* Tutorial Modal */}
-          <TutorialModal
-            isOpen={tutorialOpen}
-            onClose={() => setTutorialOpen(false)}
-            title={getCurrentTutorial().title}
-            description={getCurrentTutorial().description}
-            steps={getCurrentTutorial().steps}
-          />
-        </>
+      {/* Modal de tutoriel */}
+      <TutorialModal
+        isOpen={tutorialOpen}
+        onClose={() => setTutorialOpen(false)}
+        title={getCurrentTutorial().title}
+        description={getCurrentTutorial().description}
+        steps={getCurrentTutorial().steps}
+      />
     </div>
   );
 };
