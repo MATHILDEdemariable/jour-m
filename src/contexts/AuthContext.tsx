@@ -148,7 +148,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
       setIsLoading(true);
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = 'https://jour-m.lovable.app/';
       
       const { data, error } = await supabase.auth.signUp({
         email,
