@@ -46,6 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -164,13 +165,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      console.log('Attempting to sign in user:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Sign in error:', error);
+        throw error;
+      }
       
+      console.log('Sign in successful for user:', data.user?.id);
       return { error: null };
     } catch (error) {
       console.error('Sign in error:', error);
@@ -199,16 +206,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Sign up error:', error);
+        throw error;
+      }
+
+      console.log('Sign up response:', { user: data.user?.id, session: !!data.session });
 
       if (data.user && !data.session) {
         // Email confirmation required
+        console.log('Email confirmation required for user:', data.user.id);
         toast({
           title: 'Confirmation requise',
           description: 'Vérifiez votre email pour confirmer votre compte',
         });
       } else if (data.user && data.session) {
         // User signed up and logged in immediately
+        console.log('User signed up and logged in immediately:', data.user.id);
         try {
           await createTenantForUser(data.user.id, fullName || 'Utilisateur');
           toast({

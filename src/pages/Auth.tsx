@@ -33,6 +33,8 @@ const AuthPage = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('Starting signup process...');
+    
     if (!fullName.trim()) {
       toast({
         title: 'Nom requis',
@@ -45,6 +47,7 @@ const AuthPage = () => {
     const { error } = await signUp(email, password, fullName);
 
     if (error) {
+      console.error('Signup error:', error);
       let message = 'Une erreur est survenue lors de l\'inscription';
       if (error.message.includes('already registered')) {
         message = 'Un compte existe déjà avec cette adresse email';
@@ -62,6 +65,7 @@ const AuthPage = () => {
         variant: 'destructive'
       });
     } else {
+      console.log('Signup successful, showing success state');
       // Show success state
       setSignupSuccess(true);
       toast({
@@ -74,9 +78,12 @@ const AuthPage = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('Starting signin process...');
+    
     const { error } = await signIn(email, password);
 
     if (error) {
+      console.error('Signin error:', error);
       let message = 'Email ou mot de passe incorrect';
       if (error.message.includes('Email not confirmed')) {
         message = 'Veuillez confirmer votre email avant de vous connecter';
@@ -92,14 +99,13 @@ const AuthPage = () => {
         variant: 'destructive'
       });
     } else {
+      console.log('Signin successful, auth context will handle redirection');
       toast({
         title: 'Connexion réussie !',
         description: 'Redirection vers votre tableau de bord...',
       });
-      // Let the auth context handle the navigation
-      setTimeout(() => {
-        navigate('/portal');
-      }, 1000);
+      // Let the auth context and routing logic handle the redirection
+      // No manual navigation here to avoid conflicts
     }
   };
 
