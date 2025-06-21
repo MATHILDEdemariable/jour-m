@@ -30,10 +30,9 @@ export const useSupabaseAuth = () => {
       
       // Rediriger vers auth si pas authentifié et sur une page protégée
       const publicPaths = ['/auth', '/', '/equipe'];
-      const isPublicPath = publicPaths.includes(location.pathname) || 
-                          location.pathname.startsWith('/portal'); // Permettre l'accès au portail uniquement si authentifié
+      const isPublicPath = publicPaths.includes(location.pathname);
       
-      if (!authenticated && !isPublicPath) {
+      if (!authenticated && !isPublicPath && !location.pathname.startsWith('/portal')) {
         console.log('User not authenticated on protected page, redirecting to auth');
         navigate('/auth');
       }

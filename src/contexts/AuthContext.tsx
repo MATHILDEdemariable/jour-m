@@ -32,11 +32,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
         
         if (session?.user && event === 'SIGNED_IN') {
+          console.log('User signed in successfully, loading tenant data');
           // Defer tenant loading to prevent deadlocks
           setTimeout(async () => {
             await loadUserTenant(session.user.id);
           }, 0);
         } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out, clearing tenant data');
           setCurrentTenantId(null);
         }
         
@@ -146,10 +148,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
+      console.log('Signing out user');
       setCurrentTenantId(null);
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       if (error) throw error;
       
+      console.log('Sign out successful, redirecting to auth');
       // Force page reload for clean state
       window.location.href = '/auth';
     } catch (error) {
@@ -178,6 +182,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       
       console.log('Sign in successful for user:', data.user?.id);
+      
+      // Success toast will be shown by the Auth page
       return { error: null };
     } catch (error) {
       console.error('Sign in error:', error);

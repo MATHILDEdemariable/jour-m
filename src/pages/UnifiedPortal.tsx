@@ -1,11 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, LogOut, HelpCircle, Users, Building2, Shield, Eye } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, LogOut, HelpCircle, Users, Building2, Shield, Eye, Settings, Calendar, Share2, FileText, Plus, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { useEvents } from '@/hooks/useEvents';
@@ -35,8 +35,203 @@ interface UserInfo {
   token?: string;
 }
 
+const DashboardOverview = ({ onNavigateToTab }: { onNavigateToTab: (tab: string) => void }) => {
+  const { events, currentEvent } = useEvents();
+  const { people } = usePeople();
+  const { vendors } = useVendors();
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Bienvenue dans votre espace JOURM !
+        </h2>
+        <p className="text-gray-600">
+          Gérez votre événement en toute simplicité avec nos outils intégrés
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Configuration Card */}
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onNavigateToTab('config')}>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <Settings className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Configuration</CardTitle>
+                <CardDescription>Paramétrez votre événement</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 mb-3">
+              Définissez les détails de votre événement : date, lieu, type
+            </p>
+            <Button variant="outline" size="sm" className="w-full">
+              <Plus className="w-4 h-4 mr-2" />
+              Configurer
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* People Management Card */}
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onNavigateToTab('people')}>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Users className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Équipe</CardTitle>
+                <CardDescription>{people.length} personnes</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 mb-3">
+              Gérez votre équipe : mariés, témoins, famille
+            </p>
+            <Button variant="outline" size="sm" className="w-full">
+              <Users className="w-4 h-4 mr-2" />
+              Gérer l'équipe
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Vendors Card */}
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onNavigateToTab('vendors')}>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Prestataires</CardTitle>
+                <CardDescription>{vendors.length} prestataires</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 mb-3">
+              Gérez vos prestataires : photographe, traiteur, DJ
+            </p>
+            <Button variant="outline" size="sm" className="w-full">
+              <Building2 className="w-4 h-4 mr-2" />
+              Gérer les prestataires
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Planning Card */}
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onNavigateToTab('planning')}>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-orange-600" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Planning</CardTitle>
+                <CardDescription>Organisez votre journée</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 mb-3">
+              Créez le planning détaillé de votre événement
+            </p>
+            <Button variant="outline" size="sm" className="w-full">
+              <Calendar className="w-4 h-4 mr-2" />
+              Planifier
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Share Card */}
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onNavigateToTab('share')}>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
+                <Share2 className="w-5 h-5 text-pink-600" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Partage</CardTitle>
+                <CardDescription>Partagez avec votre équipe</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 mb-3">
+              Générez des liens d'accès pour votre équipe
+            </p>
+            <Button variant="outline" size="sm" className="w-full">
+              <Share2 className="w-4 h-4 mr-2" />
+              Partager
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Documents Card */}
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onNavigateToTab('documents')}>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <FileText className="w-5 h-5 text-indigo-600" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Documents</CardTitle>
+                <CardDescription>Gérez vos fichiers</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 mb-3">
+              Centralisez tous vos documents importants
+            </p>
+            <Button variant="outline" size="sm" className="w-full">
+              <FileText className="w-4 h-4 mr-2" />
+              Organiser
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Start Guide */}
+      <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-purple-800">
+            <CheckCircle className="w-5 h-5" />
+            Guide de démarrage rapide
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2 text-sm">
+            <p className="flex items-center gap-2">
+              <span className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center text-xs font-medium text-purple-600">1</span>
+              Configurez votre événement (date, lieu, type)
+            </p>
+            <p className="flex items-center gap-2">
+              <span className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center text-xs font-medium text-purple-600">2</span>
+              Ajoutez votre équipe et vos prestataires
+            </p>
+            <p className="flex items-center gap-2">
+              <span className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center text-xs font-medium text-purple-600">3</span>
+              Créez votre planning détaillé
+            </p>
+            <p className="flex items-center gap-2">
+              <span className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center text-xs font-medium text-purple-600">4</span>
+              Partagez l'accès avec votre équipe
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 export const UnifiedPortal = () => {
-  const [activeTab, setActiveTab] = useState('');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [isTokenValid, setIsTokenValid] = useState(true);
   const [searchParams] = useSearchParams();
@@ -132,7 +327,7 @@ export const UnifiedPortal = () => {
           icon: Shield,
           color: 'bg-red-100 text-red-800',
           canEdit: true,
-          availableTabs: ['config', 'people', 'vendors', 'planning', 'share', 'documents']
+          availableTabs: ['dashboard', 'config', 'people', 'vendors', 'planning', 'share', 'documents']
         };
       case 'person':
         return {
@@ -167,6 +362,10 @@ export const UnifiedPortal = () => {
     const roleConfig = getRoleConfig(userInfo.role);
 
     switch (activeTab) {
+      case 'dashboard':
+        return userInfo.role === 'admin' ? (
+          <DashboardOverview onNavigateToTab={setActiveTab} />
+        ) : null;
       case 'config':
         return roleConfig.canEdit ? <EventConfiguration /> : null;
       case 'people':
@@ -308,6 +507,12 @@ export const UnifiedPortal = () => {
         <div className="bg-white border-b">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full h-auto p-1" style={{ gridTemplateColumns: `repeat(${roleConfig.availableTabs.length}, 1fr)` }}>
+              {roleConfig.availableTabs.includes('dashboard') && (
+                <TabsTrigger value="dashboard" className="flex flex-col py-3">
+                  <span className="text-xs">🏠</span>
+                  <span className="text-xs">Tableau de bord</span>
+                </TabsTrigger>
+              )}
               {roleConfig.availableTabs.includes('config') && (
                 <TabsTrigger value="config" className="flex flex-col py-3">
                   <span className="text-xs">⚙️</span>
