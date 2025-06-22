@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, LogOut, HelpCircle, Users, Building2, Shield, Eye, Settings, Calendar, Share2, FileText, Plus, CheckCircle, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, LogOut, HelpCircle, Users, Building2, Shield, Eye, Settings, Calendar, Share2, FileText, Plus, CheckCircle, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { useEvents } from '@/hooks/useEvents';
@@ -262,7 +261,7 @@ const SetupWelcome = ({ onStartSetup }: { onStartSetup: () => void }) => {
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-green-500" />
-              Partager l'accès avec vos proches
+              Partagez l'accès avec vos proches
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-green-500" />
