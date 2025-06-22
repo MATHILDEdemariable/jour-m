@@ -8,12 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { Eye, EyeOff, ArrowLeft, CheckCircle, Sparkles } from 'lucide-react';
 
 const AuthPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signIn, signUp, isLoading, resendConfirmation } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useSupabaseAuth();
   const [searchParams] = useSearchParams();
   
   // Form states
@@ -28,6 +30,25 @@ const AuthPage = () => {
 
   // Check for creation intent
   const isCreationFlow = searchParams.get('action') === 'create' || localStorage.getItem('create_event_intent') === 'true';
+
+  // Handle authentication state changes and redirections
+  useEffect(() => {
+    console.log('Auth page - Auth state:', { isAuthenticated, authLoading });
+    
+    if (!authLoading && isAuthenticated) {
+      console.log('Auth page - User authenticated, initiating redirection');
+      
+      // Check if user came from creation flow
+      const createEventIntent = localStorage.getItem('create_event_intent');
+      if (createEventIntent === 'true') {
+        console.log('Auth page - Creation intent detected, redirecting to portal with setup');
+        navigate('/portal?setup=true&tab=config', { replace: true });
+      } else {
+        console.log('Auth page - Regular login, redirecting to portal');
+        navigate('/portal', { replace: true });
+      }
+    }
+  }, [isAuthenticated, authLoading, navigate]);
 
   useEffect(() => {
     // If coming from creation flow, default to signup
@@ -83,7 +104,7 @@ const AuthPage = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('Starting signup process...');
+    console.log('Auth page - Starting signup process...');
     
     if (!fullName.trim()) {
       toast({
@@ -97,7 +118,7 @@ const AuthPage = () => {
     const { error } = await signUp(email, password, fullName);
 
     if (error) {
-      console.error('Signup error:', error);
+      console.error('Auth page - Signup error:', error);
       let message = 'Une erreur est survenue lors de l\'inscription';
       if (error.message.includes('already registered')) {
         message = 'Un compte existe déjà avec cette adresse email';
@@ -115,8 +136,7 @@ const AuthPage = () => {
         variant: 'destructive'
       });
     } else {
-      console.log('Signup successful, showing success state');
-      // Show success state
+      console.log('Auth page - Signup successful, showing success state');
       setSignupSuccess(true);
       toast({
         title: 'Inscription réussie !',
@@ -128,13 +148,13 @@ const AuthPage = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('Starting signin process...');
+    console.log('Auth page - Starting signin process...');
     setLastSigninError(null);
     
     const { error } = await signIn(email, password);
 
     if (error) {
-      console.error('Signin error:', error);
+      console.error('Auth page - Signin error:', error);
       let message = 'Email ou mot de passe incorrect';
       if (error.message.includes('Email not confirmed')) {
         message = 'Veuillez confirmer votre email avant de vous connecter';
@@ -151,13 +171,12 @@ const AuthPage = () => {
         variant: 'destructive'
       });
     } else {
-      console.log('Signin successful, auth context will handle redirection');
+      console.log('Auth page - Signin successful, auth state will handle redirection');
       toast({
         title: 'Connexion réussie !',
         description: 'Redirection vers votre tableau de bord...',
       });
-      // Let the auth context and routing logic handle the redirection
-      // No manual navigation here to avoid conflicts
+      // Don't manually navigate here - let useSupabaseAuth handle it
     }
   };
 
@@ -165,6 +184,18 @@ const AuthPage = () => {
     setTab(newTab);
     resetForm();
   };
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Vérification de l'authentification...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (signupSuccess) {
     return (

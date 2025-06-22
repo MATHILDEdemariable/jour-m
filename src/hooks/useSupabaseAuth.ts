@@ -14,40 +14,44 @@ export const useSupabaseAuth = () => {
       const authenticated = !!(user && session);
       setIsAuthenticated(authenticated);
       
-      console.log('Auth state updated:', { 
+      console.log('useSupabaseAuth - Auth state updated:', { 
         authenticated, 
         currentPath: location.pathname,
         user: user?.id,
         session: !!session 
       });
       
-      // Rediriger vers le portail si l'utilisateur est authentifié et sur la page auth
+      // Only handle redirections if we're not already on the target page
       if (authenticated && location.pathname === '/auth') {
-        console.log('User authenticated on auth page, redirecting to portal');
+        console.log('useSupabaseAuth - User authenticated on auth page, initiating redirection');
         
-        // Check if user came from creation flow
-        const createEventIntent = localStorage.getItem('create_event_intent');
-        if (createEventIntent === 'true') {
-          console.log('Creation intent detected, redirecting to portal with setup');
-          navigate('/portal?setup=true&tab=config', { replace: true });
-        } else {
-          navigate('/portal', { replace: true });
-        }
+        // Small delay to ensure state is fully updated
+        setTimeout(() => {
+          // Check if user came from creation flow
+          const createEventIntent = localStorage.getItem('create_event_intent');
+          if (createEventIntent === 'true') {
+            console.log('useSupabaseAuth - Creation intent detected, redirecting to portal with setup');
+            navigate('/portal?setup=true&tab=config', { replace: true });
+          } else {
+            console.log('useSupabaseAuth - Regular auth, redirecting to portal');
+            navigate('/portal', { replace: true });
+          }
+        }, 100);
         return;
       }
       
-      // Rediriger vers auth si pas authentifié et sur une page protégée
+      // Redirect to auth if not authenticated and on a protected page
       const publicPaths = ['/auth', '/', '/equipe'];
       const isPublicPath = publicPaths.includes(location.pathname);
       
       if (!authenticated && !isPublicPath && !location.pathname.startsWith('/portal')) {
-        console.log('User not authenticated on protected page, redirecting to auth');
+        console.log('useSupabaseAuth - User not authenticated on protected page, redirecting to auth');
         navigate('/auth');
       }
       
-      // Bloquer l'accès au portail pour les utilisateurs non authentifiés
+      // Block access to portal for unauthenticated users
       if (!authenticated && location.pathname.startsWith('/portal')) {
-        console.log('Unauthenticated user trying to access portal, redirecting to auth');
+        console.log('useSupabaseAuth - Unauthenticated user trying to access portal, redirecting to auth');
         navigate('/auth');
       }
     }
