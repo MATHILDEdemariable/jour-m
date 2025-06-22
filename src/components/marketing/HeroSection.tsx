@@ -8,6 +8,8 @@ import {
   Heart
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useEvents } from '@/hooks/useEvents';
 
 interface HeroSectionProps {
   onAdminClick?: () => void;
@@ -16,9 +18,26 @@ interface HeroSectionProps {
 
 export const HeroSection: React.FC<HeroSectionProps> = () => {
   const navigate = useNavigate();
+  const { user, isLoading } = useAuth();
+  const { events, currentEvent } = useEvents();
 
   const handleCreateEventClick = () => {
-    navigate('/auth');
+    if (isLoading) return;
+
+    if (user) {
+      // Utilisateur connecté
+      if (currentEvent || events.length > 0) {
+        // A déjà un événement, rediriger vers le portail
+        navigate('/portal');
+      } else {
+        // Pas d'événement, rediriger vers la configuration
+        navigate('/portal?tab=config&setup=true');
+      }
+    } else {
+      // Utilisateur non connecté, marquer l'intention de création
+      localStorage.setItem('create_event_intent', 'true');
+      navigate('/auth?action=create');
+    }
   };
 
   return (
@@ -47,11 +66,13 @@ export const HeroSection: React.FC<HeroSectionProps> = () => {
 
           <Button
             onClick={handleCreateEventClick}
+            disabled={isLoading}
             size="lg"
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xl px-12 py-6 h-auto rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xl px-12 py-6 h-auto rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
             <Sparkles className="w-6 h-6 mr-3" />
-            Créer mon Jour-J
+            {isLoading ? 'Chargement...' : 
+             user ? (currentEvent || events.length > 0 ? 'Accéder à mon Jour-J' : 'Configurer mon Jour-J') : 'Créer mon Jour-J'}
             <ArrowRight className="w-6 h-6 ml-3" />
           </Button>
 

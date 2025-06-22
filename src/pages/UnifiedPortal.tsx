@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -5,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, LogOut, HelpCircle, Users, Building2, Shield, Eye, Settings, Calendar, Share2, FileText, Plus, CheckCircle } from 'lucide-react';
+import { ArrowLeft, LogOut, HelpCircle, Users, Building2, Shield, Eye, Settings, Calendar, Share2, FileText, Plus, CheckCircle, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { useEvents } from '@/hooks/useEvents';
@@ -230,6 +231,64 @@ const DashboardOverview = ({ onNavigateToTab }: { onNavigateToTab: (tab: string)
   );
 };
 
+const SetupWelcome = ({ onStartSetup }: { onStartSetup: () => void }) => {
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="text-center max-w-2xl mx-auto p-8">
+        <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
+          <Sparkles className="w-10 h-10 text-white" />
+        </div>
+        
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">
+          Félicitations ! Votre compte est créé 🎉
+        </h1>
+        
+        <p className="text-lg text-gray-600 mb-8">
+          Il est temps de configurer votre premier événement et commencer l'organisation de votre Jour-J parfait.
+        </p>
+        
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 mb-8">
+          <h3 className="font-semibold text-purple-800 mb-3">
+            Que pouvez-vous faire avec JOURM ?
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-purple-700">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-500" />
+              Planifier votre événement en détail
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-500" />
+              Gérer votre équipe et prestataires
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-500" />
+              Partager l'accès avec vos proches
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-500" />
+              Centraliser tous vos documents
+            </div>
+          </div>
+        </div>
+        
+        <Button
+          onClick={onStartSetup}
+          size="lg"
+          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-lg px-8 py-6 h-auto rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+        >
+          <Settings className="w-5 h-5 mr-3" />
+          Commencer la configuration
+          <ArrowRight className="w-5 h-5 ml-3" />
+        </Button>
+        
+        <p className="text-sm text-gray-500 mt-4">
+          Cela ne prend que quelques minutes
+        </p>
+      </div>
+    </div>
+  );
+};
+
 export const UnifiedPortal = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
@@ -244,6 +303,10 @@ export const UnifiedPortal = () => {
   const { events, currentEvent } = useEvents();
   const { people } = usePeople();
   const { vendors } = useVendors();
+
+  // Check for setup flow
+  const isSetupFlow = searchParams.get('setup') === 'true' || localStorage.getItem('create_event_intent') === 'true';
+  const tabFromUrl = searchParams.get('tab');
 
   // Validation des tokens (simulation - en production, cela serait côté serveur)
   const validateToken = (userId: string, userType: 'person' | 'vendor', token: string) => {
@@ -270,10 +333,17 @@ export const UnifiedPortal = () => {
         role: 'admin',
         type: 'person'
       });
-      // Pour l'admin, commencer par l'onglet config seulement s'il n'y a pas d'onglet déjà sélectionné
-      if (!activeTab) {
-        setActiveTab('config');
+      
+      // Handle setup flow and tab selection
+      if (isSetupFlow && !currentEvent) {
+        // Show setup welcome if no event exists and we're in setup flow
+        setActiveTab('setup-welcome');
+      } else if (tabFromUrl && ['config', 'people', 'vendors', 'planning', 'share', 'documents'].includes(tabFromUrl)) {
+        setActiveTab(tabFromUrl);
+      } else if (!activeTab || activeTab === 'dashboard') {
+        setActiveTab('dashboard');
       }
+      
       setIsTokenValid(true);
     } else if (userId && userType && autoLogin) {
       // Accès via lien personnalisé
@@ -317,7 +387,19 @@ export const UnifiedPortal = () => {
       console.log('UnifiedPortal - No valid access method, redirecting to auth');
       navigate('/auth');
     }
-  }, [searchParams, user, people, vendors, navigate, activeTab]);
+  }, [searchParams, user, people, vendors, navigate, activeTab, isSetupFlow, currentEvent, tabFromUrl]);
+
+  // Clear creation intent when component mounts and user is authenticated
+  useEffect(() => {
+    if (user && localStorage.getItem('create_event_intent') === 'true') {
+      // Don't clear immediately, let the setup flow handle it
+      setTimeout(() => {
+        if (currentEvent) {
+          localStorage.removeItem('create_event_intent');
+        }
+      }, 1000);
+    }
+  }, [user, currentEvent]);
 
   const getRoleConfig = (role: UserRole) => {
     switch (role) {
@@ -356,10 +438,21 @@ export const UnifiedPortal = () => {
     }
   };
 
+  const handleStartSetup = () => {
+    setActiveTab('config');
+    // Clear the creation intent since we're starting setup
+    localStorage.removeItem('create_event_intent');
+  };
+
   const renderTabContent = () => {
     if (!userInfo) return null;
 
     const roleConfig = getRoleConfig(userInfo.role);
+
+    // Show setup welcome for new users in setup flow
+    if (activeTab === 'setup-welcome' && userInfo.role === 'admin') {
+      return <SetupWelcome onStartSetup={handleStartSetup} />;
+    }
 
     switch (activeTab) {
       case 'dashboard':
@@ -442,6 +535,9 @@ export const UnifiedPortal = () => {
   const roleConfig = getRoleConfig(userInfo.role);
   const IconComponent = roleConfig.icon;
 
+  // Don't show tabs for setup welcome
+  const showTabs = activeTab !== 'setup-welcome';
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header - Responsive */}
@@ -478,6 +574,11 @@ export const UnifiedPortal = () => {
                 Lien sécurisé
               </Badge>
             )}
+            {isSetupFlow && (
+              <Badge className="text-xs bg-orange-100 text-orange-800 border-orange-200">
+                Configuration
+              </Badge>
+            )}
             {userInfo.role === 'admin' && (
               <Button 
                 variant="outline" 
@@ -503,7 +604,7 @@ export const UnifiedPortal = () => {
       </div>
 
       {/* Desktop Navigation Tabs */}
-      {!isMobile && (
+      {!isMobile && showTabs && (
         <div className="bg-white border-b">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full h-auto p-1" style={{ gridTemplateColumns: `repeat(${roleConfig.availableTabs.length}, 1fr)` }}>
@@ -566,7 +667,7 @@ export const UnifiedPortal = () => {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      {isMobile && (
+      {isMobile && showTabs && (
         <AdminBottomNavigation 
           activeTab={activeTab}
           onTabChange={setActiveTab}

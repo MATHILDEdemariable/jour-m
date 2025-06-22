@@ -24,7 +24,15 @@ export const useSupabaseAuth = () => {
       // Rediriger vers le portail si l'utilisateur est authentifié et sur la page auth
       if (authenticated && location.pathname === '/auth') {
         console.log('User authenticated on auth page, redirecting to portal');
-        navigate('/portal', { replace: true });
+        
+        // Check if user came from creation flow
+        const createEventIntent = localStorage.getItem('create_event_intent');
+        if (createEventIntent === 'true') {
+          console.log('Creation intent detected, redirecting to portal with setup');
+          navigate('/portal?setup=true&tab=config', { replace: true });
+        } else {
+          navigate('/portal', { replace: true });
+        }
         return;
       }
       

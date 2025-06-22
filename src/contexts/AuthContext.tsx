@@ -11,6 +11,7 @@ type AuthContextType = {
   signOut: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
+  resendConfirmation: (email: string) => Promise<{ error: Error | null }>;
   currentTenantId: string | null;
 };
 
@@ -40,6 +41,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else if (event === 'SIGNED_OUT') {
           console.log('User signed out, clearing tenant data');
           setCurrentTenantId(null);
+          // Clear creation intent on sign out
+          localStorage.removeItem('create_event_intent');
         }
         
         setIsLoading(false);
@@ -150,6 +153,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       console.log('Signing out user');
       setCurrentTenantId(null);
+      localStorage.removeItem('create_event_intent');
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       if (error) throw error;
       
@@ -254,6 +258,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const resendConfirmation = async (email: string) => {
+    try {
+      console.log('Resending confirmation email to:', email);
+      
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+        options: {
+          emailRedirectTo: 'https://jour-m.lovable.app/'
+        }
+      });
+
+      if (error) {
+        console.error('Resend confirmation error:', error);
+        throw error;
+      }
+
+      console.log('Confirmation email resent successfully');
+      return { error: null };
+    } catch (error) {
+      console.error('Resend confirmation error:', error);
+      return { error: error as Error };
+    }
+  };
+
   const value = {
     user,
     session,
@@ -261,6 +290,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signOut,
     signIn,
     signUp,
+    resendConfirmation,
     currentTenantId,
   };
 

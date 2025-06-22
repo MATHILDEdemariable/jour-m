@@ -1,6 +1,6 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,12 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { Eye, EyeOff, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, CheckCircle, Sparkles } from 'lucide-react';
 
 const AuthPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn, signUp, isLoading } = useAuth();
+  const { signIn, signUp, isLoading, resendConfirmation } = useAuth();
+  const [searchParams] = useSearchParams();
   
   // Form states
   const [email, setEmail] = useState('');
@@ -22,12 +23,61 @@ const AuthPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [tab, setTab] = useState("signin");
   const [signupSuccess, setSignupSuccess] = useState(false);
+  const [lastSigninError, setLastSigninError] = useState<string | null>(null);
+  const [isResending, setIsResending] = useState(false);
+
+  // Check for creation intent
+  const isCreationFlow = searchParams.get('action') === 'create' || localStorage.getItem('create_event_intent') === 'true';
+
+  useEffect(() => {
+    // If coming from creation flow, default to signup
+    if (isCreationFlow) {
+      setTab('signup');
+    }
+  }, [isCreationFlow]);
 
   const resetForm = () => {
     setEmail('');
     setPassword('');
     setFullName('');
     setSignupSuccess(false);
+    setLastSigninError(null);
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!email) {
+      toast({
+        title: 'Email requis',
+        description: 'Veuillez saisir votre adresse email',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsResending(true);
+    try {
+      const { error } = await resendConfirmation(email);
+      if (error) {
+        toast({
+          title: 'Erreur',
+          description: error.message || 'Impossible de renvoyer l\'email',
+          variant: 'destructive'
+        });
+      } else {
+        toast({
+          title: 'Email envoyé !',
+          description: 'Vérifiez votre boîte de réception',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: 'Une erreur est survenue',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsResending(false);
+    }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -79,6 +129,7 @@ const AuthPage = () => {
     e.preventDefault();
     
     console.log('Starting signin process...');
+    setLastSigninError(null);
     
     const { error } = await signIn(email, password);
 
@@ -87,6 +138,7 @@ const AuthPage = () => {
       let message = 'Email ou mot de passe incorrect';
       if (error.message.includes('Email not confirmed')) {
         message = 'Veuillez confirmer votre email avant de vous connecter';
+        setLastSigninError('email_not_confirmed');
       } else if (error.message.includes('Invalid login')) {
         message = 'Email ou mot de passe incorrect';
       } else if (error.message.includes('Too many requests')) {
@@ -135,7 +187,7 @@ const AuthPage = () => {
             
             <CardContent className="text-center space-y-4">
               <p className="text-sm text-gray-600">
-                Cliquez sur le lien dans l'email pour activer votre compte et accéder à votre espace JOURM.
+                Cliquez sur le lien dans l'email pour activer votre compte et {isCreationFlow ? 'commencer à créer votre événement' : 'accéder à votre espace JOURM'}.
               </p>
               
               <div className="space-y-2">
@@ -169,14 +221,21 @@ const AuthPage = () => {
         <Card className="bg-white/80 backdrop-blur-sm shadow-xl border-0">
           <CardHeader className="text-center space-y-4">
             <div className="mx-auto w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">J</span>
+              {isCreationFlow ? (
+                <Sparkles className="text-2xl text-white" />
+              ) : (
+                <span className="text-2xl font-bold text-white">J</span>
+              )}
             </div>
             <div>
               <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                JOURM
+                {isCreationFlow ? 'Créer votre Jour-J' : 'JOURM'}
               </CardTitle>
               <CardDescription className="text-gray-600">
-                Organisez vos événements en toute simplicité
+                {isCreationFlow 
+                  ? 'Commencez l\'organisation de votre mariage parfait'
+                  : 'Organisez vos événements en toute simplicité'
+                }
               </CardDescription>
             </div>
           </CardHeader>
@@ -185,7 +244,9 @@ const AuthPage = () => {
             <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="signin">Se connecter</TabsTrigger>
-                <TabsTrigger value="signup">S'inscrire</TabsTrigger>
+                <TabsTrigger value="signup">
+                  {isCreationFlow ? 'Créer mon compte' : 'S\'inscrire'}
+                </TabsTrigger>
               </TabsList>
               
               <TabsContent value="signin">
@@ -229,6 +290,24 @@ const AuthPage = () => {
                       </Button>
                     </div>
                   </div>
+                  
+                  {lastSigninError === 'email_not_confirmed' && (
+                    <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                      <p className="text-sm text-orange-800 mb-3">
+                        Votre email n'est pas encore confirmé. Vérifiez votre boîte de réception ou demandez un nouvel email.
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-full border-orange-300 text-orange-700 hover:bg-orange-100"
+                        onClick={handleResendConfirmation}
+                        disabled={isResending}
+                      >
+                        {isResending ? 'Envoi en cours...' : 'Renvoyer l\'email de confirmation'}
+                      </Button>
+                    </div>
+                  )}
                   
                   <Button
                     type="submit"
@@ -304,7 +383,7 @@ const AuthPage = () => {
                     className="w-full h-11 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Création du compte...' : 'Créer mon compte'}
+                    {isLoading ? 'Création du compte...' : (isCreationFlow ? 'Créer mon Jour-J' : 'Créer mon compte')}
                   </Button>
                 </form>
               </TabsContent>
