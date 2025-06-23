@@ -26,6 +26,8 @@ export const useShareToken = () => {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 30);
 
+      console.log('Generating share token for event:', eventId);
+
       const { data, error } = await supabase
         .from('event_share_tokens')
         .insert({
@@ -36,10 +38,15 @@ export const useShareToken = () => {
         .select('token')
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error inserting token:', error);
+        throw error;
+      }
+
+      console.log('Token generated successfully:', data.token);
 
       toast({
-        title: 'Token créé',
+        title: 'Lien créé',
         description: 'Nouveau lien de partage généré avec succès. Valide pendant 30 jours.',
       });
 
@@ -126,7 +133,10 @@ export const useShareToken = () => {
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching active tokens:', error);
+        throw error;
+      }
 
       return data || [];
     } catch (error) {

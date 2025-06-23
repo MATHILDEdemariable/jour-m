@@ -51,13 +51,17 @@ export const ShareManagement = () => {
     
     setLoading(true);
     try {
+      console.log('Loading active tokens for event:', currentEventId);
       const tokens = await getActiveTokens(currentEventId);
+      console.log('Loaded tokens:', tokens);
       setActiveTokens(tokens);
       
       // Set the current share URL to the most recent token
       if (tokens.length > 0) {
         const latestToken = tokens[0];
-        setCurrentShareUrl(`${window.location.origin}/share/${latestToken.token}`);
+        const shareUrl = `${window.location.origin}/equipe?token=${latestToken.token}`;
+        setCurrentShareUrl(shareUrl);
+        console.log('Current share URL set to:', shareUrl);
       }
     } catch (error) {
       console.error('Error loading tokens:', error);
@@ -82,11 +86,18 @@ export const ShareManagement = () => {
       return;
     }
 
+    console.log('Generating token for event:', currentEventId);
     const token = await generateShareToken(currentEventId);
     if (token) {
-      const shareUrl = `${window.location.origin}/share/${token}`;
+      const shareUrl = `${window.location.origin}/equipe?token=${token}`;
       setCurrentShareUrl(shareUrl);
+      console.log('Share URL generated:', shareUrl);
       await loadActiveTokens();
+      
+      toast({
+        title: 'Lien créé avec succès',
+        description: 'Le lien de partage vers la page équipe a été généré.',
+      });
     }
   };
 
@@ -95,7 +106,7 @@ export const ShareManagement = () => {
 
     const token = await regenerateShareToken(currentEventId);
     if (token) {
-      const shareUrl = `${window.location.origin}/share/${token}`;
+      const shareUrl = `${window.location.origin}/equipe?token=${token}`;
       setCurrentShareUrl(shareUrl);
       await loadActiveTokens();
     }
@@ -182,7 +193,7 @@ export const ShareManagement = () => {
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Partage Public Sécurisé</h2>
         <p className="text-gray-600">
-          Générez des liens sécurisés avec expiration pour partager votre événement avec votre équipe.
+          Générez des liens sécurisés avec expiration pour partager la page équipe de votre événement.
         </p>
       </div>
 
@@ -194,7 +205,7 @@ export const ShareManagement = () => {
             Lien de Partage Actuel
           </CardTitle>
           <CardDescription>
-            Créez ou gérez le lien de partage principal pour votre événement
+            Créez un lien de partage vers la page équipe pour permettre l'accès sans authentification
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -241,9 +252,9 @@ export const ShareManagement = () => {
                     </DialogTrigger>
                     <DialogContent className="max-w-sm">
                       <DialogHeader>
-                        <DialogTitle>QR Code - Partage Événement</DialogTitle>
+                        <DialogTitle>QR Code - Accès Équipe</DialogTitle>
                         <DialogDescription>
-                          Scannez ce code pour accéder directement à l'événement
+                          Scannez ce code pour accéder directement à la page équipe
                         </DialogDescription>
                       </DialogHeader>
                       <div className="flex justify-center p-4">
@@ -324,7 +335,7 @@ export const ShareManagement = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => copyToClipboard(
-                          `${window.location.origin}/share/${token.token}`,
+                          `${window.location.origin}/equipe?token=${token.token}`,
                           'Le lien'
                         )}
                       >
@@ -354,6 +365,9 @@ export const ShareManagement = () => {
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-gray-600">
           <p>
+            <strong>Accès à la page équipe :</strong> Le lien permet d'accéder directement à la page équipe sans authentification
+          </p>
+          <p>
             <strong>Liens temporaires :</strong> Tous les liens expirent automatiquement après 30 jours
           </p>
           <p>
@@ -364,9 +378,6 @@ export const ShareManagement = () => {
           </p>
           <p>
             <strong>Régénération :</strong> Créer un nouveau lien rend l'ancien inutilisable
-          </p>
-          <p>
-            <strong>Pas d'authentification :</strong> Aucun compte requis pour accéder aux liens partagés
           </p>
         </CardContent>
       </Card>

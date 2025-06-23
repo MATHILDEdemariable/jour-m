@@ -1,9 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Users, Calendar, Settings, Building2, FileText } from 'lucide-react';
+import { Users, Calendar, Settings, Building2, FileText, Loader2, AlertCircle } from 'lucide-react';
 import { useLocalEventData } from '@/contexts/LocalEventDataContext';
+import { useShareToken } from '@/hooks/useShareToken';
+import { Card, CardContent } from '@/components/ui/card';
 
 // Composants améliorés
 import { EnhancedTeamHeader } from '@/components/equipe/EnhancedTeamHeader';
@@ -19,6 +22,14 @@ import { ReadOnlyDocumentsList } from '@/components/equipe/ReadOnlyDocumentsList
 
 const EquipePage = () => {
   const [activeTab, setActiveTab] = useState('config');
+  const [searchParams] = useSearchParams();
+  const [loading, setLoading] = useState(false);
+  const [validationError, setValidationError] = useState<string>('');
+  const [isTokenAccess, setIsTokenAccess] = useState(false);
+  
+  const token = searchParams.get('token');
+  const { validateShareToken } = useShareToken();
+  
   const { 
     currentEvent, 
     people, 
@@ -27,8 +38,48 @@ const EquipePage = () => {
     planningItems, 
     documents,
     getDaysUntilEvent,
-    getProgressStats 
+    getProgressStats,
+    setCurrentEventId
   } = useLocalEventData();
+
+  // Validation du token au chargement
+  useEffect(() => {
+    const validateToken = async () => {
+      if (!token) {
+        setIsTokenAccess(false);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        console.log('Validating token:', token);
+        const validation = await validateShareToken(token);
+        
+        if (!validation.isValid) {
+          console.error('Token validation failed:', validation.error);
+          setValidationError(validation.error || 'Token invalide');
+          setLoading(false);
+          return;
+        }
+
+        console.log('Token validated, event ID:', validation.eventId);
+        setIsTokenAccess(true);
+        
+        // Définir l'événement actuel basé sur le token
+        if (validation.eventId) {
+          setCurrentEventId(validation.eventId);
+        }
+        
+      } catch (error) {
+        console.error('Error validating token:', error);
+        setValidationError('Erreur lors de la validation du token');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    validateToken();
+  }, [token, validateShareToken]);
 
   const progressStats = getProgressStats();
 
@@ -47,10 +98,54 @@ const EquipePage = () => {
     }
   };
 
+  // Affichage du chargement
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+        <Card className="w-full max-w-md shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+          <CardContent className="p-8 text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Chargement...</h2>
+            <p className="text-gray-600">Validation de l'accès</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Affichage de l'erreur si le token est invalide
+  if (token && validationError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+        <Card className="w-full max-w-md shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+          <CardContent className="p-8 text-center">
+            <AlertCircle className="w-8 h-8 mx-auto mb-4 text-red-500" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Accès non autorisé</h2>
+            <p className="text-gray-600 mb-4">{validationError}</p>
+            <div className="text-sm text-gray-500">
+              Veuillez demander un nouveau lien à l'organisateur de l'événement.
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50">
       {/* Header amélioré */}
       <EnhancedTeamHeader />
+
+      {/* Indicateur d'accès partagé */}
+      {isTokenAccess && (
+        <div className="bg-blue-50 border-b border-blue-200">
+          <div className="max-w-7xl mx-auto p-2 text-center">
+            <Badge className="bg-blue-100 text-blue-800">
+              👁️ Vue partagée - Accès en lecture seule
+            </Badge>
+          </div>
+        </div>
+      )}
 
       {/* Contenu principal */}
       <div className="max-w-7xl mx-auto p-4 lg:p-6">
@@ -63,7 +158,7 @@ const EquipePage = () => {
                 className="flex flex-col items-center gap-1 py-3 data-[state=active]:bg-white data-[state=active]:shadow-sm"
               >
                 <Settings className="w-4 h-4" />
-                <span className="text-xs hidden sm:inline">Configuration</span>
+                <span className="text-xs hidden sm:inline">Paramètres</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="people" 
@@ -91,7 +186,7 @@ const EquipePage = () => {
                     </Badge>
                   )}
                 </div>
-                <span className="text-xs hidden sm:inline">Prestataires</span>
+                <span className="text-xs hidden sm:inline">Professionnels</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="planning" 
