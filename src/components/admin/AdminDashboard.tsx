@@ -1,9 +1,7 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { CheckCircle, Clock, AlertTriangle, Users, Calendar, FileText, TrendingUp, Activity } from 'lucide-react';
 import { useSharedEventData } from '@/hooks/useSharedEventData';
 import { useEvents } from '@/hooks/useEvents';
@@ -65,7 +63,7 @@ export const AdminDashboard = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900">Dashboard</h2>
+          <h2 className="text-3xl font-bold text-gray-900">Tableau de Bord</h2>
           <p className="text-gray-600">
             Vue d'ensemble de {currentEvent?.name || 'votre événement'} - 
             {daysUntilEvent > 0 ? ` ${daysUntilEvent} jours restants` : ' Jour J !'}
@@ -83,11 +81,11 @@ export const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Cartes de statistiques */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-800">Tâches Complètes</CardTitle>
+            <CardTitle className="text-sm font-medium text-green-800">Tâches Terminées</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -119,7 +117,7 @@ export const AdminDashboard = () => {
 
         <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-800">Timeline</CardTitle>
+            <CardTitle className="text-sm font-medium text-purple-800">Planning</CardTitle>
             <Calendar className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
@@ -148,7 +146,7 @@ export const AdminDashboard = () => {
         </Card>
       </div>
 
-      {/* Progress Section */}
+      {/* Section de progression */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -168,7 +166,7 @@ export const AdminDashboard = () => {
             </div>
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Timeline Jour J</span>
+                <span className="text-sm font-medium">Planning du Jour J</span>
                 <span className="text-sm text-gray-500">{timelineStats.progressPercentage}%</span>
               </div>
               <Progress value={timelineStats.progressPercentage} className="h-2" />
@@ -189,11 +187,11 @@ export const AdminDashboard = () => {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium">Documentation</span>
                 <span className="text-sm text-gray-500">
-                  {Math.round((documentStats.approvedDocuments / documentStats.totalDocuments) * 100)}%
+                  {Math.round((documentStats.approvedDocuments / documentStats.totalDocuments) * 100) || 0}%
                 </span>
               </div>
               <Progress 
-                value={Math.round((documentStats.approvedDocuments / documentStats.totalDocuments) * 100)} 
+                value={Math.round((documentStats.approvedDocuments / documentStats.totalDocuments) * 100) || 0} 
                 className="h-2" 
               />
             </div>
@@ -255,7 +253,7 @@ export const AdminDashboard = () => {
         </Card>
       </div>
 
-      {/* Recent Activity */}
+      {/* Activité récente */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Calendar, Users, Building2, FileText, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Calendar, Users, Building2, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
 import { useSharedEventData } from '@/hooks/useSharedEventData';
 
 export const CompactRecapDashboard = () => {
@@ -73,7 +73,7 @@ export const CompactRecapDashboard = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Timeline</p>
+                <p className="text-sm text-gray-600">Planning</p>
                 <p className="text-2xl font-bold text-blue-600">{timelineStats.progressPercentage}%</p>
               </div>
               <Clock className="w-8 h-8 text-blue-500" />
@@ -109,7 +109,7 @@ export const CompactRecapDashboard = () => {
                 <span>Confirmations</span>
                 <span>{teamSummary.confirmed}/{teamSummary.total}</span>
               </div>
-              <Progress value={(teamSummary.confirmed / teamSummary.total) * 100} className="h-2" />
+              <Progress value={(teamSummary.confirmed / Math.max(teamSummary.total, 1)) * 100} className="h-2" />
             </div>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="text-center p-2 bg-green-50 rounded">
@@ -137,7 +137,7 @@ export const CompactRecapDashboard = () => {
                 <span>Contrats signés</span>
                 <span>{vendorsSummary.confirmed}/{vendorsSummary.total}</span>
               </div>
-              <Progress value={(vendorsSummary.confirmed / vendorsSummary.total) * 100} className="h-2" />
+              <Progress value={(vendorsSummary.confirmed / Math.max(vendorsSummary.total, 1)) * 100} className="h-2" />
             </div>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="text-center p-2 bg-green-50 rounded">
