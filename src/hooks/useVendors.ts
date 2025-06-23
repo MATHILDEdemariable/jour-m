@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,7 +29,7 @@ export interface VendorDocument {
   category: string | null;
   vendor_id: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string; // Made optional to match database schema
 }
 
 export const useVendors = () => {
@@ -81,7 +80,12 @@ export const useVendors = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setDocuments(data || []);
+      // Ensure documents match VendorDocument interface
+      const formattedData = (data || []).map(doc => ({
+        ...doc,
+        updated_at: doc.updated_at || doc.created_at
+      }));
+      setDocuments(formattedData);
     } catch (error) {
       console.error('Erreur lors du chargement des documents:', error);
     }

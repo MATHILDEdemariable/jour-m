@@ -1,14 +1,21 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { useShareToken, ShareToken } from '@/hooks/useShareToken';
+import { useSharedEventData } from '@/hooks/useSharedEventData';
 import { 
   Copy, 
   QrCode, 
   Users, 
-  Eye
+  Eye,
+  RefreshCw,
+  Trash2,
+  Plus,
+  Clock,
+  Share
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
@@ -19,11 +26,90 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Badge } from '@/components/ui/badge';
 
 export const ShareManagement = () => {
   const { toast } = useToast();
+  const { 
+    generateShareToken, 
+    regenerateShareToken, 
+    getActiveTokens, 
+    revokeToken,
+    generating,
+    regenerating 
+  } = useShareToken();
+  
+  const [activeTokens, setActiveTokens] = useState<ShareToken[]>([]);
+  const [currentShareUrl, setCurrentShareUrl] = useState<string>('');
+  const [loading, setLoading] = useState(false);
 
-  const equipeUrl = `${window.location.origin}/equipe`;
+  // Mock current event - in real app, get this from context
+  const currentEventId = localStorage.getItem('currentEventId') || '';
+
+  const loadActiveTokens = async () => {
+    if (!currentEventId) return;
+    
+    setLoading(true);
+    try {
+      const tokens = await getActiveTokens(currentEventId);
+      setActiveTokens(tokens);
+      
+      // Set the current share URL to the most recent token
+      if (tokens.length > 0) {
+        const latestToken = tokens[0];
+        setCurrentShareUrl(`${window.location.origin}/share/${latestToken.token}`);
+      }
+    } catch (error) {
+      console.error('Error loading tokens:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadActiveTokens();
+  }, [currentEventId]);
+
+  const handleGenerateToken = async () => {
+    if (!currentEventId) {
+      toast({
+        title: 'Erreur',
+        description: 'Aucun événement sélectionné',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const token = await generateShareToken(currentEventId);
+    if (token) {
+      const shareUrl = `${window.location.origin}/share/${token}`;
+      setCurrentShareUrl(shareUrl);
+      await loadActiveTokens();
+    }
+  };
+
+  const handleRegenerateToken = async () => {
+    if (!currentEventId) return;
+
+    const token = await regenerateShareToken(currentEventId);
+    if (token) {
+      const shareUrl = `${window.location.origin}/share/${token}`;
+      setCurrentShareUrl(shareUrl);
+      await loadActiveTokens();
+    }
+  };
+
+  const handleRevokeToken = async (tokenId: string) => {
+    const success = await revokeToken(tokenId);
+    if (success) {
+      await loadActiveTokens();
+      // If we revoked the current token, clear the URL
+      const revokedToken = activeTokens.find(t => t.id === tokenId);
+      if (revokedToken && currentShareUrl.includes(revokedToken.token)) {
+        setCurrentShareUrl('');
+      }
+    }
+  };
 
   const copyToClipboard = async (text: string, label: string) => {
     try {
@@ -42,117 +128,219 @@ export const ShareManagement = () => {
   };
 
   const openPreview = () => {
-    window.open(equipeUrl, '_blank');
+    if (currentShareUrl) {
+      window.open(currentShareUrl, '_blank');
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getDaysUntilExpiry = (expiresAt: string) => {
+    const now = new Date();
+    const expiry = new Date(expiresAt);
+    const diffTime = expiry.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Partage Équipe</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Partage Public Sécurisé</h2>
         <p className="text-gray-600">
-          Partagez toutes les informations de votre événement avec votre équipe via un lien simple.
+          Générez des liens sécurisés avec expiration pour partager votre événement avec votre équipe.
         </p>
       </div>
 
-      {/* Page équipe */}
+      {/* Génération de token */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-purple-600" />
-            Page Équipe Complète
+            <Share className="w-5 h-5 text-blue-600" />
+            Lien de Partage Actuel
           </CardTitle>
           <CardDescription>
-            Vue miroir de l'admin avec tous les onglets : Configuration, Équipe, Prestataires, Planning et Documents
+            Créez ou gérez le lien de partage principal pour votre événement
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {/* URL */}
-            <div className="flex items-center gap-2">
-              <Input value={equipeUrl} readOnly className="flex-1" />
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => copyToClipboard(equipeUrl, 'Le lien équipe')}
-              >
-                <Copy className="w-4 h-4" />
-              </Button>
-            </div>
-
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                onClick={openPreview}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center gap-2"
-              >
-                <Eye className="w-4 h-4" />
-                Voir aperçu équipe
-              </Button>
-
-              <Button
-                onClick={() => copyToClipboard(equipeUrl, 'Le lien équipe')}
-                variant="outline"
-                className="border-purple-200 text-purple-700 hover:bg-purple-50 flex items-center gap-2"
-              >
-                <Copy className="w-4 h-4" />
-                Copier le lien
-              </Button>
-
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <QrCode className="w-4 h-4" />
-                    QR Code
+            {currentShareUrl ? (
+              <>
+                {/* URL */}
+                <div className="flex items-center gap-2">
+                  <Input value={currentShareUrl} readOnly className="flex-1" />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard(currentShareUrl, 'Le lien de partage')}
+                  >
+                    <Copy className="w-4 h-4" />
                   </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-sm">
-                  <DialogHeader>
-                    <DialogTitle>QR Code - Page Équipe</DialogTitle>
-                    <DialogDescription>
-                      Scannez ce code pour accéder directement à la page équipe
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="flex justify-center p-4">
-                    <QRCodeSVG value={equipeUrl} size={200} />
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
+                </div>
 
-            {/* Informations */}
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <h4 className="font-medium text-purple-900 mb-2">Cette page équipe affiche :</h4>
-              <ul className="text-sm text-purple-800 space-y-1">
-                <li>• <strong>Configuration :</strong> Informations générales de l'événement</li>
-                <li>• <strong>Équipe :</strong> Liste complète des membres avec contacts</li>
-                <li>• <strong>Prestataires :</strong> Tous les prestataires et leurs informations</li>
-                <li>• <strong>Planning :</strong> Timeline du Jour-J avec filtres par personne</li>
-                <li>• <strong>Documents :</strong> Accès à tous les documents partagés</li>
-                <li>• Interface en lecture seule (consultation uniquement)</li>
-                <li>• Synchronisation temps réel avec vos modifications admin</li>
-              </ul>
-            </div>
+                {/* Actions */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    onClick={openPreview}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white flex items-center gap-2"
+                  >
+                    <Eye className="w-4 h-4" />
+                    Voir l'aperçu
+                  </Button>
+
+                  <Button
+                    onClick={() => copyToClipboard(currentShareUrl, 'Le lien de partage')}
+                    variant="outline"
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50 flex items-center gap-2"
+                  >
+                    <Copy className="w-4 h-4" />
+                    Copier le lien
+                  </Button>
+
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="flex items-center gap-2">
+                        <QrCode className="w-4 h-4" />
+                        QR Code
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-sm">
+                      <DialogHeader>
+                        <DialogTitle>QR Code - Partage Événement</DialogTitle>
+                        <DialogDescription>
+                          Scannez ce code pour accéder directement à l'événement
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="flex justify-center p-4">
+                        <QRCodeSVG value={currentShareUrl} size={200} />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  <Button
+                    onClick={handleRegenerateToken}
+                    disabled={regenerating}
+                    variant="outline"
+                    className="border-orange-200 text-orange-700 hover:bg-orange-50 flex items-center gap-2"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${regenerating ? 'animate-spin' : ''}`} />
+                    Régénérer
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <Share className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <p className="text-gray-500 mb-4">Aucun lien de partage actif</p>
+                <Button
+                  onClick={handleGenerateToken}
+                  disabled={generating}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white flex items-center gap-2"
+                >
+                  <Plus className={`w-4 h-4 ${generating ? 'animate-spin' : ''}`} />
+                  Créer un lien de partage
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Conseils d'utilisation */}
+      {/* Gestion des tokens actifs */}
+      {activeTokens.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-green-600" />
+              Tokens Actifs ({activeTokens.length})
+            </CardTitle>
+            <CardDescription>
+              Gérez tous les liens de partage actifs pour cet événement
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {activeTokens.map((token) => {
+                const daysLeft = getDaysUntilExpiry(token.expires_at);
+                const isExpiringSoon = daysLeft <= 7;
+                
+                return (
+                  <div key={token.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <code className="text-sm bg-white px-2 py-1 rounded border">
+                          ...{token.token.slice(-8)}
+                        </code>
+                        <Badge 
+                          variant={isExpiringSoon ? "destructive" : "secondary"}
+                          className="text-xs"
+                        >
+                          {daysLeft > 0 ? `${daysLeft} jours restants` : 'Expiré'}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Créé le {formatDate(token.created_at)} • 
+                        Expire le {formatDate(token.expires_at)}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyToClipboard(
+                          `${window.location.origin}/share/${token.token}`,
+                          'Le lien'
+                        )}
+                      >
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRevokeToken(token.id)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Informations sur la sécurité */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">💡 Conseils d'utilisation</CardTitle>
+          <CardTitle className="text-lg">🔒 Sécurité et Confidentialité</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-gray-600">
           <p>
-            <strong>Partage simple :</strong> Envoyez directement l'URL par message, email ou réseaux sociaux
+            <strong>Liens temporaires :</strong> Tous les liens expirent automatiquement après 30 jours
           </p>
           <p>
-            <strong>QR Code :</strong> Idéal pour l'affichage physique (invitations, panneau d'accueil, etc.)
+            <strong>Accès lecture seule :</strong> Les utilisateurs externes peuvent uniquement consulter les informations
           </p>
           <p>
-            <strong>Aperçu :</strong> Testez l'affichage avant de partager avec votre équipe
+            <strong>Révocation :</strong> Vous pouvez désactiver un lien à tout moment
           </p>
           <p>
-            <strong>Mise à jour temps réel :</strong> Toutes vos modifications sont immédiatement visibles sur la page équipe
+            <strong>Régénération :</strong> Créer un nouveau lien rend l'ancien inutilisable
+          </p>
+          <p>
+            <strong>Pas d'authentification :</strong> Aucun compte requis pour accéder aux liens partagés
           </p>
         </CardContent>
       </Card>

@@ -14,6 +14,7 @@ import Index from '@/pages/Index';
 import Auth from '@/pages/Auth';
 import UnifiedPortal from '@/pages/UnifiedPortal';
 import EquipePage from '@/pages/EquipePage';
+import PublicEventPage from '@/pages/PublicEventPage';
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ function App() {
                   } />
                   <Route path="/dashboard" element={<Navigate to="/portal" replace />} />
                   <Route path="/equipe" element={<EquipePage />} />
+                  <Route path="/share/:token" element={<PublicEventPage />} />
                   
                   {/* Redirect old routes to new unified portal */}
                   <Route path="/admin-portal" element={<Navigate to="/portal" replace />} />
