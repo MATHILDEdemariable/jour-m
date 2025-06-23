@@ -29,7 +29,7 @@ export interface VendorDocument {
   category: string | null;
   vendor_id: string;
   created_at: string;
-  updated_at?: string; // Made optional to match database schema
+  updated_at?: string;
 }
 
 export const useVendors = () => {
@@ -80,11 +80,20 @@ export const useVendors = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      // Ensure documents match VendorDocument interface
+      
+      // Format the data to match VendorDocument interface
       const formattedData = (data || []).map(doc => ({
-        ...doc,
-        updated_at: doc.updated_at || doc.created_at
+        id: doc.id,
+        name: doc.name,
+        file_url: doc.file_url,
+        file_type: doc.file_type,
+        file_size: doc.file_size,
+        category: doc.category,
+        vendor_id: doc.vendor_id,
+        created_at: doc.created_at,
+        updated_at: doc.created_at // Use created_at as fallback since updated_at doesn't exist in DB
       }));
+      
       setDocuments(formattedData);
     } catch (error) {
       console.error('Erreur lors du chargement des documents:', error);

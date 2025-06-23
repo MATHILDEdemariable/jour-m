@@ -8,7 +8,6 @@ export interface ShareToken {
   event_id: string;
   token: string;
   expires_at: string;
-  permissions: string[];
   created_at: string;
 }
 
