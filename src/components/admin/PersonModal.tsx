@@ -96,15 +96,12 @@ export const PersonModal: React.FC<PersonModalProps> = ({
                 <SelectValue placeholder="Sélectionner un rôle" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="bride">Mariée</SelectItem>
-                <SelectItem value="groom">Marié</SelectItem>
-                <SelectItem value="best-man">Témoin</SelectItem>
-                <SelectItem value="maid-of-honor">Demoiselle d'honneur</SelectItem>
-                <SelectItem value="wedding-planner">Wedding Planner</SelectItem>
-                <SelectItem value="photographer">Photographe</SelectItem>
-                <SelectItem value="caterer">Traiteur</SelectItem>
-                <SelectItem value="guest">Invité</SelectItem>
-                <SelectItem value="family">Famille</SelectItem>
+                <SelectItem value="mariée">Mariée</SelectItem>
+                <SelectItem value="marié">Marié</SelectItem>
+                <SelectItem value="témoins">Témoins</SelectItem>
+                <SelectItem value="demoiselle d'honneur">Demoiselle d'honneur</SelectItem>
+                <SelectItem value="famille">Famille</SelectItem>
+                <SelectItem value="invités">Invités</SelectItem>
               </SelectContent>
             </Select>
           </div>

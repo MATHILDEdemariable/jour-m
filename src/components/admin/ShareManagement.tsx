@@ -5,11 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useShareToken, ShareToken } from '@/hooks/useShareToken';
-import { useSharedEventData } from '@/hooks/useSharedEventData';
+import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
 import { 
   Copy, 
   QrCode, 
-  Users, 
   Eye,
   RefreshCw,
   Trash2,
@@ -43,8 +42,8 @@ export const ShareManagement = () => {
   const [currentShareUrl, setCurrentShareUrl] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
-  // Mock current event - in real app, get this from context
-  const currentEventId = localStorage.getItem('currentEventId') || '';
+  // Utiliser le contexte local pour l'événement actuel
+  const { currentEventId } = useLocalCurrentEvent();
 
   const loadActiveTokens = async () => {
     if (!currentEventId) return;
@@ -67,14 +66,16 @@ export const ShareManagement = () => {
   };
 
   useEffect(() => {
-    loadActiveTokens();
+    if (currentEventId) {
+      loadActiveTokens();
+    }
   }, [currentEventId]);
 
   const handleGenerateToken = async () => {
     if (!currentEventId) {
       toast({
         title: 'Erreur',
-        description: 'Aucun événement sélectionné',
+        description: 'Aucun événement disponible',
         variant: 'destructive',
       });
       return;

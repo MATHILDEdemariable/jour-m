@@ -28,6 +28,7 @@ interface DraggablePlanningItemProps {
   onDragStart: (index: number) => void;
   onDragOver: (e: React.DragEvent, index: number) => void;
   onDrop: (e: React.DragEvent, index: number) => void;
+  availablePeople: string[];
 }
 
 export const DraggablePlanningItem: React.FC<DraggablePlanningItemProps> = ({
@@ -41,7 +42,8 @@ export const DraggablePlanningItem: React.FC<DraggablePlanningItemProps> = ({
   isDragging = false,
   onDragStart,
   onDragOver,
-  onDrop
+  onDrop,
+  availablePeople
 }) => {
   const endTime = calculateEndTime(item.time, item.duration);
 
@@ -133,7 +135,7 @@ export const DraggablePlanningItem: React.FC<DraggablePlanningItemProps> = ({
         <div className="flex items-center gap-1 mt-2">
           {item.assignedTo.slice(0, 3).map(person => (
             <Badge key={person} variant="outline" className="text-xs border-stone-300 text-stone-600 bg-white">
-              {person.replace('-', ' ')}
+              {person}
             </Badge>
           ))}
           {item.assignedTo.length > 3 && (

@@ -59,9 +59,9 @@ export const ImprovedTabNavigation: React.FC<ImprovedTabNavigationProps> = ({
       <div className="max-w-7xl mx-auto">
         <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-5 h-auto p-2 bg-gray-50 rounded-none">
-            <TabButton value="config" icon={Settings} label="Configuration" showCount={false} />
+            <TabButton value="config" icon={Settings} label="Paramètres" showCount={false} />
             <TabButton value="people" icon={Users} label="Équipe" />
-            <TabButton value="vendors" icon={Building2} label="Prestataires" />
+            <TabButton value="vendors" icon={Building2} label="Professionnels" />
             <TabButton value="planning" icon={Calendar} label="Planning" />
             <TabButton value="documents" icon={FileText} label="Documents" />
           </TabsList>

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Download, Search, Filter, Clock4, Sparkles, Plus } from 'lucide-react';
 import { usePlanningItems, PlanningItem } from '@/hooks/usePlanningItems';
+import { useLocalEventData } from '@/contexts/LocalEventDataContext';
 import { PlanningItemModal } from './PlanningItemModal';
 import { DraggablePlanningItem } from './DraggablePlanningItem';
 import { LogisticsAISuggestions } from './LogisticsAISuggestions';
@@ -30,6 +31,8 @@ export const PlanningManagement = () => {
     getTotalDuration,
     getEndTime
   } = usePlanningItems();
+  
+  const { people } = useLocalEventData();
   const { toast } = useToast();
 
   const categoryColors = {
@@ -107,6 +110,10 @@ export const PlanningManagement = () => {
     e.preventDefault();
     if (draggedIndex !== null && draggedIndex !== dropIndex) {
       reorderItems(draggedIndex, dropIndex);
+      toast({
+        title: 'Planning réorganisé',
+        description: 'Les horaires ont été recalculés automatiquement',
+      });
     }
     setDraggedIndex(null);
   };
@@ -128,6 +135,9 @@ export const PlanningManagement = () => {
   });
 
   const categories = ['all', ...Array.from(new Set(planningItems.map(item => item.category)))];
+
+  // Get available people for assignment
+  const availablePeople = people.map(person => person.name);
 
   return (
     <div className="space-y-6">
@@ -188,7 +198,7 @@ export const PlanningManagement = () => {
               <div className="text-sm text-stone-600">Horaires prévisionnels</div>
             </div>
             <div className="text-center p-4 bg-stone-50 rounded-lg border border-stone-200">
-              <div className="text-2xl font-bold text-stone-700">12</div>
+              <div className="text-2xl font-bold text-stone-700">{people.length}</div>
               <div className="text-sm text-stone-600">Personnes impliquées</div>
             </div>
           </div>
@@ -281,6 +291,7 @@ export const PlanningManagement = () => {
                     onDragStart={handleDragStart}
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
+                    availablePeople={availablePeople}
                   />
                 ))}
               </div>
@@ -347,6 +358,7 @@ export const PlanningManagement = () => {
         }}
         onSubmit={handleSubmitItem}
         item={editingItem}
+        availablePeople={availablePeople}
       />
 
       <LogisticsAISuggestions 
