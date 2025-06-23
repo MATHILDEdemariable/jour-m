@@ -28,7 +28,7 @@ export const TeamOverview = () => {
   };
 
   // Afficher les personnes clés en premier
-  const keyPeople = people.filter(p => ['bride', 'groom', 'wedding-planner', 'photographer'].includes(p.role)).slice(0, 6);
+  const keyPeople = people.filter(p => ['bride', 'groom', 'wedding-planner', 'photographer'].includes(p.role || '')).slice(0, 6);
 
   return (
     <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
@@ -66,9 +66,9 @@ export const TeamOverview = () => {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <Badge className={statusColors[person.status as keyof typeof statusColors]} variant="outline">
-                    {person.status === 'confirmed' ? 'Confirmé' : 
-                     person.status === 'pending' ? 'En attente' : 'Décliné'}
+                  <Badge className={statusColors[person.confirmation_status as keyof typeof statusColors] || statusColors.pending} variant="outline">
+                    {person.confirmation_status === 'confirmed' ? 'Confirmé' : 
+                     person.confirmation_status === 'pending' ? 'En attente' : 'Décliné'}
                   </Badge>
                   
                   <div className="flex gap-1">

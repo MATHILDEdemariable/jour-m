@@ -21,22 +21,34 @@ export interface Vendor {
   updated_at: string;
 }
 
+export interface VendorDocument {
+  id: string;
+  name: string;
+  file_url: string;
+  file_type: string | null;
+  file_size: number | null;
+  category: string | null;
+  vendor_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export const useVendors = () => {
   const { toast } = useToast();
-  const { currentTenant } = useCurrentTenant();
+  const { data: currentTenant } = useCurrentTenant();
   const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [documents, setDocuments] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<VendorDocument[]>([]);
   const [loading, setLoading] = useState(false);
 
   const loadVendors = async () => {
     if (!currentTenant?.id) {
-      console.log('useVendors - No tenant available, skipping load');
+      console.log('useVendors - Aucun tenant disponible, chargement ignoré');
       return;
     }
 
     setLoading(true);
     try {
-      console.log('useVendors - Loading vendors for tenant:', currentTenant.id);
+      console.log('useVendors - Chargement des prestataires pour le tenant:', currentTenant.id);
       
       const { data, error } = await supabase
         .from('vendors')
@@ -46,7 +58,7 @@ export const useVendors = () => {
 
       if (error) throw error;
       
-      console.log('useVendors - Vendors loaded:', data?.length || 0);
+      console.log('useVendors - Prestataires chargés:', data?.length || 0);
       setVendors(data || []);
     } catch (error) {
       console.error('Erreur lors du chargement des prestataires:', error);
@@ -97,7 +109,7 @@ export const useVendors = () => {
 
       if (error) throw error;
 
-      console.log('useVendors - Vendor added:', data);
+      console.log('useVendors - Prestataire ajouté:', data);
       setVendors(prev => [data, ...prev]);
       
       toast({
@@ -128,7 +140,7 @@ export const useVendors = () => {
 
       if (error) throw error;
 
-      console.log('useVendors - Vendor updated:', data);
+      console.log('useVendors - Prestataire mis à jour:', data);
       setVendors(prev => prev.map(vendor => 
         vendor.id === id ? data : vendor
       ));
@@ -156,7 +168,7 @@ export const useVendors = () => {
 
       if (error) throw error;
 
-      console.log('useVendors - Vendor deleted:', id);
+      console.log('useVendors - Prestataire supprimé:', id);
       setVendors(prev => prev.filter(vendor => vendor.id !== id));
 
       toast({

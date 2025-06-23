@@ -24,20 +24,20 @@ export interface Event {
 
 export const useEvents = () => {
   const { toast } = useToast();
-  const { currentTenant } = useCurrentTenant();
+  const { data: currentTenant } = useCurrentTenant();
   const [events, setEvents] = useState<Event[]>([]);
   const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(false);
 
   const loadEvents = async () => {
     if (!currentTenant?.id) {
-      console.log('useEvents - No tenant available, skipping load');
+      console.log('useEvents - Aucun tenant disponible, chargement ignoré');
       return;
     }
 
     setLoading(true);
     try {
-      console.log('useEvents - Loading events for tenant:', currentTenant.id);
+      console.log('useEvents - Chargement des événements pour le tenant:', currentTenant.id);
       
       const { data, error } = await supabase
         .from('events')
@@ -47,10 +47,10 @@ export const useEvents = () => {
 
       if (error) throw error;
       
-      console.log('useEvents - Events loaded:', data?.length || 0);
+      console.log('useEvents - Événements chargés:', data?.length || 0);
       setEvents(data || []);
       
-      // Set the first event as current if none selected
+      // Définir le premier événement comme actuel si aucun n'est sélectionné
       if (!currentEvent && data && data.length > 0) {
         setCurrentEvent(data[0]);
         localStorage.setItem('currentEventId', data[0].id);
@@ -93,7 +93,7 @@ export const useEvents = () => {
 
       if (error) throw error;
 
-      console.log('useEvents - Event created:', data);
+      console.log('useEvents - Événement créé:', data);
       setEvents(prev => [data, ...prev]);
       
       if (!currentEvent) {

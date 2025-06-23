@@ -20,19 +20,19 @@ export interface Person {
 
 export const usePeople = () => {
   const { toast } = useToast();
-  const { currentTenant } = useCurrentTenant();
+  const { data: currentTenant } = useCurrentTenant();
   const [people, setPeople] = useState<Person[]>([]);
   const [loading, setLoading] = useState(false);
 
   const loadPeople = async () => {
     if (!currentTenant?.id) {
-      console.log('usePeople - No tenant available, skipping load');
+      console.log('usePeople - Aucun tenant disponible, chargement ignoré');
       return;
     }
 
     setLoading(true);
     try {
-      console.log('usePeople - Loading people for tenant:', currentTenant.id);
+      console.log('usePeople - Chargement des personnes pour le tenant:', currentTenant.id);
       
       const { data, error } = await supabase
         .from('people')
@@ -42,7 +42,7 @@ export const usePeople = () => {
 
       if (error) throw error;
       
-      console.log('usePeople - People loaded:', data?.length || 0);
+      console.log('usePeople - Personnes chargées:', data?.length || 0);
       setPeople(data || []);
     } catch (error) {
       console.error('Erreur lors du chargement des personnes:', error);
@@ -78,7 +78,7 @@ export const usePeople = () => {
 
       if (error) throw error;
 
-      console.log('usePeople - Person added:', data);
+      console.log('usePeople - Personne ajoutée:', data);
       setPeople(prev => [data, ...prev]);
       
       toast({
@@ -109,7 +109,7 @@ export const usePeople = () => {
 
       if (error) throw error;
 
-      console.log('usePeople - Person updated:', data);
+      console.log('usePeople - Personne mise à jour:', data);
       setPeople(prev => prev.map(person => 
         person.id === id ? data : person
       ));
@@ -137,7 +137,7 @@ export const usePeople = () => {
 
       if (error) throw error;
 
-      console.log('usePeople - Person deleted:', id);
+      console.log('usePeople - Personne supprimée:', id);
       setPeople(prev => prev.filter(person => person.id !== id));
 
       toast({

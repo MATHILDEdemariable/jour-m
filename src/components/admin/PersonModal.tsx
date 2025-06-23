@@ -25,8 +25,8 @@ export const PersonModal: React.FC<PersonModalProps> = ({
     role: '',
     email: '',
     phone: '',
-    status: 'pending',
-    availability: 'full'
+    confirmation_status: 'pending',
+    availability_notes: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -37,8 +37,8 @@ export const PersonModal: React.FC<PersonModalProps> = ({
         role: person.role || '',
         email: person.email || '',
         phone: person.phone || '',
-        status: person.status || 'pending',
-        availability: person.availability || 'full'
+        confirmation_status: person.confirmation_status || 'pending',
+        availability_notes: person.availability_notes || ''
       });
     } else {
       setFormData({
@@ -46,8 +46,8 @@ export const PersonModal: React.FC<PersonModalProps> = ({
         role: '',
         email: '',
         phone: '',
-        status: 'pending',
-        availability: 'full'
+        confirmation_status: 'pending',
+        availability_notes: ''
       });
     }
   }, [person, isOpen]);
@@ -60,7 +60,7 @@ export const PersonModal: React.FC<PersonModalProps> = ({
       await onSubmit(formData);
       onClose();
     } catch (error) {
-      console.error('Error submitting person:', error);
+      console.error('Erreur lors de la soumission:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -133,8 +133,8 @@ export const PersonModal: React.FC<PersonModalProps> = ({
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="status" className="text-right">Statut</Label>
-            <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}>
+            <Label htmlFor="confirmation_status" className="text-right">Statut</Label>
+            <Select value={formData.confirmation_status} onValueChange={(value) => setFormData(prev => ({ ...prev, confirmation_status: value }))}>
               <SelectTrigger className="col-span-3">
                 <SelectValue />
               </SelectTrigger>
@@ -144,6 +144,17 @@ export const PersonModal: React.FC<PersonModalProps> = ({
                 <SelectItem value="declined">Décliné</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="availability_notes" className="text-right">Notes de disponibilité</Label>
+            <Input 
+              id="availability_notes" 
+              className="col-span-3" 
+              placeholder="Notes sur la disponibilité"
+              value={formData.availability_notes}
+              onChange={(e) => setFormData(prev => ({ ...prev, availability_notes: e.target.value }))}
+            />
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
