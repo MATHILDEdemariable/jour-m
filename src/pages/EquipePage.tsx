@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Users, Calendar, Settings, Building2, FileText, Loader2, AlertCircle } from 'lucide-react';
 import { useLocalEventData } from '@/contexts/LocalEventDataContext';
+import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
 import { useShareToken } from '@/hooks/useShareToken';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -29,6 +30,7 @@ const EquipePage = () => {
   
   const token = searchParams.get('token');
   const { validateShareToken } = useShareToken();
+  const { setCurrentEventId } = useLocalCurrentEvent();
   
   const { 
     currentEvent, 
@@ -38,8 +40,7 @@ const EquipePage = () => {
     planningItems, 
     documents,
     getDaysUntilEvent,
-    getProgressStats,
-    setCurrentEventId
+    getProgressStats
   } = useLocalEventData();
 
   // Validation du token au chargement
@@ -79,7 +80,7 @@ const EquipePage = () => {
     };
 
     validateToken();
-  }, [token, validateShareToken]);
+  }, [token, validateShareToken, setCurrentEventId]);
 
   const progressStats = getProgressStats();
 
