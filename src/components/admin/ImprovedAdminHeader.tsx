@@ -3,7 +3,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Share2, Settings, Calendar, Download } from 'lucide-react';
+import { Share2, Calendar, Download } from 'lucide-react';
 import { useLocalEventData } from '@/contexts/LocalEventDataContext';
 
 interface ImprovedAdminHeaderProps {
@@ -70,14 +70,6 @@ export const ImprovedAdminHeader: React.FC<ImprovedAdminHeaderProps> = ({
                 >
                   <Share2 className="w-4 h-4 mr-2" />
                   Partager
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="bg-white/10 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Paramètres
                 </Button>
               </>
             )}

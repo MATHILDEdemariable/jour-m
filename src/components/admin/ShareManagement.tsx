@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useShareToken, ShareToken } from '@/hooks/useShareToken';
-import { useLocalCurrentEvent } from '@/contexts/LocalCurrentEventContext';
+import { useLocalEventData } from '@/contexts/LocalEventDataContext';
 import { 
   Copy, 
   QrCode, 
@@ -42,8 +42,9 @@ export const ShareManagement = () => {
   const [currentShareUrl, setCurrentShareUrl] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
-  // Utiliser le contexte local pour l'événement actuel
-  const { currentEventId } = useLocalCurrentEvent();
+  // Utiliser le contexte des données d'événement local
+  const { currentEvent } = useLocalEventData();
+  const currentEventId = currentEvent?.id;
 
   const loadActiveTokens = async () => {
     if (!currentEventId) return;
@@ -75,7 +76,7 @@ export const ShareManagement = () => {
     if (!currentEventId) {
       toast({
         title: 'Erreur',
-        description: 'Aucun événement disponible',
+        description: 'Aucun événement sélectionné',
         variant: 'destructive',
       });
       return;
@@ -151,6 +152,30 @@ export const ShareManagement = () => {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
+
+  // Si aucun événement n'est sélectionné, afficher un message d'information
+  if (!currentEventId) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Partage Public Sécurisé</h2>
+          <p className="text-gray-600">
+            Générez des liens sécurisés avec expiration pour partager votre événement avec votre équipe.
+          </p>
+        </div>
+
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Share className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">Aucun événement sélectionné</h3>
+            <p className="text-gray-500 mb-4">
+              Veuillez sélectionner un événement pour générer des liens de partage.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
